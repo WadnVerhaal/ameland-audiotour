@@ -8,7 +8,8 @@ export async function POST(req: NextRequest) {
   if (!paymentId) return NextResponse.json({ ok: false }, { status: 400 });
 
   const payment = await mollie().payments.get(paymentId);
-  const orderId = String(payment.metadata?.orderId || '');
+  const metadata = payment.metadata as { orderId?: string } | undefined;
+const orderId = String(metadata?.orderId || '');
   if (!orderId) return NextResponse.json({ ok: false }, { status: 400 });
 
   let status = 'pending';
