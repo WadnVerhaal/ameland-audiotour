@@ -49,5 +49,11 @@ export async function startCheckout(slug: string, formData: FormData) {
   });
 
   await supabase.from('orders').update({ payment_reference: payment.id }).eq('id', order.id);
-  redirect(payment.getCheckoutUrl());
+  const checkoutUrl = payment.getCheckoutUrl();
+
+if (!checkoutUrl) {
+  throw new Error('Geen checkout URL ontvangen van Mollie');
+}
+
+redirect(checkoutUrl);
 }
