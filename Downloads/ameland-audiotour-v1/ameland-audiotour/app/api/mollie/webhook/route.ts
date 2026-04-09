@@ -13,9 +13,10 @@ const orderId = String(metadata?.orderId || '');
   if (!orderId) return NextResponse.json({ ok: false }, { status: 400 });
 
   let status = 'pending';
-  if (payment.isPaid()) status = 'paid';
-  if (payment.isFailed()) status = 'failed';
-  if (payment.isExpired()) status = 'expired';
+
+if (payment.status === 'paid') status = 'paid';
+if (payment.status === 'failed') status = 'failed';
+if (payment.status === 'expired') status = 'expired';
 
   const supabase = createServerSupabase();
   await supabase.from('orders').update({ payment_status: status }).eq('id', orderId);
