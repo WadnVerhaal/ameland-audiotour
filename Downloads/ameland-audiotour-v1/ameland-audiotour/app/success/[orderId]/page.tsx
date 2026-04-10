@@ -1,13 +1,8 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
 import { CheckCircle2, Headphones, MapPinned } from 'lucide-react';
-import { getOrderById } from '@/lib/data/access';
 
 export default async function SuccessPage({ params }: { params: Promise<{ orderId: string }> }) {
-  const { orderId } = await params;
-  const order = await getOrderById(orderId);
-
-  if (!order) notFound();
+  await params;
 
   return (
     <main className="mx-auto max-w-md px-4 py-5">
@@ -23,7 +18,7 @@ export default async function SuccessPage({ params }: { params: Promise<{ orderI
           </h1>
 
           <p className="mt-3 text-sm leading-6 text-app-muted">
-            Je startlink is verstuurd. Je kunt hieronder ook direct je tour openen en meteen op pad gaan.
+            Je startlink is verstuurd per e-mail. Open je mailbox om direct te beginnen.
           </p>
         </div>
       </section>
@@ -32,32 +27,32 @@ export default async function SuccessPage({ params }: { params: Promise<{ orderI
         <div className="space-y-3">
           <div className="flex items-start gap-3 text-sm text-app-muted">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
-            <span>Je toegang is actief</span>
+            <span>Je bestelling is succesvol afgerond</span>
           </div>
           <div className="flex items-start gap-3 text-sm text-app-muted">
             <Headphones className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
-            <span>Luister onderweg naar verhalen op bijzondere plekken</span>
+            <span>Je ontvangt je persoonlijke toegang per e-mail</span>
           </div>
           <div className="flex items-start gap-3 text-sm text-app-muted">
             <MapPinned className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
-            <span>Start wanneer jij er klaar voor bent</span>
+            <span>Start wanneer jij er klaar voor bent op Ameland</span>
           </div>
         </div>
       </section>
 
       <div className="mt-5 space-y-3">
         <Link
-          href={`/player/${order.access_token}`}
+          href="/tours"
           className="block rounded-2xl bg-app-accent px-4 py-4 text-center font-medium text-white"
         >
-          Open mijn tour nu
+          Bekijk tours
         </Link>
 
         <Link
-          href="/tours"
+          href="/"
           className="block rounded-2xl border border-app bg-white px-4 py-4 text-center font-medium text-app-accent"
         >
-          Bekijk meer tours
+          Terug naar home
         </Link>
       </div>
     </main>
