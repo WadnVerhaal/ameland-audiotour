@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Headphones } from 'lucide-react';
 import { getTourByAccessToken } from '@/lib/data/access';
@@ -11,7 +12,16 @@ export default async function PlayerPage({ params }: { params: Promise<{ token: 
   return (
     <main className="mx-auto max-w-md px-4 py-5">
       <section className="mb-5 overflow-hidden rounded-[2rem] border border-app bg-app-card shadow-soft">
-        <div className="h-44 w-full bg-[linear-gradient(135deg,#e9dfbf_0%,#f4efe4_45%,#d9e3de_100%)]" />
+        <div className="relative h-44 w-full">
+          <Image
+            src="/images/tour-dorp.jpg"
+            alt="Tour op Ameland"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#f8f4eb] via-[#f8f4eb]/35 to-transparent" />
+        </div>
         <div className="p-5">
           <div className="inline-flex items-center gap-2 rounded-full bg-app-soft px-3 py-1 text-xs font-semibold text-[#6a5c37]">
             <Headphones className="h-3.5 w-3.5" />

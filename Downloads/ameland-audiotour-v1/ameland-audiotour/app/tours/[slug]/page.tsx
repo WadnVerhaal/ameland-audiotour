@@ -1,8 +1,15 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Clock3, MapPin, Headphones, Check } from 'lucide-react';
 import { getTourBySlug } from '@/lib/data/tours';
 import { formatEuroFromCents } from '@/lib/utils/money';
+
+function getTourImage(slug: string) {
+  if (slug.includes('verborgen-verhalen')) return '/images/tour-dorp.jpg';
+  if (slug.includes('fiets')) return '/images/tour-fietsen.jpg';
+  return '/images/tour-duinen.jpg';
+}
 
 export default async function TourDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -12,9 +19,15 @@ export default async function TourDetailPage({ params }: { params: Promise<{ slu
   return (
     <main className="mx-auto max-w-md px-4 py-5">
       <section className="overflow-hidden rounded-[2rem] border border-app bg-app-card shadow-soft">
-        <div className="relative">
-          <div className="h-56 w-full bg-[linear-gradient(135deg,#e9dfbf_0%,#f4efe4_45%,#d9e3de_100%)]" />
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#f8f4eb] to-transparent" />
+        <div className="relative h-56 w-full">
+          <Image
+            src={getTourImage(tour.slug)}
+            alt={tour.title}
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#f8f4eb] via-[#f8f4eb]/35 to-transparent" />
         </div>
 
         <div className="p-5">

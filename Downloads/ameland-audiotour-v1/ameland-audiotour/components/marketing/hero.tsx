@@ -1,10 +1,21 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Bike, Headphones, Clock3 } from 'lucide-react';
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-app bg-app-card shadow-soft">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(233,223,191,0.6),transparent_35%)]" />
+    <section className="overflow-hidden rounded-[2rem] border border-app bg-app-card shadow-soft">
+      <div className="relative h-56 w-full">
+        <Image
+          src="/images/hero-ameland.jpg"
+          alt="Fietsen en wandelen op Ameland"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#f8f4eb] via-[#f8f4eb]/55 to-transparent" />
+      </div>
+
       <div className="relative p-6">
         <div className="inline-flex rounded-full bg-app-soft px-3 py-1 text-xs font-semibold text-[#6a5c37]">
           Audiotours op Ameland
