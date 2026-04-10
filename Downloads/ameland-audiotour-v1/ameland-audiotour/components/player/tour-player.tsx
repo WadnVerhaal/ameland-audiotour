@@ -1,4 +1,4 @@
-@'
+@"
 'use client';
 
 import 'leaflet/dist/leaflet.css';
@@ -36,21 +36,20 @@ type Position = {
 
 const userIcon = new L.DivIcon({
   className: '',
-  html: `<div style="width:18px;height:18px;border-radius:9999px;background:#2563eb;border:3px solid white;box-shadow:0 0 0 4px rgba(37,99,235,.18)"></div>`,
+  html: '<div style="width:18px;height:18px;border-radius:9999px;background:#2563eb;border:3px solid white;box-shadow:0 0 0 4px rgba(37,99,235,.18)"></div>',
   iconSize: [18, 18],
   iconAnchor: [9, 9],
 });
 
 const nextStopIcon = new L.DivIcon({
   className: '',
-  html: `<div style="width:22px;height:22px;border-radius:9999px;background:#dc2626;border:3px solid white;box-shadow:0 0 0 4px rgba(220,38,38,.16)"></div>`,
+  html: '<div style="width:22px;height:22px;border-radius:9999px;background:#dc2626;border:3px solid white;box-shadow:0 0 0 4px rgba(220,38,38,.16)"></div>',
   iconSize: [22, 22],
   iconAnchor: [11, 11],
 });
 
 function formatDistance(meters: number) {
   const roundedMeters = Math.round(meters);
-
   if (roundedMeters < 1000) return `${roundedMeters} m`;
   return `${(roundedMeters / 1000).toFixed(1)} km`;
 }
@@ -373,7 +372,7 @@ export function TourPlayer({ stops }: Props) {
 
       <section className="overflow-hidden rounded-[1.75rem] border border-app bg-app-card shadow-card">
         <div className="p-4">
-          <div className="mt-0 grid grid-cols-3 items-center gap-3">
+          <div className="grid grid-cols-3 items-center gap-3">
             <button
               onClick={previousStop}
               disabled={currentIndex === 0}
@@ -458,4 +457,4 @@ export function TourPlayer({ stops }: Props) {
     </div>
   );
 }
-'@ | Set-Content -LiteralPath .\components\player\tour-player.tsx -Encoding utf8
+"@ | Set-Content -LiteralPath .\components\player\tour-player.tsx -Encoding utf8
