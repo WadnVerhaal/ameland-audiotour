@@ -18,6 +18,9 @@ import {
   CheckCircle2,
   Volume2,
   Compass,
+  Route,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { TourStop } from '@/types/tour';
 import { distanceInMeters } from '@/lib/utils/geo';
@@ -56,10 +59,10 @@ function formatDistance(meters: number) {
 function estimateWalkingTime(meters: number) {
   const roundedMeters = Math.round(meters);
   const minutes = Math.max(1, Math.round(roundedMeters / 78));
-  if (minutes < 60) return `${minutes} min lopen`;
+  if (minutes < 60) return `${minutes} min`;
   const hours = Math.floor(minutes / 60);
   const remaining = minutes % 60;
-  return `${hours}u ${remaining}m lopen`;
+  return `${hours}u ${remaining}m`;
 }
 
 function RecenterMap({
@@ -79,7 +82,7 @@ function RecenterMap({
         [position.lat, position.lng],
         [Number(stop.lat), Number(stop.lng)]
       );
-      map.fitBounds(bounds, { padding: [40, 40], animate: true, maxZoom: 17 });
+      map.fitBounds(bounds, { padding: [36, 36], animate: true, maxZoom: 17 });
       return;
     }
 
@@ -104,6 +107,7 @@ export function TourPlayer({ stops }: Props) {
   const [hasArrived, setHasArrived] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [position, setPosition] = useState<Position | null>(null);
+  const [showStops, setShowStops] = useState(false);
 
   const currentStop = useMemo(() => stops[currentIndex] ?? null, [stops, currentIndex]);
 
@@ -217,7 +221,7 @@ export function TourPlayer({ stops }: Props) {
     ? [position.lat, position.lng]
     : currentStop?.lat && currentStop?.lng
       ? [Number(currentStop.lat), Number(currentStop.lng)]
-      : [53.4396, 5.7700];
+      : [53.4396, 5.77];
 
   const routeLine: [number, number][] =
     position && currentStop?.lat && currentStop?.lng
@@ -230,7 +234,7 @@ export function TourPlayer({ stops }: Props) {
   const progress = stops.length > 0 ? ((currentIndex + 1) / stops.length) * 100 : 0;
 
   const mapStyle: CSSProperties = {
-    height: '420px',
+    height: '430px',
     width: '100%',
   };
 
@@ -249,17 +253,17 @@ export function TourPlayer({ stops }: Props) {
       />
 
       <section className="overflow-hidden rounded-[1.75rem] border border-app bg-app-card shadow-card">
-        <div className="bg-[linear-gradient(135deg,#10233f_0%,#163863_40%,#245a8b_100%)] p-5 text-white">
+        <div className="bg-[linear-gradient(135deg,#10233f_0%,#163863_40%,#245a8b_100%)] p-4 text-white">
           <div className="flex items-start justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <div className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/90">
-                Stop {currentIndex + 1} van {stops.length}
+                Tour actief
               </div>
-              <h1 className="mt-3 text-2xl font-semibold leading-tight">
-                {currentStop?.title}
+              <h1 className="mt-3 truncate text-xl font-semibold">
+                {currentStop?.title ?? 'Tour'}
               </h1>
-              <p className="mt-2 text-sm leading-6 text-white/80">
-                {currentStop?.short_description ?? 'Luister naar het verhaal op deze plek.'}
+              <p className="mt-1 text-sm text-white/75">
+                Stop {currentIndex + 1} van {stops.length}
               </p>
             </div>
 
@@ -277,54 +281,11 @@ export function TourPlayer({ stops }: Props) {
               style={{ width: `${progress}%` }}
             />
           </div>
-
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl bg-white/10 p-3">
-              <div className="flex items-center gap-2 text-sm text-white/85">
-                <LocateFixed className="h-4 w-4" />
-                {gpsAllowed ? 'GPS actief' : 'Wachten op GPS'}
-              </div>
-            </div>
-
-            <div className="rounded-2xl bg-white/10 p-3">
-              <div className="flex items-center gap-2 text-sm text-white/85">
-                <Compass className="h-4 w-4" />
-                {distanceToStop !== null ? formatDistance(distanceToStop) : 'Afstand onbekend'}
-              </div>
-            </div>
-
-            <div className="rounded-2xl bg-white/10 p-3">
-              <div className="flex items-center gap-2 text-sm text-white/85">
-                <Navigation className="h-4 w-4" />
-                {distanceToStop !== null ? estimateWalkingTime(distanceToStop) : 'Looptijd onbekend'}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4">
-          <div className="rounded-2xl bg-[#f8f4eb] p-4 text-sm text-app-muted">
-            <div className="flex items-start gap-2">
-              <Headphones className="mt-0.5 h-4 w-4 text-app-accent" />
-              <div>
-                {hasArrived
-                  ? 'Je bent bij de juiste plek. Het verhaal kan nu afspelen.'
-                  : 'Loop naar de rode marker. Audio start automatisch zodra je dichtbij genoeg bent.'}
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
       <section className="overflow-hidden rounded-[1.75rem] border border-app bg-app-card shadow-card">
-        <div className="border-b border-app bg-[#f8f4eb] px-4 py-3">
-          <div className="flex items-center gap-2">
-            <MapPinned className="h-4 w-4 text-app-accent" />
-            <h2 className="font-semibold text-app-accent">Live kaart</h2>
-          </div>
-        </div>
-
-        <div className="p-0">
+        <div className="relative">
           <MapContainer center={mapCenter} zoom={16} style={mapStyle} scrollWheelZoom>
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -338,7 +299,6 @@ export function TourPlayer({ stops }: Props) {
                 <Marker position={[position.lat, position.lng]} icon={userIcon}>
                   <Popup>Jij bent hier</Popup>
                 </Marker>
-
                 {position.accuracy ? (
                   <Circle center={[position.lat, position.lng]} radius={position.accuracy} />
                 ) : null}
@@ -356,7 +316,6 @@ export function TourPlayer({ stops }: Props) {
                     <div className="text-sm text-slate-500">Volgende stop</div>
                   </Popup>
                 </Marker>
-
                 <Circle
                   center={[Number(currentStop.lat), Number(currentStop.lng)]}
                   radius={Number(currentStop.trigger_radius_meters ?? 35)}
@@ -366,55 +325,137 @@ export function TourPlayer({ stops }: Props) {
 
             {routeLine.length === 2 ? <Polyline positions={routeLine} /> : null}
           </MapContainer>
+
+          <div className="absolute left-3 right-3 top-3 z-[500]">
+            <div className="rounded-2xl bg-white/95 p-3 shadow-lg backdrop-blur">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-app-muted">
+                    Volgende stop
+                  </p>
+                  <h2 className="truncate text-base font-semibold text-app-accent">
+                    {currentStop?.title ?? 'Onbekend'}
+                  </h2>
+                  <p className="mt-1 text-xs text-app-muted">
+                    {hasArrived
+                      ? 'Je bent op locatie'
+                      : 'Loop naar de rode marker'}
+                  </p>
+                </div>
+
+                <div className="text-right">
+                  <div className="text-sm font-semibold text-app-accent">
+                    {distanceToStop !== null ? formatDistance(distanceToStop) : '--'}
+                  </div>
+                  <div className="text-xs text-app-muted">
+                    {distanceToStop !== null ? estimateWalkingTime(distanceToStop) : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-[1.75rem] border border-app bg-app-card shadow-card">
-        <div className="p-4">
-          <div className="grid grid-cols-3 items-center gap-3">
-            <button
-              onClick={previousStop}
-              disabled={currentIndex === 0}
-              className="inline-flex items-center justify-center rounded-2xl border border-app px-4 py-3 text-sm font-medium text-app-accent disabled:opacity-40"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Vorige
-            </button>
-
-            <button
-              onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())}
-              className="inline-flex h-14 w-14 items-center justify-center justify-self-center rounded-full bg-app-accent text-white shadow-soft"
-            >
-              {playing ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5" />}
-            </button>
-
-            <button
-              onClick={nextStop}
-              disabled={currentIndex === stops.length - 1}
-              className="inline-flex items-center justify-center rounded-2xl border border-app px-4 py-3 text-sm font-medium text-app-accent disabled:opacity-40"
-            >
-              Volgende
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </button>
+      <section className="rounded-[1.75rem] border border-app bg-app-card p-4 shadow-card">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-2xl bg-[#f8f4eb] p-3">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-app-muted">
+              <LocateFixed className="h-4 w-4 text-app-accent" />
+              Jij
+            </div>
+            <p className="mt-2 text-sm font-medium text-app-accent">
+              {gpsAllowed ? 'Locatie actief' : 'GPS zoeken'}
+            </p>
           </div>
 
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <button
-              onClick={openWalkingRoute}
-              className="inline-flex items-center justify-center rounded-2xl bg-app-accent px-4 py-3 text-sm font-medium text-white"
-            >
-              <Navigation className="mr-2 h-4 w-4" />
-              Open wandelroute
-            </button>
-
-            <button
-              onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())}
-              className="inline-flex items-center justify-center rounded-2xl border border-app bg-white px-4 py-3 text-sm font-medium text-app-accent"
-            >
-              <Volume2 className="mr-2 h-4 w-4" />
-              {playing ? 'Pauzeer audio' : 'Speel audio af'}
-            </button>
+          <div className="rounded-2xl bg-[#f8f4eb] p-3">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-app-muted">
+              <Route className="h-4 w-4 text-app-accent" />
+              Richting
+            </div>
+            <p className="mt-2 text-sm font-medium text-app-accent">
+              Rode marker
+            </p>
           </div>
+
+          <div className="rounded-2xl bg-[#f8f4eb] p-3">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-app-muted">
+              <Compass className="h-4 w-4 text-app-accent" />
+              Afstand
+            </div>
+            <p className="mt-2 text-sm font-medium text-app-accent">
+              {distanceToStop !== null ? formatDistance(distanceToStop) : '--'}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-[#f8f4eb] p-3">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-app-muted">
+              <Navigation className="h-4 w-4 text-app-accent" />
+              Tijd
+            </div>
+            <p className="mt-2 text-sm font-medium text-app-accent">
+              {distanceToStop !== null ? estimateWalkingTime(distanceToStop) : '--'}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl bg-white p-4 shadow-card">
+          <div className="flex items-start gap-2">
+            <Headphones className="mt-0.5 h-4 w-4 text-app-accent" />
+            <p className="text-sm text-app-muted">
+              {hasArrived
+                ? 'Je bent bij de juiste plek. Het verhaal kan nu afspelen.'
+                : 'De kaart laat live zien waar je bent en waar je naartoe moet.'}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-[1.75rem] border border-app bg-app-card p-4 shadow-card">
+        <div className="grid grid-cols-3 items-center gap-3">
+          <button
+            onClick={previousStop}
+            disabled={currentIndex === 0}
+            className="inline-flex items-center justify-center rounded-2xl border border-app px-4 py-3 text-sm font-medium text-app-accent disabled:opacity-40"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Vorige
+          </button>
+
+          <button
+            onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())}
+            className="inline-flex h-14 w-14 items-center justify-center justify-self-center rounded-full bg-app-accent text-white shadow-soft"
+          >
+            {playing ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5" />}
+          </button>
+
+          <button
+            onClick={nextStop}
+            disabled={currentIndex === stops.length - 1}
+            className="inline-flex items-center justify-center rounded-2xl border border-app px-4 py-3 text-sm font-medium text-app-accent disabled:opacity-40"
+          >
+            Volgende
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <button
+            onClick={openWalkingRoute}
+            className="inline-flex items-center justify-center rounded-2xl bg-app-accent px-4 py-3 text-sm font-medium text-white"
+          >
+            <Navigation className="mr-2 h-4 w-4" />
+            Open wandelroute
+          </button>
+
+          <button
+            onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())}
+            className="inline-flex items-center justify-center rounded-2xl border border-app bg-white px-4 py-3 text-sm font-medium text-app-accent"
+          >
+            <Volume2 className="mr-2 h-4 w-4" />
+            {playing ? 'Pauzeer audio' : 'Speel audio af'}
+          </button>
         </div>
       </section>
 
@@ -425,33 +466,45 @@ export function TourPlayer({ stops }: Props) {
       ) : null}
 
       <section className="rounded-[1.75rem] border border-app bg-app-card p-4 shadow-card">
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-app-accent" />
-          <h2 className="font-semibold text-app-accent">Alle stops</h2>
-        </div>
+        <button
+          onClick={() => setShowStops((prev) => !prev)}
+          className="flex w-full items-center justify-between"
+        >
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-app-accent" />
+            <h2 className="font-semibold text-app-accent">Alle stops</h2>
+          </div>
+          {showStops ? (
+            <ChevronUp className="h-5 w-5 text-app-accent" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-app-accent" />
+          )}
+        </button>
 
-        <div className="mt-4 space-y-2">
-          {stops.map((stop, index) => (
-            <button
-              key={stop.id}
-              onClick={() => goToStop(index)}
-              className={`block w-full rounded-2xl p-3 text-left text-sm transition ${
-                currentIndex === index
-                  ? 'bg-app-accent text-white'
-                  : 'bg-white text-app shadow-card'
-              }`}
-            >
-              <div className="font-medium">
-                {index + 1}. {stop.title}
-              </div>
-              {stop.short_description ? (
-                <div className={`mt-1 text-xs ${currentIndex === index ? 'text-white/80' : 'text-app-muted'}`}>
-                  {stop.short_description}
+        {showStops ? (
+          <div className="mt-4 space-y-2">
+            {stops.map((stop, index) => (
+              <button
+                key={stop.id}
+                onClick={() => goToStop(index)}
+                className={`block w-full rounded-2xl p-3 text-left text-sm transition ${
+                  currentIndex === index
+                    ? 'bg-app-accent text-white'
+                    : 'bg-white text-app shadow-card'
+                }`}
+              >
+                <div className="font-medium">
+                  {index + 1}. {stop.title}
                 </div>
-              ) : null}
-            </button>
-          ))}
-        </div>
+                {stop.short_description ? (
+                  <div className={`mt-1 text-xs ${currentIndex === index ? 'text-white/80' : 'text-app-muted'}`}>
+                    {stop.short_description}
+                  </div>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </section>
     </div>
   );
