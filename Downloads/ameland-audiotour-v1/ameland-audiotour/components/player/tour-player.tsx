@@ -121,7 +121,6 @@ export function TourPlayer({ stops }: Props) {
   const [routeLine, setRouteLine] = useState<RoutePoint[]>([]);
   const [routeDistance, setRouteDistance] = useState<number | null>(null);
   const [routeDurationSeconds, setRouteDurationSeconds] = useState<number | null>(null);
-  const [routeLoading, setRouteLoading] = useState(false);
 
   const currentStop = useMemo(() => stops[currentIndex] ?? null, [stops, currentIndex]);
 
@@ -304,8 +303,6 @@ export function TourPlayer({ stops }: Props) {
     const stopLng = Number(currentStop.lng);
 
     async function loadWalkingRoute() {
-      setRouteLoading(true);
-
       try {
         const url =
           `https://router.project-osrm.org/route/v1/foot/` +
@@ -353,7 +350,6 @@ export function TourPlayer({ stops }: Props) {
       } finally {
         lastRoutePositionRef.current = { lat: startLat, lng: startLng };
         lastRouteRequestAtRef.current = Date.now();
-        setRouteLoading(false);
       }
     }
 
@@ -517,37 +513,6 @@ export function TourPlayer({ stops }: Props) {
               />
             ) : null}
           </MapContainer>
-
-          <div className="absolute left-2 right-2 top-2 z-[500]">
-            <div className="rounded-xl bg-white/95 p-2.5 shadow-lg backdrop-blur">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-app-muted">
-                    Volgende stop
-                  </p>
-                  <h2 className="truncate text-sm font-semibold text-app-accent">
-                    {currentStop?.title ?? 'Onbekend'}
-                  </h2>
-                  <p className="mt-0.5 text-[11px] text-app-muted">
-                    {hasArrived
-                      ? 'Je bent op locatie'
-                      : routeLoading
-                        ? 'Route wordt bijgewerkt'
-                        : 'Loop via de route naar de rode marker'}
-                  </p>
-                </div>
-
-                <div className="text-right">
-                  <div className="text-xs font-semibold text-app-accent">
-                    {distanceToStop !== null ? formatDistance(distanceToStop) : '--'}
-                  </div>
-                  <div className="text-[11px] text-app-muted">
-                    {timeToStopSeconds !== null ? estimateWalkingTime(timeToStopSeconds) : ''}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
