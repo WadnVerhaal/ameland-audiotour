@@ -2,12 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg: #f7f3ea;
+  --card: #f8f4eb;
+  --card-strong: #f4efe4;
+  --foreground: #29453f;
+  --muted: #5e6b66;
+  --border: #ddd5c7;
+  --accent: #26443e;
+  --accent-soft: #e9dfbf;
+  --badge: #b97858;
+}
+
 html {
   scroll-behavior: smooth;
 }
 
 body {
   font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--foreground);
 }
 
 a {
@@ -19,4 +33,54 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+@layer utilities {
+  .bg-app {
+    background: var(--bg);
+  }
+
+  .bg-app-card {
+    background: var(--card);
+  }
+
+  .bg-app-card-strong {
+    background: var(--card-strong);
+  }
+
+  .text-app {
+    color: var(--foreground);
+  }
+
+  .text-app-muted {
+    color: var(--muted);
+  }
+
+  .border-app {
+    border-color: var(--border);
+  }
+
+  .bg-app-accent {
+    background: var(--accent);
+  }
+
+  .text-app-accent {
+    color: var(--accent);
+  }
+
+  .bg-app-soft {
+    background: var(--accent-soft);
+  }
+
+  .bg-app-badge {
+    background: var(--badge);
+  }
+
+  .shadow-soft {
+    box-shadow: 0 12px 30px rgba(62, 53, 34, 0.08);
+  }
+
+  .shadow-card {
+    box-shadow: 0 10px 24px rgba(62, 53, 34, 0.06);
+  }
 }
