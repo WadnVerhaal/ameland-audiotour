@@ -38,16 +38,16 @@ type Position = {
 
 const userIcon = new L.DivIcon({
   className: '',
-  html: '<div style="width:18px;height:18px;border-radius:9999px;background:#2563eb;border:3px solid white;box-shadow:0 0 0 4px rgba(37,99,235,.18)"></div>',
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
+  html: '<div style="width:16px;height:16px;border-radius:9999px;background:#2563eb;border:3px solid white;box-shadow:0 0 0 3px rgba(37,99,235,.18)"></div>',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
 });
 
 const nextStopIcon = new L.DivIcon({
   className: '',
-  html: '<div style="width:22px;height:22px;border-radius:9999px;background:#dc2626;border:3px solid white;box-shadow:0 0 0 4px rgba(220,38,38,.16)"></div>',
-  iconSize: [22, 22],
-  iconAnchor: [11, 11],
+  html: '<div style="width:20px;height:20px;border-radius:9999px;background:#dc2626;border:3px solid white;box-shadow:0 0 0 3px rgba(220,38,38,.16)"></div>',
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
 });
 
 function formatDistance(meters: number) {
@@ -82,7 +82,7 @@ function RecenterMap({
         [position.lat, position.lng],
         [Number(stop.lat), Number(stop.lng)]
       );
-      map.fitBounds(bounds, { padding: [36, 36], animate: true, maxZoom: 17 });
+      map.fitBounds(bounds, { padding: [28, 28], animate: true, maxZoom: 17 });
       return;
     }
 
@@ -234,12 +234,12 @@ export function TourPlayer({ stops }: Props) {
   const progress = stops.length > 0 ? ((currentIndex + 1) / stops.length) * 100 : 0;
 
   const mapStyle: CSSProperties = {
-    height: '430px',
+    height: '300px',
     width: '100%',
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <audio
         ref={audioRef}
         onEnded={() => {
@@ -252,30 +252,30 @@ export function TourPlayer({ stops }: Props) {
         onPlay={() => setPlaying(true)}
       />
 
-      <section className="overflow-hidden rounded-[1.75rem] border border-app bg-app-card shadow-card">
-        <div className="bg-[linear-gradient(135deg,#10233f_0%,#163863_40%,#245a8b_100%)] p-4 text-white">
+      <section className="overflow-hidden rounded-[1.5rem] border border-app bg-app-card shadow-card">
+        <div className="bg-[linear-gradient(135deg,#10233f_0%,#163863_40%,#245a8b_100%)] p-3 text-white">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/90">
+              <div className="inline-flex rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/90">
                 Tour actief
               </div>
-              <h1 className="mt-3 truncate text-xl font-semibold">
+              <h1 className="mt-2 truncate text-lg font-semibold">
                 {currentStop?.title ?? 'Tour'}
               </h1>
-              <p className="mt-1 text-sm text-white/75">
+              <p className="mt-1 text-xs text-white/75">
                 Stop {currentIndex + 1} van {stops.length}
               </p>
             </div>
 
-            <div className="rounded-2xl bg-white/10 px-3 py-2 text-right">
-              <div className="text-xs text-white/70">Status</div>
-              <div className="text-sm font-semibold">
+            <div className="rounded-xl bg-white/10 px-3 py-2 text-right">
+              <div className="text-[11px] text-white/70">Status</div>
+              <div className="text-xs font-semibold">
                 {hasArrived ? 'Aangekomen' : 'Onderweg'}
               </div>
             </div>
           </div>
 
-          <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/10">
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
             <div
               className="h-full rounded-full bg-white transition-all"
               style={{ width: `${progress}%` }}
@@ -284,7 +284,7 @@ export function TourPlayer({ stops }: Props) {
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-[1.75rem] border border-app bg-app-card shadow-card">
+      <section className="overflow-hidden rounded-[1.5rem] border border-app bg-app-card shadow-card">
         <div className="relative">
           <MapContainer center={mapCenter} zoom={16} style={mapStyle} scrollWheelZoom>
             <TileLayer
@@ -326,28 +326,26 @@ export function TourPlayer({ stops }: Props) {
             {routeLine.length === 2 ? <Polyline positions={routeLine} /> : null}
           </MapContainer>
 
-          <div className="absolute left-3 right-3 top-3 z-[500]">
-            <div className="rounded-2xl bg-white/95 p-3 shadow-lg backdrop-blur">
+          <div className="absolute left-2 right-2 top-2 z-[500]">
+            <div className="rounded-xl bg-white/95 p-2.5 shadow-lg backdrop-blur">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-app-muted">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-app-muted">
                     Volgende stop
                   </p>
-                  <h2 className="truncate text-base font-semibold text-app-accent">
+                  <h2 className="truncate text-sm font-semibold text-app-accent">
                     {currentStop?.title ?? 'Onbekend'}
                   </h2>
-                  <p className="mt-1 text-xs text-app-muted">
-                    {hasArrived
-                      ? 'Je bent op locatie'
-                      : 'Loop naar de rode marker'}
+                  <p className="mt-0.5 text-[11px] text-app-muted">
+                    {hasArrived ? 'Je bent op locatie' : 'Loop naar de rode marker'}
                   </p>
                 </div>
 
                 <div className="text-right">
-                  <div className="text-sm font-semibold text-app-accent">
+                  <div className="text-xs font-semibold text-app-accent">
                     {distanceToStop !== null ? formatDistance(distanceToStop) : '--'}
                   </div>
-                  <div className="text-xs text-app-muted">
+                  <div className="text-[11px] text-app-muted">
                     {distanceToStop !== null ? estimateWalkingTime(distanceToStop) : ''}
                   </div>
                 </div>
@@ -357,50 +355,50 @@ export function TourPlayer({ stops }: Props) {
         </div>
       </section>
 
-      <section className="rounded-[1.75rem] border border-app bg-app-card p-4 shadow-card">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-2xl bg-[#f8f4eb] p-3">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-app-muted">
-              <LocateFixed className="h-4 w-4 text-app-accent" />
+      <section className="rounded-[1.5rem] border border-app bg-app-card p-3 shadow-card">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="rounded-xl bg-[#f8f4eb] p-2.5">
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-app-muted">
+              <LocateFixed className="h-3.5 w-3.5 text-app-accent" />
               Jij
             </div>
-            <p className="mt-2 text-sm font-medium text-app-accent">
+            <p className="mt-1 text-xs font-medium text-app-accent">
               {gpsAllowed ? 'Locatie actief' : 'GPS zoeken'}
             </p>
           </div>
 
-          <div className="rounded-2xl bg-[#f8f4eb] p-3">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-app-muted">
-              <Route className="h-4 w-4 text-app-accent" />
+          <div className="rounded-xl bg-[#f8f4eb] p-2.5">
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-app-muted">
+              <Route className="h-3.5 w-3.5 text-app-accent" />
               Richting
             </div>
-            <p className="mt-2 text-sm font-medium text-app-accent">
+            <p className="mt-1 text-xs font-medium text-app-accent">
               Rode marker
             </p>
           </div>
 
-          <div className="rounded-2xl bg-[#f8f4eb] p-3">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-app-muted">
-              <Compass className="h-4 w-4 text-app-accent" />
+          <div className="rounded-xl bg-[#f8f4eb] p-2.5">
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-app-muted">
+              <Compass className="h-3.5 w-3.5 text-app-accent" />
               Afstand
             </div>
-            <p className="mt-2 text-sm font-medium text-app-accent">
+            <p className="mt-1 text-xs font-medium text-app-accent">
               {distanceToStop !== null ? formatDistance(distanceToStop) : '--'}
             </p>
           </div>
 
-          <div className="rounded-2xl bg-[#f8f4eb] p-3">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-app-muted">
-              <Navigation className="h-4 w-4 text-app-accent" />
+          <div className="rounded-xl bg-[#f8f4eb] p-2.5">
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-app-muted">
+              <Navigation className="h-3.5 w-3.5 text-app-accent" />
               Tijd
             </div>
-            <p className="mt-2 text-sm font-medium text-app-accent">
+            <p className="mt-1 text-xs font-medium text-app-accent">
               {distanceToStop !== null ? estimateWalkingTime(distanceToStop) : '--'}
             </p>
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl bg-white p-4 shadow-card">
+        <div className="mt-3 rounded-xl bg-white p-3 shadow-card">
           <div className="flex items-start gap-2">
             <Headphones className="mt-0.5 h-4 w-4 text-app-accent" />
             <p className="text-sm text-app-muted">
@@ -412,12 +410,12 @@ export function TourPlayer({ stops }: Props) {
         </div>
       </section>
 
-      <section className="rounded-[1.75rem] border border-app bg-app-card p-4 shadow-card">
+      <section className="rounded-[1.5rem] border border-app bg-app-card p-3 shadow-card">
         <div className="grid grid-cols-3 items-center gap-3">
           <button
             onClick={previousStop}
             disabled={currentIndex === 0}
-            className="inline-flex items-center justify-center rounded-2xl border border-app px-4 py-3 text-sm font-medium text-app-accent disabled:opacity-40"
+            className="inline-flex items-center justify-center rounded-xl border border-app px-3 py-2.5 text-sm font-medium text-app-accent disabled:opacity-40"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Vorige
@@ -425,7 +423,7 @@ export function TourPlayer({ stops }: Props) {
 
           <button
             onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())}
-            className="inline-flex h-14 w-14 items-center justify-center justify-self-center rounded-full bg-app-accent text-white shadow-soft"
+            className="inline-flex h-12 w-12 items-center justify-center justify-self-center rounded-full bg-app-accent text-white shadow-soft"
           >
             {playing ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5" />}
           </button>
@@ -433,17 +431,17 @@ export function TourPlayer({ stops }: Props) {
           <button
             onClick={nextStop}
             disabled={currentIndex === stops.length - 1}
-            className="inline-flex items-center justify-center rounded-2xl border border-app px-4 py-3 text-sm font-medium text-app-accent disabled:opacity-40"
+            className="inline-flex items-center justify-center rounded-xl border border-app px-3 py-2.5 text-sm font-medium text-app-accent disabled:opacity-40"
           >
             Volgende
             <ArrowRight className="ml-2 h-4 w-4" />
           </button>
         </div>
 
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <button
             onClick={openWalkingRoute}
-            className="inline-flex items-center justify-center rounded-2xl bg-app-accent px-4 py-3 text-sm font-medium text-white"
+            className="inline-flex items-center justify-center rounded-xl bg-app-accent px-4 py-2.5 text-sm font-medium text-white"
           >
             <Navigation className="mr-2 h-4 w-4" />
             Open wandelroute
@@ -451,7 +449,7 @@ export function TourPlayer({ stops }: Props) {
 
           <button
             onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())}
-            className="inline-flex items-center justify-center rounded-2xl border border-app bg-white px-4 py-3 text-sm font-medium text-app-accent"
+            className="inline-flex items-center justify-center rounded-xl border border-app bg-white px-4 py-2.5 text-sm font-medium text-app-accent"
           >
             <Volume2 className="mr-2 h-4 w-4" />
             {playing ? 'Pauzeer audio' : 'Speel audio af'}
@@ -465,7 +463,7 @@ export function TourPlayer({ stops }: Props) {
         </div>
       ) : null}
 
-      <section className="rounded-[1.75rem] border border-app bg-app-card p-4 shadow-card">
+      <section className="rounded-[1.5rem] border border-app bg-app-card p-3 shadow-card">
         <button
           onClick={() => setShowStops((prev) => !prev)}
           className="flex w-full items-center justify-between"
@@ -482,12 +480,12 @@ export function TourPlayer({ stops }: Props) {
         </button>
 
         {showStops ? (
-          <div className="mt-4 space-y-2">
+          <div className="mt-3 space-y-2">
             {stops.map((stop, index) => (
               <button
                 key={stop.id}
                 onClick={() => goToStop(index)}
-                className={`block w-full rounded-2xl p-3 text-left text-sm transition ${
+                className={`block w-full rounded-xl p-3 text-left text-sm transition ${
                   currentIndex === index
                     ? 'bg-app-accent text-white'
                     : 'bg-white text-app shadow-card'
