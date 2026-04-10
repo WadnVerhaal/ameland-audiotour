@@ -456,4 +456,3 @@ export function TourPlayer({ stops }: Props) {
     </div>
   );
 }
-"@ | Set-Content -LiteralPath .\components\player\tour-player.tsx -Encoding utf8
