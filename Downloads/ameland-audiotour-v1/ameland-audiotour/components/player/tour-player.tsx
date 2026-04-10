@@ -397,17 +397,6 @@ export function TourPlayer({ stops }: Props) {
             </p>
           </div>
         </div>
-
-        <div className="mt-3 rounded-xl bg-white p-3 shadow-card">
-          <div className="flex items-start gap-2">
-            <Headphones className="mt-0.5 h-4 w-4 text-app-accent" />
-            <p className="text-sm text-app-muted">
-              {hasArrived
-                ? 'Je bent bij de juiste plek. Het verhaal kan nu afspelen.'
-                : 'De kaart laat live zien waar je bent en waar je naartoe moet.'}
-            </p>
-          </div>
-        </div>
       </section>
 
       <section className="rounded-[1.5rem] border border-app bg-app-card p-3 shadow-card">
