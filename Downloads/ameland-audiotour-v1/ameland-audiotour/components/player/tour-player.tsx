@@ -9,9 +9,7 @@ import { Circle, MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from
 import {
   Pause,
   Play,
-  MapPinned,
   Navigation,
-  Headphones,
   ArrowRight,
   ArrowLeft,
   LocateFixed,
@@ -36,6 +34,9 @@ type Position = {
   accuracy?: number;
 };
 
+type RoutePoint = [number, number];
+type GeoPermissionState = 'unknown' | 'granted' | 'prompt' | 'denied';
+
 const userIcon = new L.DivIcon({
   className: '',
   html: '<div style="width:16px;height:16px;border-radius:9999px;background:#2563eb;border:3px solid white;box-shadow:0 0 0 3px rgba(37,99,235,.18)"></div>',
@@ -43,7 +44,7 @@ const userIcon = new L.DivIcon({
   iconAnchor: [8, 8],
 });
 
-const nextStopIcon = new L.DivIcon({
+const stopIcon = new L.DivIcon({
   className: '',
   html: '<div style="width:20px;height:20px;border-radius:9999px;background:#dc2626;border:3px solid white;box-shadow:0 0 0 3px rgba(220,38,38,.16)"></div>',
   iconSize: [20, 20],
@@ -56,13 +57,17 @@ function formatDistance(meters: number) {
   return `${(roundedMeters / 1000).toFixed(1)} km`;
 }
 
-function estimateWalkingTime(meters: number) {
-  const roundedMeters = Math.round(meters);
-  const minutes = Math.max(1, Math.round(roundedMeters / 78));
+function estimateWalkingTime(seconds: number) {
+  const minutes = Math.max(1, Math.ceil(seconds / 60));
   if (minutes < 60) return `${minutes} min`;
   const hours = Math.floor(minutes / 60);
   const remaining = minutes % 60;
-  return `${hours}u ${remaining}m`;
+  return remaining === 0 ? `${hours}u` : `${hours}u ${remaining}m`;
+}
+
+function estimateWalkingSecondsFromMeters(meters: number) {
+  const walkingSpeedMetersPerSecond = 1.3;
+  return Math.max(60, Math.round(meters / walkingSpeedMetersPerSecond));
 }
 
 function RecenterMap({
@@ -101,6 +106,10 @@ function RecenterMap({
 
 export function TourPlayer({ stops }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const watchIdRef = useRef<number | null>(null);
+  const lastRoutePositionRef = useRef<Position | null>(null);
+  const lastRouteRequestAtRef = useRef<number>(0);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [gpsAllowed, setGpsAllowed] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -108,18 +117,50 @@ export function TourPlayer({ stops }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [position, setPosition] = useState<Position | null>(null);
   const [showStops, setShowStops] = useState(false);
+  const [permissionState, setPermissionState] = useState<GeoPermissionState>('unknown');
+  const [routeLine, setRouteLine] = useState<RoutePoint[]>([]);
+  const [routeDistance, setRouteDistance] = useState<number | null>(null);
+  const [routeDurationSeconds, setRouteDurationSeconds] = useState<number | null>(null);
+  const [routeLoading, setRouteLoading] = useState(false);
 
   const currentStop = useMemo(() => stops[currentIndex] ?? null, [stops, currentIndex]);
 
-  useEffect(() => {
+  async function checkPermissionState() {
+    try {
+      if (!navigator.permissions) {
+        setPermissionState('unknown');
+        return;
+      }
+
+      const result = await navigator.permissions.query({
+        name: 'geolocation' as PermissionName,
+      });
+
+      setPermissionState(result.state as GeoPermissionState);
+
+      result.onchange = () => {
+        setPermissionState(result.state as GeoPermissionState);
+      };
+    } catch {
+      setPermissionState('unknown');
+    }
+  }
+
+  function startWatchingLocation() {
     if (!navigator.geolocation) {
       setError('Je apparaat ondersteunt geen locatie.');
       return;
     }
 
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         setGpsAllowed(true);
+        setPermissionState('granted');
         setPosition({
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
@@ -127,13 +168,69 @@ export function TourPlayer({ stops }: Props) {
         });
         setError(null);
       },
-      () => {
+      (geoError) => {
+        setGpsAllowed(false);
+
+        if (geoError.code === geoError.PERMISSION_DENIED) {
+          setPermissionState('denied');
+          setError(
+            'Locatie is geweigerd. Klik op het slotje links van de adresbalk en sta locatie toe, of gebruik de knop "Locatie inschakelen".'
+          );
+          return;
+        }
+
         setError('Locatie kon niet worden opgehaald. Je kunt de tour nog wel handmatig volgen.');
       },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
     );
 
-    return () => navigator.geolocation.clearWatch(watchId);
+    watchIdRef.current = watchId;
+  }
+
+  function requestLocationAgain() {
+    setError(null);
+    void checkPermissionState();
+
+    if (!navigator.geolocation) {
+      setError('Je apparaat ondersteunt geen locatie.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGpsAllowed(true);
+        setPermissionState('granted');
+        setPosition({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+        });
+        startWatchingLocation();
+      },
+      (geoError) => {
+        if (geoError.code === geoError.PERMISSION_DENIED) {
+          setPermissionState('denied');
+          setError(
+            'Locatie is nog steeds geweigerd. Klik op het slotje links van de adresbalk en zet locatie op toestaan.'
+          );
+          return;
+        }
+
+        setError('Locatie kon niet opnieuw worden gestart.');
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+    );
+  }
+
+  useEffect(() => {
+    void checkPermissionState();
+    startWatchingLocation();
+
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -146,8 +243,9 @@ export function TourPlayer({ stops }: Props) {
     }
   }, [currentIndex]);
 
-  const distanceToStop = useMemo(() => {
+  const fallbackDistanceToStop = useMemo(() => {
     if (!position || !currentStop?.lat || !currentStop?.lng) return null;
+
     return distanceInMeters(
       position.lat,
       position.lng,
@@ -156,8 +254,17 @@ export function TourPlayer({ stops }: Props) {
     );
   }, [position, currentStop]);
 
+  const distanceToStop = routeDistance ?? fallbackDistanceToStop;
+  const timeToStopSeconds =
+    routeDurationSeconds ??
+    (fallbackDistanceToStop !== null
+      ? estimateWalkingSecondsFromMeters(fallbackDistanceToStop)
+      : null);
+
   useEffect(() => {
-    if (!position || !currentStop?.lat || !currentStop?.lng || !currentStop.audio_url || playing) return;
+    if (!position || !currentStop?.lat || !currentStop?.lng || !currentStop.audio_url || playing) {
+      return;
+    }
 
     const triggerRadius = Number(currentStop.trigger_radius_meters ?? 35);
     const distance = distanceInMeters(
@@ -172,6 +279,88 @@ export function TourPlayer({ stops }: Props) {
       void playCurrentStop();
     }
   }, [position, currentStop, playing]);
+
+  useEffect(() => {
+    if (!position || !currentStop?.lat || !currentStop?.lng) {
+      setRouteLine([]);
+      setRouteDistance(null);
+      setRouteDurationSeconds(null);
+      return;
+    }
+
+    const lastPos = lastRoutePositionRef.current;
+    const movedEnough =
+      !lastPos ||
+      distanceInMeters(position.lat, position.lng, lastPos.lat, lastPos.lng) > 20;
+
+    const waitedLongEnough = Date.now() - lastRouteRequestAtRef.current > 12000;
+
+    if (!movedEnough && !waitedLongEnough) return;
+
+    const controller = new AbortController();
+    const startLat = position.lat;
+    const startLng = position.lng;
+    const stopLat = Number(currentStop.lat);
+    const stopLng = Number(currentStop.lng);
+
+    async function loadWalkingRoute() {
+      setRouteLoading(true);
+
+      try {
+        const url =
+          `https://router.project-osrm.org/route/v1/foot/` +
+          `${startLng},${startLat};${stopLng},${stopLat}` +
+          `?overview=full&geometries=geojson`;
+
+        const response = await fetch(url, {
+          method: 'GET',
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Route request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const route = data?.routes?.[0];
+
+        if (!route?.geometry?.coordinates?.length) {
+          throw new Error('No route found');
+        }
+
+        const coordinates: RoutePoint[] = route.geometry.coordinates.map(
+          ([lng, lat]: [number, number]) => [lat, lng]
+        );
+
+        setRouteLine(coordinates);
+        setRouteDistance(route.distance ?? null);
+        setRouteDurationSeconds(route.duration ?? null);
+      } catch {
+        const straightDistance = distanceInMeters(
+          startLat,
+          startLng,
+          stopLat,
+          stopLng
+        );
+
+        setRouteLine([
+          [startLat, startLng],
+          [stopLat, stopLng],
+        ]);
+        setRouteDistance(straightDistance);
+        setRouteDurationSeconds(estimateWalkingSecondsFromMeters(straightDistance));
+      } finally {
+        lastRoutePositionRef.current = { lat: startLat, lng: startLng };
+        lastRouteRequestAtRef.current = Date.now();
+        setRouteLoading(false);
+      }
+    }
+
+    void loadWalkingRoute();
+
+    return () => controller.abort();
+  }, [position, currentStop]);
 
   async function playCurrentStop() {
     if (!audioRef.current || !currentStop?.audio_url) return;
@@ -212,7 +401,9 @@ export function TourPlayer({ stops }: Props) {
     if (!currentStop?.lat || !currentStop?.lng) return;
 
     window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=${Number(currentStop.lat)},${Number(currentStop.lng)}&travelmode=walking`,
+      `https://www.google.com/maps/dir/?api=1&destination=${Number(currentStop.lat)},${Number(
+        currentStop.lng
+      )}&travelmode=walking`,
       '_blank'
     );
   }
@@ -222,14 +413,6 @@ export function TourPlayer({ stops }: Props) {
     : currentStop?.lat && currentStop?.lng
       ? [Number(currentStop.lat), Number(currentStop.lng)]
       : [53.4396, 5.77];
-
-  const routeLine: [number, number][] =
-    position && currentStop?.lat && currentStop?.lng
-      ? [
-          [position.lat, position.lng],
-          [Number(currentStop.lat), Number(currentStop.lng)],
-        ]
-      : [];
 
   const progress = stops.length > 0 ? ((currentIndex + 1) / stops.length) * 100 : 0;
 
@@ -309,7 +492,7 @@ export function TourPlayer({ stops }: Props) {
               <>
                 <Marker
                   position={[Number(currentStop.lat), Number(currentStop.lng)]}
-                  icon={nextStopIcon}
+                  icon={stopIcon}
                 >
                   <Popup>
                     <div className="font-medium">{currentStop.title}</div>
@@ -323,7 +506,16 @@ export function TourPlayer({ stops }: Props) {
               </>
             ) : null}
 
-            {routeLine.length === 2 ? <Polyline positions={routeLine} /> : null}
+            {routeLine.length > 1 ? (
+              <Polyline
+                positions={routeLine}
+                pathOptions={{
+                  color: '#2563eb',
+                  weight: 5,
+                  opacity: 0.85,
+                }}
+              />
+            ) : null}
           </MapContainer>
 
           <div className="absolute left-2 right-2 top-2 z-[500]">
@@ -337,7 +529,11 @@ export function TourPlayer({ stops }: Props) {
                     {currentStop?.title ?? 'Onbekend'}
                   </h2>
                   <p className="mt-0.5 text-[11px] text-app-muted">
-                    {hasArrived ? 'Je bent op locatie' : 'Loop naar de rode marker'}
+                    {hasArrived
+                      ? 'Je bent op locatie'
+                      : routeLoading
+                        ? 'Route wordt bijgewerkt'
+                        : 'Loop via de route naar de rode marker'}
                   </p>
                 </div>
 
@@ -346,7 +542,7 @@ export function TourPlayer({ stops }: Props) {
                     {distanceToStop !== null ? formatDistance(distanceToStop) : '--'}
                   </div>
                   <div className="text-[11px] text-app-muted">
-                    {distanceToStop !== null ? estimateWalkingTime(distanceToStop) : ''}
+                    {timeToStopSeconds !== null ? estimateWalkingTime(timeToStopSeconds) : ''}
                   </div>
                 </div>
               </div>
@@ -363,7 +559,7 @@ export function TourPlayer({ stops }: Props) {
               Jij
             </div>
             <p className="mt-1 text-xs font-medium text-app-accent">
-              {gpsAllowed ? 'Locatie actief' : 'GPS zoeken'}
+              {gpsAllowed ? 'Locatie actief' : 'Locatie uit'}
             </p>
           </div>
 
@@ -373,7 +569,7 @@ export function TourPlayer({ stops }: Props) {
               Richting
             </div>
             <p className="mt-1 text-xs font-medium text-app-accent">
-              Rode marker
+              Route over wegen
             </p>
           </div>
 
@@ -393,7 +589,7 @@ export function TourPlayer({ stops }: Props) {
               Tijd
             </div>
             <p className="mt-1 text-xs font-medium text-app-accent">
-              {distanceToStop !== null ? estimateWalkingTime(distanceToStop) : '--'}
+              {timeToStopSeconds !== null ? estimateWalkingTime(timeToStopSeconds) : '--'}
             </p>
           </div>
         </div>
@@ -427,7 +623,15 @@ export function TourPlayer({ stops }: Props) {
           </button>
         </div>
 
-        <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <button
+            onClick={requestLocationAgain}
+            className="inline-flex items-center justify-center rounded-xl border border-app bg-white px-4 py-2.5 text-sm font-medium text-app-accent"
+          >
+            <LocateFixed className="mr-2 h-4 w-4" />
+            {permissionState === 'denied' ? 'Probeer locatie opnieuw' : 'Locatie inschakelen'}
+          </button>
+
           <button
             onClick={openWalkingRoute}
             className="inline-flex items-center justify-center rounded-xl bg-app-accent px-4 py-2.5 text-sm font-medium text-white"
@@ -484,7 +688,11 @@ export function TourPlayer({ stops }: Props) {
                   {index + 1}. {stop.title}
                 </div>
                 {stop.short_description ? (
-                  <div className={`mt-1 text-xs ${currentIndex === index ? 'text-white/80' : 'text-app-muted'}`}>
+                  <div
+                    className={`mt-1 text-xs ${
+                      currentIndex === index ? 'text-white/80' : 'text-app-muted'
+                    }`}
+                  >
                     {stop.short_description}
                   </div>
                 ) : null}
