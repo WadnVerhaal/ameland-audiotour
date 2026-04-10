@@ -20,7 +20,12 @@ export async function getTourByAccessToken(token: string) {
 
   if (orderError || !order || order.payment_status !== 'paid') return null;
 
-  const { data: tour } = await supabase.from('tours').select('*').eq('id', order.tour_id).single();
+  const { data: tour } = await supabase
+    .from('tours')
+    .select('*')
+    .eq('id', order.tour_id)
+    .single();
+
   const { data: stops } = await supabase
     .from('tour_stops')
     .select('*')
@@ -28,7 +33,35 @@ export async function getTourByAccessToken(token: string) {
     .eq('is_active', true)
     .order('order_index', { ascending: true });
 
-  await supabase.from('access_tokens').update({ last_opened_at: new Date().toISOString() }).eq('id', tokenRow.id);
+  await supabase
+    .from('access_tokens')
+    .update({ last_opened_at: new Date().toISOString() })
+    .eq('id', tokenRow.id);
 
   return { order, tour, stops: stops ?? [] };
+}
+
+export async function getAccessTokenByOrderId(orderId: string) {
+  const supabase = createServerSupabase();
+
+  const { data: order, error: orderError } = await supabase
+    .from('orders')
+    .select('id, payment_status')
+    .eq('id', orderId)
+    .single();
+
+  if (orderError || !order || order.payment_status !== 'paid') return null;
+
+  const { data: tokenRow, error: tokenError } = await supabase
+    .from('access_tokens')
+    .select('token, expires_at')
+    .eq('order_id', orderId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (tokenError || !tokenRow) return null;
+  if (tokenRow.expires_at && new Date(tokenRow.expires_at) < new Date()) return null;
+
+  return tokenRow.token;
 }
