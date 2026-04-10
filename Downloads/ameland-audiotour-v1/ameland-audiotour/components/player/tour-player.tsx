@@ -259,7 +259,7 @@ export function TourPlayer({ stops }: Props) {
               <div className="inline-flex rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/90">
                 Tour actief
               </div>
-              <h1 className="mt-2 truncate text-lg font-semibold">
+              <h1 className="mt-2 line-clamp-2 break-words pr-2 text-base font-semibold leading-5 sm:text-lg">
                 {currentStop?.title ?? 'Tour'}
               </h1>
               <p className="mt-1 text-xs text-white/75">
@@ -329,7 +329,7 @@ export function TourPlayer({ stops }: Props) {
           <div className="absolute left-2 right-2 top-2 z-[500]">
             <div className="rounded-xl bg-white/95 p-2.5 shadow-lg backdrop-blur">
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-app-muted">
                     Volgende stop
                   </p>
