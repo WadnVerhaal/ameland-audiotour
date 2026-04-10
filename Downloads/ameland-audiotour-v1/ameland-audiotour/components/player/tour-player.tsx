@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Pause, Play, MapPinned, Navigation, Headphones } from 'lucide-react';
 import { TourStop } from '@/types/tour';
 import { distanceInMeters } from '@/lib/utils/geo';
 
@@ -65,17 +66,29 @@ export function TourPlayer({ stops }: Props) {
     setCurrentIndex((prev) => Math.min(prev + 1, stops.length - 1));
   }
 
+  function previousStop() {
+    pauseCurrentStop();
+    setCurrentIndex((prev) => Math.max(prev - 1, 0));
+  }
+
   return (
     <div className="space-y-4">
-      <div className="rounded-3xl bg-white p-4 shadow-soft">
-        <div className="mb-2 text-sm text-stone-500">Stop {currentIndex + 1} van {stops.length}</div>
-        <h1 className="text-2xl font-semibold">{currentStop?.title}</h1>
-        <p className="mt-2 text-sm text-stone-600">
-          {currentStop?.short_description ?? 'Luister naar het verhaal op deze plek.'}
-        </p>
-      </div>
+      <section className="overflow-hidden rounded-[1.75rem] border border-app bg-app-card shadow-card">
+        <div className="h-36 w-full bg-[linear-gradient(135deg,#e9dfbf_0%,#f4efe4_45%,#d9e3de_100%)]" />
+        <div className="p-4">
+          <div className="inline-flex rounded-full bg-app-soft px-3 py-1 text-xs font-semibold text-[#6a5c37]">
+            Stop {currentIndex + 1} van {stops.length}
+          </div>
+          <h1 className="mt-3 text-2xl font-semibold leading-tight text-app-accent">
+            {currentStop?.title}
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-app-muted">
+            {currentStop?.short_description ?? 'Luister naar het verhaal op deze plek.'}
+          </p>
+        </div>
+      </section>
 
-      <div className="rounded-3xl bg-stone-950 p-4 text-white shadow-soft">
+      <section className="rounded-[1.75rem] border border-app bg-app-accent p-4 text-white shadow-soft">
         <audio
           ref={audioRef}
           onEnded={() => {
@@ -83,33 +96,71 @@ export function TourPlayer({ stops }: Props) {
             if (currentIndex < stops.length - 1) setCurrentIndex((prev) => prev + 1);
           }}
         />
-        <div className="text-sm text-stone-300">{gpsAllowed ? 'GPS actief' : 'Wachten op GPS'}</div>
-        <div className="mt-4 flex gap-3">
-          <button onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())} className="rounded-2xl bg-white px-4 py-3 font-medium text-stone-900">
-            {playing ? 'Pauzeer' : 'Speel af'}
+
+        <div className="flex items-center gap-2 text-sm text-white/80">
+          <Navigation className="h-4 w-4" />
+          {gpsAllowed ? 'GPS actief' : 'Wachten op GPS'}
+        </div>
+
+        <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+          <button
+            onClick={previousStop}
+            className="rounded-2xl border border-white/20 px-4 py-3 text-sm font-medium text-white"
+          >
+            Vorige
           </button>
-          <button onClick={nextStop} className="rounded-2xl border border-white/20 px-4 py-3 font-medium text-white">
-            Volgende stop
+
+          <button
+            onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())}
+            className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-white text-app-accent"
+          >
+            {playing ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5" />}
+          </button>
+
+          <button
+            onClick={nextStop}
+            className="rounded-2xl border border-white/20 px-4 py-3 text-sm font-medium text-white"
+          >
+            Volgende
           </button>
         </div>
-      </div>
 
-      {error ? <div className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">{error}</div> : null}
+        <div className="mt-4 rounded-2xl bg-white/10 p-3 text-sm text-white/85">
+          <div className="flex items-center gap-2">
+            <Headphones className="h-4 w-4" />
+            Start handmatig of laat audio automatisch afspelen wanneer je op de juiste plek bent.
+          </div>
+        </div>
+      </section>
 
-      <div className="rounded-3xl bg-white p-4 shadow-soft">
-        <h2 className="font-semibold">Stops</h2>
-        <div className="mt-3 space-y-2">
+      {error ? (
+        <div className="rounded-2xl border border-[#e5d3a4] bg-[#fff7df] p-4 text-sm text-[#7c5b16]">
+          {error}
+        </div>
+      ) : null}
+
+      <section className="rounded-[1.75rem] border border-app bg-app-card p-4 shadow-card">
+        <div className="flex items-center gap-2">
+          <MapPinned className="h-4 w-4 text-app-accent" />
+          <h2 className="font-semibold text-app-accent">Stops in deze tour</h2>
+        </div>
+
+        <div className="mt-4 space-y-2">
           {stops.map((stop, index) => (
             <button
               key={stop.id}
               onClick={() => setCurrentIndex(index)}
-              className={`block w-full rounded-2xl p-3 text-left text-sm ${currentIndex === index ? 'bg-stone-900 text-white' : 'bg-stone-50 text-stone-700'}`}
+              className={`block w-full rounded-2xl p-3 text-left text-sm transition ${
+                currentIndex === index
+                  ? 'bg-app-accent text-white'
+                  : 'bg-white text-app shadow-card'
+              }`}
             >
               {index + 1}. {stop.title}
             </button>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 }
