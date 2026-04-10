@@ -1,3 +1,4 @@
+@'
 'use client';
 
 import 'leaflet/dist/leaflet.css';
@@ -48,12 +49,15 @@ const nextStopIcon = new L.DivIcon({
 });
 
 function formatDistance(meters: number) {
-  if (meters < 1000) return `${meters} m`;
-  return `${(meters / 1000).toFixed(1)} km`;
+  const roundedMeters = Math.round(meters);
+
+  if (roundedMeters < 1000) return `${roundedMeters} m`;
+  return `${(roundedMeters / 1000).toFixed(1)} km`;
 }
 
 function estimateWalkingTime(meters: number) {
-  const minutes = Math.max(1, Math.round(meters / 78));
+  const roundedMeters = Math.round(meters);
+  const minutes = Math.max(1, Math.round(roundedMeters / 78));
   if (minutes < 60) return `${minutes} min lopen`;
   const hours = Math.floor(minutes / 60);
   const remaining = minutes % 60;
@@ -311,59 +315,8 @@ export function TourPlayer({ stops }: Props) {
               </div>
             </div>
           </div>
-
-          <div className="mt-4 grid grid-cols-3 items-center gap-3">
-            <button
-              onClick={previousStop}
-              disabled={currentIndex === 0}
-              className="inline-flex items-center justify-center rounded-2xl border border-app px-4 py-3 text-sm font-medium text-app-accent disabled:opacity-40"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Vorige
-            </button>
-
-            <button
-              onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())}
-              className="inline-flex h-14 w-14 items-center justify-center justify-self-center rounded-full bg-app-accent text-white shadow-soft"
-            >
-              {playing ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5" />}
-            </button>
-
-            <button
-              onClick={nextStop}
-              disabled={currentIndex === stops.length - 1}
-              className="inline-flex items-center justify-center rounded-2xl border border-app px-4 py-3 text-sm font-medium text-app-accent disabled:opacity-40"
-            >
-              Volgende
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <button
-              onClick={openWalkingRoute}
-              className="inline-flex items-center justify-center rounded-2xl bg-app-accent px-4 py-3 text-sm font-medium text-white"
-            >
-              <Navigation className="mr-2 h-4 w-4" />
-              Open wandelroute
-            </button>
-
-            <button
-              onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())}
-              className="inline-flex items-center justify-center rounded-2xl border border-app bg-white px-4 py-3 text-sm font-medium text-app-accent"
-            >
-              <Volume2 className="mr-2 h-4 w-4" />
-              {playing ? 'Pauzeer audio' : 'Speel audio af'}
-            </button>
-          </div>
         </div>
       </section>
-
-      {error ? (
-        <div className="rounded-2xl border border-[#e5d3a4] bg-[#fff7df] p-4 text-sm text-[#7c5b16]">
-          {error}
-        </div>
-      ) : null}
 
       <section className="overflow-hidden rounded-[1.75rem] border border-app bg-app-card shadow-card">
         <div className="border-b border-app bg-[#f8f4eb] px-4 py-3">
@@ -418,6 +371,61 @@ export function TourPlayer({ stops }: Props) {
         </div>
       </section>
 
+      <section className="overflow-hidden rounded-[1.75rem] border border-app bg-app-card shadow-card">
+        <div className="p-4">
+          <div className="mt-0 grid grid-cols-3 items-center gap-3">
+            <button
+              onClick={previousStop}
+              disabled={currentIndex === 0}
+              className="inline-flex items-center justify-center rounded-2xl border border-app px-4 py-3 text-sm font-medium text-app-accent disabled:opacity-40"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Vorige
+            </button>
+
+            <button
+              onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())}
+              className="inline-flex h-14 w-14 items-center justify-center justify-self-center rounded-full bg-app-accent text-white shadow-soft"
+            >
+              {playing ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5" />}
+            </button>
+
+            <button
+              onClick={nextStop}
+              disabled={currentIndex === stops.length - 1}
+              className="inline-flex items-center justify-center rounded-2xl border border-app px-4 py-3 text-sm font-medium text-app-accent disabled:opacity-40"
+            >
+              Volgende
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <button
+              onClick={openWalkingRoute}
+              className="inline-flex items-center justify-center rounded-2xl bg-app-accent px-4 py-3 text-sm font-medium text-white"
+            >
+              <Navigation className="mr-2 h-4 w-4" />
+              Open wandelroute
+            </button>
+
+            <button
+              onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())}
+              className="inline-flex items-center justify-center rounded-2xl border border-app bg-white px-4 py-3 text-sm font-medium text-app-accent"
+            >
+              <Volume2 className="mr-2 h-4 w-4" />
+              {playing ? 'Pauzeer audio' : 'Speel audio af'}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {error ? (
+        <div className="rounded-2xl border border-[#e5d3a4] bg-[#fff7df] p-4 text-sm text-[#7c5b16]">
+          {error}
+        </div>
+      ) : null}
+
       <section className="rounded-[1.75rem] border border-app bg-app-card p-4 shadow-card">
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-app-accent" />
@@ -450,3 +458,4 @@ export function TourPlayer({ stops }: Props) {
     </div>
   );
 }
+'@ | Set-Content -LiteralPath .\components\player\tour-player.tsx -Encoding utf8
