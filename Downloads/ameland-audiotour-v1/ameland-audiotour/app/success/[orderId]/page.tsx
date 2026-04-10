@@ -1,8 +1,13 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { CheckCircle2, Headphones, MapPinned } from 'lucide-react';
+import { getAccessTokenByOrderId } from '@/lib/data/access';
 
 export default async function SuccessPage({ params }: { params: Promise<{ orderId: string }> }) {
-  await params;
+  const { orderId } = await params;
+  const token = await getAccessTokenByOrderId(orderId);
+
+  if (!token) notFound();
 
   return (
     <main className="mx-auto max-w-md px-4 py-5">
@@ -18,7 +23,7 @@ export default async function SuccessPage({ params }: { params: Promise<{ orderI
           </h1>
 
           <p className="mt-3 text-sm leading-6 text-app-muted">
-            Je startlink is verstuurd per e-mail. Open je mailbox om direct te beginnen.
+            Je startlink is verstuurd per e-mail. Je kunt hieronder ook direct je tour openen.
           </p>
         </div>
       </section>
@@ -31,7 +36,7 @@ export default async function SuccessPage({ params }: { params: Promise<{ orderI
           </div>
           <div className="flex items-start gap-3 text-sm text-app-muted">
             <Headphones className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
-            <span>Je ontvangt je persoonlijke toegang per e-mail</span>
+            <span>Je persoonlijke tour staat klaar om te starten</span>
           </div>
           <div className="flex items-start gap-3 text-sm text-app-muted">
             <MapPinned className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
@@ -42,17 +47,17 @@ export default async function SuccessPage({ params }: { params: Promise<{ orderI
 
       <div className="mt-5 space-y-3">
         <Link
-          href="/tours"
+          href={`/player/${token}`}
           className="block rounded-2xl bg-app-accent px-4 py-4 text-center font-medium text-white"
         >
-          Bekijk tours
+          Open mijn tour nu
         </Link>
 
         <Link
-          href="/"
+          href="/tours"
           className="block rounded-2xl border border-app bg-white px-4 py-4 text-center font-medium text-app-accent"
         >
-          Terug naar home
+          Bekijk meer tours
         </Link>
       </div>
     </main>
