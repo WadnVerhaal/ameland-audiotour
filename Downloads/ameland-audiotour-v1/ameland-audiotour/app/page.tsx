@@ -1,31 +1,34 @@
-import Link from 'next/link';
-import { Headphones, Bike, Clock3 } from 'lucide-react';
+﻿import Link from 'next/link';
+import { Headphones, Bike, Clock3, MapPinned, ArrowRight, Sparkles } from 'lucide-react';
 
 export default function HomePage() {
   return (
     <main className="mx-auto max-w-md px-4 py-5">
       <section className="relative overflow-hidden rounded-[2rem] border border-app bg-app-card shadow-soft">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(233,223,191,0.6),transparent_35%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(233,223,191,0.7),transparent_35%)]" />
         <div className="relative p-6">
-          <div className="inline-flex rounded-full bg-app-soft px-3 py-1 text-xs font-semibold text-[#6a5c37]">
-            Audiotours op Ameland
+          <div className="inline-flex items-center gap-2 rounded-full bg-app-soft px-3 py-1 text-xs font-semibold text-[#6a5c37]">
+            <Sparkles className="h-3.5 w-3.5" />
+            Wad'n Verhaal
           </div>
 
           <h1 className="mt-4 text-3xl font-bold leading-tight text-app-accent">
-            Ontdek Ameland op jouw tempo
+            Ontdek Ameland met verhalen op de kaart
           </h1>
 
           <p className="mt-3 text-sm leading-6 text-app-muted">
-            Rustige audiotours voor wandelen en fietsen. Kies jouw route en start eenvoudig op je telefoon.
+            Start een rustige audiotour op je telefoon, volg live waar je bent en loop eenvoudig naar het volgende verhaalpunt.
           </p>
 
           <div className="mt-5 flex gap-3">
             <Link
               href="/tours"
-              className="inline-flex rounded-2xl bg-app-accent px-4 py-3 text-sm font-medium text-white"
+              className="inline-flex items-center rounded-2xl bg-app-accent px-4 py-3 text-sm font-medium text-white"
             >
-              Bekijk tours
+              Start een tour
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
+
             <Link
               href="/privacy"
               className="inline-flex rounded-2xl border border-app bg-white px-4 py-3 text-sm font-medium text-app-accent"
@@ -34,18 +37,37 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="mt-6 grid grid-cols-3 gap-3">
-            <div className="rounded-2xl bg-white p-3 shadow-card">
-              <Clock3 className="h-4 w-4 text-app-accent" />
-              <p className="mt-2 text-xs font-semibold">Direct starten</p>
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-white p-4 shadow-card">
+              <MapPinned className="h-5 w-5 text-app-accent" />
+              <p className="mt-2 text-sm font-semibold text-app-accent">Live kaart</p>
+              <p className="mt-1 text-xs leading-5 text-app-muted">
+                Zie direct waar je staat en waar je naartoe loopt.
+              </p>
             </div>
-            <div className="rounded-2xl bg-white p-3 shadow-card">
-              <Headphones className="h-4 w-4 text-app-accent" />
-              <p className="mt-2 text-xs font-semibold">Verhalen onderweg</p>
+
+            <div className="rounded-2xl bg-white p-4 shadow-card">
+              <Headphones className="h-5 w-5 text-app-accent" />
+              <p className="mt-2 text-sm font-semibold text-app-accent">Audio onderweg</p>
+              <p className="mt-1 text-xs leading-5 text-app-muted">
+                Verhalen en beleving precies op de juiste plek.
+              </p>
             </div>
-            <div className="rounded-2xl bg-white p-3 shadow-card">
-              <Bike className="h-4 w-4 text-app-accent" />
-              <p className="mt-2 text-xs font-semibold">Wandelen of fietsen</p>
+
+            <div className="rounded-2xl bg-white p-4 shadow-card">
+              <Clock3 className="h-5 w-5 text-app-accent" />
+              <p className="mt-2 text-sm font-semibold text-app-accent">Direct starten</p>
+              <p className="mt-1 text-xs leading-5 text-app-muted">
+                Geen gedoe, gewoon openen en beginnen.
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-white p-4 shadow-card">
+              <Bike className="h-5 w-5 text-app-accent" />
+              <p className="mt-2 text-sm font-semibold text-app-accent">Wandelen of fietsen</p>
+              <p className="mt-1 text-xs leading-5 text-app-muted">
+                Kies de route die past bij jouw dag op Ameland.
+              </p>
             </div>
           </div>
         </div>
@@ -53,16 +75,26 @@ export default function HomePage() {
 
       <section className="mt-5 rounded-[1.75rem] border border-app bg-app-card p-5 shadow-card">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-app-muted">Zo werkt het</p>
+
         <div className="mt-4 space-y-3 text-sm text-app-muted">
           <div className="rounded-2xl bg-white p-4">
             <span className="font-semibold text-app-accent">1.</span> Kies jouw tour
           </div>
           <div className="rounded-2xl bg-white p-4">
-            <span className="font-semibold text-app-accent">2.</span> Rond je bestelling af
+            <span className="font-semibold text-app-accent">2.</span> Open de tour op je telefoon
           </div>
           <div className="rounded-2xl bg-white p-4">
-            <span className="font-semibold text-app-accent">3.</span> Start direct op je telefoon
+            <span className="font-semibold text-app-accent">3.</span> Volg live de route en luister onderweg
           </div>
+        </div>
+      </section>
+
+      <section className="mt-5 rounded-[1.75rem] border border-app bg-app-card p-5 shadow-card">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-app-muted">Waarom dit fijn werkt</p>
+        <div className="mt-3 space-y-2 text-sm leading-6 text-app-muted">
+          <p>Duidelijke routebeleving op mobiel</p>
+          <p>Rustige vormgeving die buiten goed leesbaar blijft</p>
+          <p>Klaar voor live navigatie en automatische audio</p>
         </div>
       </section>
 
