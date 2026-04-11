@@ -3,7 +3,12 @@ import { notFound } from 'next/navigation'
 import { Check, ArrowLeft, Clock3, MapPin, Headphones, Footprints, Bike } from 'lucide-react'
 import { getTourBySlug } from '@/lib/data/tours'
 import { formatEuroFromCents } from '@/lib/utils/money'
-import { translations, getStopTitle } from '@/lib/app-language'
+import {
+  translations,
+  getStopTitle,
+  getTourDescription,
+  getTourTitle,
+} from '@/lib/app-language'
 import { getServerLanguage } from '@/lib/app-language-server'
 
 type Props = {
@@ -26,6 +31,8 @@ export default async function TourDetailPage({ params }: Props) {
 
   const modeLabel = tour.mode === 'bike' ? t.bikeTour : t.walkingTour
   const ModeIcon = tour.mode === 'bike' ? Bike : Footprints
+  const tourTitle = getTourTitle(tour, language)
+  const tourDescription = getTourDescription(tour, language)
 
   return (
     <main className="mx-auto max-w-md px-4 py-5">
@@ -33,7 +40,7 @@ export default async function TourDetailPage({ params }: Props) {
         <div className="relative h-64 w-full overflow-hidden">
           <img
             src={getTourImage(tour.slug)}
-            alt={tour.title}
+            alt={tourTitle}
             className="h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.08)_0%,rgba(247,243,234,0.16)_55%,rgba(247,243,234,0.95)_100%)]" />
@@ -55,11 +62,11 @@ export default async function TourDetailPage({ params }: Props) {
           </div>
 
           <h1 className="mt-4 text-3xl font-bold leading-tight text-app-accent">
-            {tour.title}
+            {tourTitle}
           </h1>
 
           <p className="mt-4 text-sm leading-8 text-app-muted">
-            {tour.description}
+            {tourDescription}
           </p>
 
           <div className="mt-5 grid grid-cols-2 gap-3">

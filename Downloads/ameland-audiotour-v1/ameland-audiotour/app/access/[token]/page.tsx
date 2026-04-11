@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { CheckCircle2, Headphones, Play, Clock3, MapPin } from 'lucide-react'
 import { getTourByAccessToken } from '@/lib/data/access'
-import { getStopTitle, translations } from '@/lib/app-language'
+import { getTourTitle, getStopTitle, translations } from '@/lib/app-language'
 import { getServerLanguage } from '@/lib/app-language-server'
 
 type Props = {
@@ -22,6 +22,7 @@ export default async function AccessPage({ params }: Props) {
 
   const language = await getServerLanguage()
   const t = translations[language]
+  const tourTitle = getTourTitle(data.tour, language)
 
   return (
     <main className="mx-auto max-w-md px-4 py-5">
@@ -29,7 +30,7 @@ export default async function AccessPage({ params }: Props) {
         <div className="relative h-64 w-full overflow-hidden">
           <img
             src={getTourImage(data.tour.slug)}
-            alt={data.tour.title}
+            alt={tourTitle}
             className="h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.08)_0%,rgba(247,243,234,0.16)_55%,rgba(247,243,234,0.95)_100%)]" />
@@ -37,10 +38,10 @@ export default async function AccessPage({ params }: Props) {
 
         <div className="p-5">
           <div className="inline-flex rounded-full bg-app-soft px-3 py-1 text-xs font-semibold text-[#6a5c37]">
-            {t.accessBadge}
+            {t.accessActive}
           </div>
 
-          <h1 className="mt-4 text-3xl font-bold text-app-accent">{data.tour.title}</h1>
+          <h1 className="mt-4 text-3xl font-bold text-app-accent">{tourTitle}</h1>
 
           <p className="mt-4 text-sm leading-8 text-app-muted">
             {t.accessText}
@@ -77,15 +78,15 @@ export default async function AccessPage({ params }: Props) {
         <div className="space-y-4 text-sm text-app-muted">
           <div className="flex items-start gap-3">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
-            <span>{t.accessBenefit1}</span>
+            <span>{t.successBenefit1}</span>
           </div>
           <div className="flex items-start gap-3">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
-            <span>{t.accessBenefit2}</span>
+            <span>{t.successBenefit2}</span>
           </div>
           <div className="flex items-start gap-3">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
-            <span>{t.accessBenefit3}</span>
+            <span>{t.successBenefit3}</span>
           </div>
         </div>
       </section>
@@ -96,7 +97,7 @@ export default async function AccessPage({ params }: Props) {
           className="inline-flex w-full items-center justify-center rounded-2xl bg-app-accent px-4 py-4 text-sm font-semibold text-white shadow-card transition hover:opacity-95"
         >
           <Play className="mr-2 h-4 w-4" />
-          {t.startTour}
+          {t.startMyTour}
         </Link>
       </div>
 
