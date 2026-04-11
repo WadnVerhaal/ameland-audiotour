@@ -146,6 +146,7 @@ export function TourPlayer({
   const watchIdRef = useRef<number | null>(null)
   const lastRoutePositionRef = useRef<Position | null>(null)
   const lastRouteRequestAtRef = useRef<number>(0)
+  const startedAtRef = useRef<number>(Date.now())
 
   const [language, setLanguage] = useState<AppLanguage>(initialLanguage)
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -160,7 +161,6 @@ export function TourPlayer({
   const [routeDistance, setRouteDistance] = useState<number | null>(null)
   const [routeDurationSeconds, setRouteDurationSeconds] = useState<number | null>(null)
   const [showCompletionScreen, setShowCompletionScreen] = useState(false)
-  const [finalAudioFinished, setFinalAudioFinished] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
 
   const currentStop = useMemo(() => stops[currentIndex] ?? null, [stops, currentIndex])
@@ -169,9 +169,7 @@ export function TourPlayer({
   const resolvedTourId = tourId ?? token
   const resolvedTourSlug = tourSlug ?? token
   const resolvedTourTitle = tourTitle ?? 'Ameland audiotour'
-
   const isLastStop = currentIndex === stops.length - 1
-  const hasReachedLastStop = hasArrived && isLastStop
 
   useEffect(() => {
     setLanguage(initialLanguage)
@@ -187,24 +185,12 @@ export function TourPlayer({
   }, [initialLanguage])
 
   useEffect(() => {
-    const startedAt = Date.now()
-
     const interval = window.setInterval(() => {
-      setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000))
+      setElapsedSeconds(Math.floor((Date.now() - startedAtRef.current) / 1000))
     }, 1000)
 
     return () => window.clearInterval(interval)
   }, [])
-
-  useEffect(() => {
-    setFinalAudioFinished(false)
-  }, [currentIndex])
-
-  useEffect(() => {
-    if (hasReachedLastStop && finalAudioFinished) {
-      setShowCompletionScreen(true)
-    }
-  }, [hasReachedLastStop, finalAudioFinished])
 
   async function checkPermissionState() {
     try {
@@ -507,6 +493,17 @@ export function TourPlayer({
     )
   }
 
+  function handleAudioEnded() {
+    setPlaying(false)
+
+    if (isLastStop) {
+      setShowCompletionScreen(true)
+      return
+    }
+
+    setCurrentIndex((prev) => Math.min(prev + 1, stops.length - 1))
+  }
+
   const mapCenter: [number, number] = position
     ? [position.lat, position.lng]
     : currentStop?.lat && currentStop?.lng
@@ -539,18 +536,7 @@ export function TourPlayer({
     <div className="space-y-3">
       <audio
         ref={audioRef}
-        onEnded={() => {
-          setPlaying(false)
-
-          if (isLastStop) {
-            setFinalAudioFinished(true)
-            return
-          }
-
-          if (currentIndex < stops.length - 1) {
-            setCurrentIndex((prev) => prev + 1)
-          }
-        }}
+        onEnded={handleAudioEnded}
         onPause={() => setPlaying(false)}
         onPlay={() => setPlaying(true)}
       />
