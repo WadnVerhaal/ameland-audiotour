@@ -506,7 +506,7 @@ export function TourPlayer({ stops }: Props) {
             <div className="rounded-xl bg-white/10 px-3 py-2 text-right">
               <div className="text-[11px] text-white/70">{t.status}</div>
               <div className="text-xs font-semibold">
-                {hasArrived ? t.arrived : t.onTheWay}
+                {hasArrived ? t.arrived : t.underway}
               </div>
             </div>
           </div>
