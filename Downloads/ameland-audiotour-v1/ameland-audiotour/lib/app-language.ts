@@ -5,6 +5,10 @@ export type AppLanguage = 'nl' | 'en' | 'de'
 export const APP_LANGUAGE_COOKIE = 'wadnverhaal-language'
 export const APP_LANGUAGE_STORAGE_KEY = 'wadnverhaal-language'
 
+export function isAppLanguage(value: string): value is AppLanguage {
+  return value === 'nl' || value === 'en' || value === 'de'
+}
+
 export const translations = {
   nl: {
     appName: "Wad'n Verhaal",
@@ -68,8 +72,7 @@ export const translations = {
     checkoutLabel: 'Afrekenen',
     checkoutTitle: 'Bijna klaar',
     almostDone: 'Bijna klaar',
-    checkoutText:
-      'Rond je bestelling af en ontvang direct toegang tot jouw tour.',
+    checkoutText: 'Rond je bestelling af en ontvang direct toegang tot jouw tour.',
     yourEmail: 'Jouw e-mailadres',
     emailAddress: 'Jouw e-mailadres',
     yourEmailPlaceholder: 'naam@voorbeeld.nl',
@@ -214,8 +217,7 @@ export const translations = {
     checkoutLabel: 'Checkout',
     checkoutTitle: 'Almost done',
     almostDone: 'Almost done',
-    checkoutText:
-      'Complete your order and get direct access to your tour.',
+    checkoutText: 'Complete your order and get direct access to your tour.',
     yourEmail: 'Your email address',
     emailAddress: 'Your email address',
     yourEmailPlaceholder: 'name@example.com',
