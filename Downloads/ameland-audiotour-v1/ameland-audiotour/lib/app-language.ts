@@ -5,7 +5,7 @@ export type AppLanguage = 'nl' | 'en' | 'de'
 export const APP_LANGUAGE_COOKIE = 'wadnverhaal-language'
 export const APP_LANGUAGE_STORAGE_KEY = 'wadnverhaal-language'
 
-export function isAppLanguage(value: string): value is AppLanguage {
+export function isAppLanguage(value: string | null | undefined): value is AppLanguage {
   return value === 'nl' || value === 'en' || value === 'de'
 }
 
