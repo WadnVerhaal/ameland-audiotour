@@ -85,6 +85,9 @@ export const translations = {
     accessBadge: 'Toegang actief',
     accessText:
       'Je tour staat klaar. We gebruiken je locatie alleen om het volgende verhaal op het juiste moment te starten.',
+    accessBenefit1: 'Je kunt direct starten op je telefoon.',
+    accessBenefit2: 'Audio speelt automatisch af op de juiste plekken.',
+    accessBenefit3: 'Je kunt ook handmatig naar de volgende stop gaan.',
     startMyTour: 'Start tour',
 
     routePreview: 'Voorproefje van de route',
@@ -104,6 +107,7 @@ export const translations = {
     successBenefit3: 'Je kunt direct starten wanneer jij wilt',
     openMyTourNow: 'Open mijn tour nu',
     viewMoreTours: 'Bekijk meer tours',
+    tryAgain: 'Opnieuw proberen',
 
     tourActive: 'Tour actief',
     status: 'Status',
@@ -224,6 +228,9 @@ export const translations = {
     accessBadge: 'Access active',
     accessText:
       'Your tour is ready. We only use your location to start the next story at the right moment.',
+    accessBenefit1: 'You can start directly on your phone.',
+    accessBenefit2: 'Audio plays automatically at the right places.',
+    accessBenefit3: 'You can also manually go to the next stop.',
     startMyTour: 'Start tour',
 
     routePreview: 'Route preview',
@@ -243,6 +250,7 @@ export const translations = {
     successBenefit3: 'You can start immediately whenever you want',
     openMyTourNow: 'Open my tour now',
     viewMoreTours: 'View more tours',
+    tryAgain: 'Try again',
 
     tourActive: 'Tour active',
     status: 'Status',
@@ -363,6 +371,9 @@ export const translations = {
     accessBadge: 'Zugang aktiv',
     accessText:
       'Deine Tour ist bereit. Wir verwenden deinen Standort nur, um die nächste Geschichte im richtigen Moment zu starten.',
+    accessBenefit1: 'Du kannst direkt auf deinem Handy starten.',
+    accessBenefit2: 'Audio spielt automatisch an den richtigen Orten ab.',
+    accessBenefit3: 'Du kannst auch manuell zum nächsten Stopp gehen.',
     startMyTour: 'Tour starten',
 
     routePreview: 'Routenvorschau',
@@ -382,6 +393,7 @@ export const translations = {
     successBenefit3: 'Du kannst sofort starten, wann immer du möchtest',
     openMyTourNow: 'Meine Tour jetzt öffnen',
     viewMoreTours: 'Weitere Touren ansehen',
+    tryAgain: 'Erneut versuchen',
 
     tourActive: 'Tour aktiv',
     status: 'Status',
