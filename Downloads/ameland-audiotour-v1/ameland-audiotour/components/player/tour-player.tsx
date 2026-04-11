@@ -1,11 +1,11 @@
-'use client';
+'use client'
 
-import 'leaflet/dist/leaflet.css';
+import 'leaflet/dist/leaflet.css'
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties } from 'react';
-import L from 'leaflet';
-import { Circle, MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from 'react-leaflet';
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
+import L from 'leaflet'
+import { Circle, MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from 'react-leaflet'
 import {
   Pause,
   Play,
@@ -19,464 +19,469 @@ import {
   Route,
   ChevronDown,
   ChevronUp,
-} from 'lucide-react';
-import { TourStop } from '@/types/tour';
-import { AppLanguage, getStopShortDescription, getStopTitle, translations } from '@/lib/app-language';
-import { distanceInMeters } from '@/lib/utils/geo';
+} from 'lucide-react'
+import { TourStop } from '@/types/tour'
+import {
+  type AppLanguage,
+  getStopShortDescription,
+  getStopTitle,
+  isAppLanguage,
+  translations,
+} from '@/lib/app-language'
+import { distanceInMeters } from '@/lib/utils/geo'
 
 type Props = {
-  token: string;
-  stops: TourStop[];
-};
+  token: string
+  stops: TourStop[]
+}
 
 type Position = {
-  lat: number;
-  lng: number;
-  accuracy?: number;
-};
+  lat: number
+  lng: number
+  accuracy?: number
+}
 
-type RoutePoint = [number, number];
-type GeoPermissionState = 'unknown' | 'granted' | 'prompt' | 'denied';
+type RoutePoint = [number, number]
+type GeoPermissionState = 'unknown' | 'granted' | 'prompt' | 'denied'
+
+const LANGUAGE_STORAGE_KEY = 'wadnverhaal-player-language'
 
 const userIcon = new L.DivIcon({
   className: '',
   html: '<div style="width:16px;height:16px;border-radius:9999px;background:#2563eb;border:3px solid white;box-shadow:0 0 0 3px rgba(37,99,235,.18)"></div>',
   iconSize: [16, 16],
   iconAnchor: [8, 8],
-});
+})
 
 const stopIcon = new L.DivIcon({
   className: '',
   html: '<div style="width:20px;height:20px;border-radius:9999px;background:#dc2626;border:3px solid white;box-shadow:0 0 0 3px rgba(220,38,38,.16)"></div>',
   iconSize: [20, 20],
   iconAnchor: [10, 10],
-});
+})
 
 function formatDistance(meters: number) {
-  const roundedMeters = Math.round(meters);
-  if (roundedMeters < 1000) return `${roundedMeters} m`;
-  return `${(roundedMeters / 1000).toFixed(1)} km`;
+  const roundedMeters = Math.round(meters)
+  if (roundedMeters < 1000) return `${roundedMeters} m`
+  return `${(roundedMeters / 1000).toFixed(1)} km`
 }
 
 function estimateWalkingTime(seconds: number) {
-  const minutes = Math.max(1, Math.ceil(seconds / 60));
-  if (minutes < 60) return `${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  const remaining = minutes % 60;
-  return remaining === 0 ? `${hours}u` : `${hours}u ${remaining}m`;
+  const minutes = Math.max(1, Math.ceil(seconds / 60))
+  if (minutes < 60) return `${minutes} min`
+  const hours = Math.floor(minutes / 60)
+  const remaining = minutes % 60
+  return remaining === 0 ? `${hours}u` : `${hours}u ${remaining}m`
 }
 
 function estimateWalkingSecondsFromMeters(meters: number) {
-  const walkingSpeedMetersPerSecond = 1.3;
-  return Math.max(60, Math.round(meters / walkingSpeedMetersPerSecond));
+  const walkingSpeedMetersPerSecond = 1.3
+  return Math.max(60, Math.round(meters / walkingSpeedMetersPerSecond))
 }
 
-function normalizeWalkingDuration(distanceMeters: number, apiDurationSeconds: number | null | undefined) {
-  const baseline = estimateWalkingSecondsFromMeters(distanceMeters);
+function normalizeWalkingDuration(
+  distanceMeters: number,
+  apiDurationSeconds: number | null | undefined
+) {
+  const baseline = estimateWalkingSecondsFromMeters(distanceMeters)
 
   if (!apiDurationSeconds || !Number.isFinite(apiDurationSeconds)) {
-    return baseline;
+    return baseline
   }
 
-  return Math.max(Math.round(apiDurationSeconds), baseline);
+  return Math.max(Math.round(apiDurationSeconds), baseline)
 }
 
 function RecenterMap({
   position,
   stop,
 }: {
-  position: Position | null;
-  stop: TourStop | null;
+  position: Position | null
+  stop: TourStop | null
 }) {
-  const map = useMap();
+  const map = useMap()
 
   useEffect(() => {
-    if (!position && !stop) return;
+    if (!position && !stop) return
 
     if (position && stop?.lat && stop?.lng) {
       const bounds = L.latLngBounds(
         [position.lat, position.lng],
         [Number(stop.lat), Number(stop.lng)]
-      );
-      map.fitBounds(bounds, { padding: [28, 28], animate: true, maxZoom: 17 });
-      return;
+      )
+      map.fitBounds(bounds, { padding: [28, 28], animate: true, maxZoom: 17 })
+      return
     }
 
     if (position) {
-      map.setView([position.lat, position.lng], 16, { animate: true });
-      return;
+      map.setView([position.lat, position.lng], 16, { animate: true })
+      return
     }
 
     if (stop?.lat && stop?.lng) {
-      map.setView([Number(stop.lat), Number(stop.lng)], 16, { animate: true });
+      map.setView([Number(stop.lat), Number(stop.lng)], 16, { animate: true })
     }
-  }, [position, stop, map]);
+  }, [position, stop, map])
 
-  return null;
+  return null
 }
 
 export function TourPlayer({ stops }: Props) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const watchIdRef = useRef<number | null>(null);
-  const lastRoutePositionRef = useRef<Position | null>(null);
-  const lastRouteRequestAtRef = useRef<number>(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const watchIdRef = useRef<number | null>(null)
+  const lastRoutePositionRef = useRef<Position | null>(null)
+  const lastRouteRequestAtRef = useRef<number>(0)
 
-  const [language, setLanguage] = useState<AppLanguage>('nl');
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [gpsAllowed, setGpsAllowed] = useState(false);
-  const [playing, setPlaying] = useState(false);
-  const [hasArrived, setHasArrived] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [position, setPosition] = useState<Position | null>(null);
-  const [showStops, setShowStops] = useState(false);
-  const [permissionState, setPermissionState] = useState<GeoPermissionState>('unknown');
-  const [routeLine, setRouteLine] = useState<RoutePoint[]>([]);
-  const [routeDistance, setRouteDistance] = useState<number | null>(null);
-  const [routeDurationSeconds, setRouteDurationSeconds] = useState<number | null>(null);
+  const [language, setLanguage] = useState<AppLanguage>('nl')
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [gpsAllowed, setGpsAllowed] = useState(false)
+  const [playing, setPlaying] = useState(false)
+  const [hasArrived, setHasArrived] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [position, setPosition] = useState<Position | null>(null)
+  const [showStops, setShowStops] = useState(false)
+  const [permissionState, setPermissionState] = useState<GeoPermissionState>('unknown')
+  const [routeLine, setRouteLine] = useState<RoutePoint[]>([])
+  const [routeDistance, setRouteDistance] = useState<number | null>(null)
+  const [routeDurationSeconds, setRouteDurationSeconds] = useState<number | null>(null)
 
-  const currentStop = useMemo(() => stops[currentIndex] ?? null, [stops, currentIndex]);
-  const t = translations[language];
-  const currentStopTitle = getStopTitle(currentStop, language) ?? t.activeStopFallback;
+  const currentStop = useMemo(() => stops[currentIndex] ?? null, [stops, currentIndex])
+  const t = translations[language]
+  const currentStopTitle = getStopTitle(currentStop, language) ?? t.activeStopFallback
 
   useEffect(() => {
-    const stored = window.localStorage.getItem('wadnverhaal-player-language');
-    if (stored === 'nl' || stored === 'en' || stored === 'de') {
-      setLanguage(stored);
-      return;
+    try {
+      const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
+      if (isAppLanguage(storedLanguage)) {
+        setLanguage(storedLanguage)
+      }
+    } catch {
+      setLanguage('nl')
     }
-
-    const cookieMatch = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('wadnverhaal_language='));
-
-    const cookieValue = cookieMatch?.split('=')[1];
-
-    if (cookieValue === 'nl' || cookieValue === 'en' || cookieValue === 'de') {
-      setLanguage(cookieValue);
-    }
-  }, []);
+  }, [])
 
   async function checkPermissionState() {
     try {
       if (!navigator.permissions) {
-        setPermissionState('unknown');
-        return;
+        setPermissionState('unknown')
+        return
       }
 
       const result = await navigator.permissions.query({
         name: 'geolocation' as PermissionName,
-      });
+      })
 
-      setPermissionState(result.state as GeoPermissionState);
+      setPermissionState(result.state as GeoPermissionState)
 
       result.onchange = () => {
-        setPermissionState(result.state as GeoPermissionState);
-      };
+        setPermissionState(result.state as GeoPermissionState)
+      }
     } catch {
-      setPermissionState('unknown');
+      setPermissionState('unknown')
     }
   }
 
   function applyPosition(pos: GeolocationPosition) {
-    setGpsAllowed(true);
-    setPermissionState('granted');
+    setGpsAllowed(true)
+    setPermissionState('granted')
     setPosition({
       lat: pos.coords.latitude,
       lng: pos.coords.longitude,
       accuracy: pos.coords.accuracy,
-    });
-    setError(null);
+    })
+    setError(null)
   }
 
   function clearLocationWatch() {
     if (watchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
+      navigator.geolocation.clearWatch(watchIdRef.current)
+      watchIdRef.current = null
     }
   }
 
   function startWatchingLocation() {
     if (!navigator.geolocation) {
-      setError(t.permissionUnsupported);
-      return;
+      setError(t.permissionUnsupported)
+      return
     }
 
-    clearLocationWatch();
+    clearLocationWatch()
 
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        applyPosition(pos);
+        applyPosition(pos)
       },
       (geoError) => {
-        setGpsAllowed(false);
+        setGpsAllowed(false)
 
         if (geoError.code === geoError.PERMISSION_DENIED) {
-          setPermissionState('denied');
-          setError(t.locationDenied);
-          return;
+          setPermissionState('denied')
+          setError(t.locationDenied)
+          return
         }
 
-        setError(t.locationUnavailable);
+        setError(t.locationUnavailable)
       },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
-    );
+    )
 
-    watchIdRef.current = watchId;
+    watchIdRef.current = watchId
   }
 
   function requestLocationAgain() {
-    setError(null);
+    setError(null)
 
     if (!navigator.geolocation) {
-      setError(t.permissionUnsupported);
-      return;
+      setError(t.permissionUnsupported)
+      return
     }
 
-    clearLocationWatch();
+    clearLocationWatch()
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        applyPosition(pos);
-        startWatchingLocation();
+        applyPosition(pos)
+        startWatchingLocation()
       },
       async (geoError) => {
-        await checkPermissionState();
+        await checkPermissionState()
 
         if (geoError.code === geoError.PERMISSION_DENIED) {
-          setGpsAllowed(false);
+          setGpsAllowed(false)
 
           if (navigator.permissions) {
             try {
               const result = await navigator.permissions.query({
                 name: 'geolocation' as PermissionName,
-              });
+              })
 
               if (result.state === 'prompt') {
-                setPermissionState('prompt');
-                setError(t.locationPromptNotOpened);
-                return;
+                setPermissionState('prompt')
+                setError(t.locationPromptNotOpened)
+                return
               }
 
               if (result.state === 'denied') {
-                setPermissionState('denied');
-                setError(t.locationStillBlocked);
-                return;
+                setPermissionState('denied')
+                setError(t.locationStillBlocked)
+                return
               }
             } catch {
               // fallback below
             }
           }
 
-          setPermissionState('denied');
-          setError(t.locationRetryFailed);
-          return;
+          setPermissionState('denied')
+          setError(t.locationRetryFailed)
+          return
         }
 
-        setError(t.locationRestartFailed);
+        setError(t.locationRestartFailed)
       },
       { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
-    );
+    )
   }
 
   useEffect(() => {
-    void checkPermissionState();
-    startWatchingLocation();
+    void checkPermissionState()
+    startWatchingLocation()
 
     return () => {
-      clearLocationWatch();
-    };
+      clearLocationWatch()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [])
 
   useEffect(() => {
-    setHasArrived(false);
-    setPlaying(false);
+    setHasArrived(false)
+    setPlaying(false)
 
     if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
     }
-  }, [currentIndex]);
+  }, [currentIndex])
 
   const fallbackDistanceToStop = useMemo(() => {
-    if (!position || !currentStop?.lat || !currentStop?.lng) return null;
+    if (!position || !currentStop?.lat || !currentStop?.lng) return null
 
     return distanceInMeters(
       position.lat,
       position.lng,
       Number(currentStop.lat),
       Number(currentStop.lng)
-    );
-  }, [position, currentStop]);
+    )
+  }, [position, currentStop])
 
-  const distanceToStop = routeDistance ?? fallbackDistanceToStop;
+  const distanceToStop = routeDistance ?? fallbackDistanceToStop
   const timeToStopSeconds =
     distanceToStop !== null
       ? normalizeWalkingDuration(distanceToStop, routeDurationSeconds)
-      : null;
+      : null
 
   useEffect(() => {
     if (!position || !currentStop?.lat || !currentStop?.lng || !currentStop.audio_url || playing) {
-      return;
+      return
     }
 
-    const triggerRadius = Number(currentStop.trigger_radius_meters ?? 35);
+    const triggerRadius = Number(currentStop.trigger_radius_meters ?? 35)
     const distance = distanceInMeters(
       position.lat,
       position.lng,
       Number(currentStop.lat),
       Number(currentStop.lng)
-    );
+    )
 
     if (distance <= triggerRadius) {
-      setHasArrived(true);
-      void playCurrentStop();
+      setHasArrived(true)
+      void playCurrentStop()
     }
-  }, [position, currentStop, playing]);
+  }, [position, currentStop, playing])
 
   useEffect(() => {
     if (!position || !currentStop?.lat || !currentStop?.lng) {
-      setRouteLine([]);
-      setRouteDistance(null);
-      setRouteDurationSeconds(null);
-      return;
+      setRouteLine([])
+      setRouteDistance(null)
+      setRouteDurationSeconds(null)
+      return
     }
 
-    const lastPos = lastRoutePositionRef.current;
+    const lastPos = lastRoutePositionRef.current
     const movedEnough =
       !lastPos ||
-      distanceInMeters(position.lat, position.lng, lastPos.lat, lastPos.lng) > 20;
+      distanceInMeters(position.lat, position.lng, lastPos.lat, lastPos.lng) > 20
 
-    const waitedLongEnough = Date.now() - lastRouteRequestAtRef.current > 12000;
+    const waitedLongEnough = Date.now() - lastRouteRequestAtRef.current > 12000
 
-    if (!movedEnough && !waitedLongEnough) return;
+    if (!movedEnough && !waitedLongEnough) return
 
-    const controller = new AbortController();
-    const startLat = position.lat;
-    const startLng = position.lng;
-    const stopLat = Number(currentStop.lat);
-    const stopLng = Number(currentStop.lng);
+    const controller = new AbortController()
+    const startLat = position.lat
+    const startLng = position.lng
+    const stopLat = Number(currentStop.lat)
+    const stopLng = Number(currentStop.lng)
 
     async function loadWalkingRoute() {
       try {
         const url =
           `https://router.project-osrm.org/route/v1/foot/` +
           `${startLng},${startLat};${stopLng},${stopLat}` +
-          `?overview=full&geometries=geojson&alternatives=false`;
+          `?overview=full&geometries=geojson&alternatives=false`
 
         const response = await fetch(url, {
           method: 'GET',
           signal: controller.signal,
           cache: 'no-store',
-        });
+        })
 
         if (!response.ok) {
-          throw new Error(`Route request failed: ${response.status}`);
+          throw new Error(`Route request failed: ${response.status}`)
         }
 
-        const data = await response.json();
-        const route = data?.routes?.[0];
+        const data = await response.json()
+        const route = data?.routes?.[0]
 
         if (!route?.geometry?.coordinates?.length) {
-          throw new Error('No route found');
+          throw new Error('No route found')
         }
 
         const coordinates: RoutePoint[] = route.geometry.coordinates.map(
           ([lng, lat]: [number, number]) => [lat, lng]
-        );
+        )
 
-        const nextDistance = route.distance ?? distanceInMeters(startLat, startLng, stopLat, stopLng);
+        const nextDistance =
+          route.distance ?? distanceInMeters(startLat, startLng, stopLat, stopLng)
 
-        setRouteLine(coordinates);
-        setRouteDistance(nextDistance);
-        setRouteDurationSeconds(normalizeWalkingDuration(nextDistance, route.duration ?? null));
+        setRouteLine(coordinates)
+        setRouteDistance(nextDistance)
+        setRouteDurationSeconds(normalizeWalkingDuration(nextDistance, route.duration ?? null))
       } catch {
-        const straightDistance = distanceInMeters(startLat, startLng, stopLat, stopLng);
+        const straightDistance = distanceInMeters(startLat, startLng, stopLat, stopLng)
 
         setRouteLine([
           [startLat, startLng],
           [stopLat, stopLng],
-        ]);
-        setRouteDistance(straightDistance);
-        setRouteDurationSeconds(estimateWalkingSecondsFromMeters(straightDistance));
+        ])
+        setRouteDistance(straightDistance)
+        setRouteDurationSeconds(estimateWalkingSecondsFromMeters(straightDistance))
       } finally {
-        lastRoutePositionRef.current = { lat: startLat, lng: startLng };
-        lastRouteRequestAtRef.current = Date.now();
+        lastRoutePositionRef.current = { lat: startLat, lng: startLng }
+        lastRouteRequestAtRef.current = Date.now()
       }
     }
 
-    void loadWalkingRoute();
+    void loadWalkingRoute()
 
-    return () => controller.abort();
-  }, [position, currentStop]);
+    return () => controller.abort()
+  }, [position, currentStop])
 
   async function playCurrentStop() {
-    if (!audioRef.current || !currentStop?.audio_url) return;
+    if (!audioRef.current || !currentStop?.audio_url) return
 
-    audioRef.current.src = currentStop.audio_url;
+    audioRef.current.src = currentStop.audio_url
 
     try {
-      await audioRef.current.play();
-      setPlaying(true);
-      setError(null);
+      await audioRef.current.play()
+      setPlaying(true)
+      setError(null)
     } catch {
-      setError(t.audioAutoStartFailed);
+      setError(t.audioAutoStartFailed)
     }
   }
 
   function pauseCurrentStop() {
-    if (!audioRef.current) return;
-    audioRef.current.pause();
-    setPlaying(false);
+    if (!audioRef.current) return
+    audioRef.current.pause()
+    setPlaying(false)
   }
 
   function nextStop() {
-    pauseCurrentStop();
-    setCurrentIndex((prev) => Math.min(prev + 1, stops.length - 1));
+    pauseCurrentStop()
+    setCurrentIndex((prev) => Math.min(prev + 1, stops.length - 1))
   }
 
   function previousStop() {
-    pauseCurrentStop();
-    setCurrentIndex((prev) => Math.max(prev - 1, 0));
+    pauseCurrentStop()
+    setCurrentIndex((prev) => Math.max(prev - 1, 0))
   }
 
   function goToStop(index: number) {
-    pauseCurrentStop();
-    setCurrentIndex(index);
+    pauseCurrentStop()
+    setCurrentIndex(index)
   }
 
   function openWalkingRoute() {
-    if (!currentStop?.lat || !currentStop?.lng) return;
+    if (!currentStop?.lat || !currentStop?.lng) return
 
     window.open(
       `https://www.google.com/maps/dir/?api=1&destination=${Number(currentStop.lat)},${Number(
         currentStop.lng
       )}&travelmode=walking`,
       '_blank'
-    );
+    )
   }
 
   const mapCenter: [number, number] = position
     ? [position.lat, position.lng]
     : currentStop?.lat && currentStop?.lng
       ? [Number(currentStop.lat), Number(currentStop.lng)]
-      : [53.4396, 5.77];
+      : [53.4396, 5.77]
 
-  const progress = stops.length > 0 ? ((currentIndex + 1) / stops.length) * 100 : 0;
+  const progress = stops.length > 0 ? ((currentIndex + 1) / stops.length) * 100 : 0
 
   const mapStyle: CSSProperties = {
     height: '360px',
     width: '100%',
-  };
+  }
 
   return (
     <div className="space-y-3">
       <audio
         ref={audioRef}
         onEnded={() => {
-          setPlaying(false);
+          setPlaying(false)
           if (currentIndex < stops.length - 1) {
-            setCurrentIndex((prev) => prev + 1);
+            setCurrentIndex((prev) => prev + 1)
           }
         }}
         onPause={() => setPlaying(false)}
@@ -494,7 +499,7 @@ export function TourPlayer({ stops }: Props) {
                 {currentStopTitle}
               </h1>
               <p className="mt-1 text-xs text-white/75">
-                {t.stopLabel} {currentIndex + 1} {t.of} {stops.length}
+                {t.stop} {currentIndex + 1} {t.of} {stops.length}
               </p>
             </div>
 
@@ -690,8 +695,8 @@ export function TourPlayer({ stops }: Props) {
         {showStops ? (
           <div className="mt-3 space-y-2">
             {stops.map((stop, index) => {
-              const stopTitle = getStopTitle(stop, language) ?? stop.title;
-              const stopDescription = getStopShortDescription(stop, language);
+              const stopTitle = getStopTitle(stop, language) ?? stop.title
+              const stopDescription = getStopShortDescription(stop, language)
 
               return (
                 <button
@@ -716,11 +721,11 @@ export function TourPlayer({ stops }: Props) {
                     </div>
                   ) : null}
                 </button>
-              );
+              )
             })}
           </div>
         ) : null}
       </section>
     </div>
-  );
+  )
 }
