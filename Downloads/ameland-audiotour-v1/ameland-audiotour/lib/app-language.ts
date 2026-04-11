@@ -8,8 +8,10 @@ export const APP_LANGUAGE_STORAGE_KEY = 'wadnverhaal-language'
 export const translations = {
   nl: {
     appName: "Wad'n Verhaal",
+
     chooseLanguage: 'Kies taal',
-    chooseLanguageText: 'Kies hier je taal. De app gebruikt deze keuze daarna overal automatisch.',
+    chooseLanguageText:
+      'Kies hier je taal. De app gebruikt deze keuze daarna overal automatisch.',
 
     discoverTitle: 'Ontdek Ameland met verhalen op de kaart',
     discoverText:
@@ -50,23 +52,37 @@ export const translations = {
 
     availableRoutes: 'Beschikbare routes',
     chooseTour: 'Kies je tour',
-    chooseTourText: 'Kies de route die past bij jouw dag op Ameland en start eenvoudig op je telefoon.',
+    chooseTourText:
+      'Kies de route die past bij jouw dag op Ameland en start eenvoudig op je telefoon.',
     noToursAvailable: 'Er zijn op dit moment nog geen tours beschikbaar.',
+    noTours: 'Er zijn op dit moment nog geen tours beschikbaar.',
 
     walkingTour: 'Wandeltour',
+    walkingTourShort: 'Wandeltour',
     bikeTour: 'Fietstour',
+    walkTour: 'Wandeltour',
 
     checkoutLabel: 'Afrekenen',
     checkoutTitle: 'Bijna klaar',
-    checkoutText: 'Rond je bestelling af en ontvang direct toegang tot jouw tour.',
+    almostDone: 'Bijna klaar',
+    checkoutText:
+      'Rond je bestelling af en ontvang direct toegang tot jouw tour.',
     yourEmail: 'Jouw e-mailadres',
+    emailAddress: 'Jouw e-mailadres',
     yourEmailPlaceholder: 'naam@voorbeeld.nl',
+    emailPlaceholder: 'naam@voorbeeld.nl',
     completeOrder: 'Bestelling afronden',
     securePayment: 'Veilig betalen',
     directAccess: 'Direct toegang',
     directAccessText: 'Na betaling kun je jouw tour meteen openen.',
+    paymentBenefit1: 'Direct na betaling ontvang je een persoonlijke startlink.',
+    paymentBenefit2: 'Je opent de tour eenvoudig op je telefoon.',
+    paymentBenefit3: 'Veilig betalen en daarna meteen op pad.',
+
+    payAndReceiveLink: 'Betaal en ontvang je startlink',
 
     accessActive: 'Toegang actief',
+    accessBadge: 'Toegang actief',
     accessText:
       'Je tour staat klaar. We gebruiken je locatie alleen om het volgende verhaal op het juiste moment te starten.',
     startMyTour: 'Start tour',
@@ -79,11 +95,10 @@ export const translations = {
     listenAtSpecialPlaces: 'Luister naar verhalen op bijzondere plekken.',
     directStartAfterPurchase: 'Na aankoop kun je direct starten.',
 
-    payAndReceiveLink: 'Betaal en ontvang je startlink',
-
     successBadge: 'Je bestelling is gelukt',
     successTitle: 'Je tour staat klaar',
-    successText: 'Alles is gelukt. Je kunt direct verder naar jouw persoonlijke tour.',
+    successText:
+      'Alles is gelukt. Je kunt direct verder naar jouw persoonlijke tour.',
     successBenefit1: 'Je betaling is bevestigd',
     successBenefit2: 'Je audio staat klaar op je telefoon',
     successBenefit3: 'Je kunt direct starten wanneer jij wilt',
@@ -132,8 +147,10 @@ export const translations = {
 
   en: {
     appName: "Wad'n Verhaal",
+
     chooseLanguage: 'Choose language',
-    chooseLanguageText: 'Choose your language here. The app will then use this choice everywhere automatically.',
+    chooseLanguageText:
+      'Choose your language here. The app will then use this choice everywhere automatically.',
 
     discoverTitle: 'Discover Ameland through stories on the map',
     discoverText:
@@ -174,23 +191,37 @@ export const translations = {
 
     availableRoutes: 'Available routes',
     chooseTour: 'Choose your tour',
-    chooseTourText: 'Choose the route that fits your day on Ameland and start easily on your phone.',
+    chooseTourText:
+      'Choose the route that fits your day on Ameland and start easily on your phone.',
     noToursAvailable: 'There are currently no tours available.',
+    noTours: 'There are currently no tours available.',
 
     walkingTour: 'Walking tour',
+    walkingTourShort: 'Walking tour',
     bikeTour: 'Bike tour',
+    walkTour: 'Walking tour',
 
     checkoutLabel: 'Checkout',
-    checkoutTitle: 'Almost there',
-    checkoutText: 'Complete your order and get direct access to your tour.',
+    checkoutTitle: 'Almost done',
+    almostDone: 'Almost done',
+    checkoutText:
+      'Complete your order and get direct access to your tour.',
     yourEmail: 'Your email address',
+    emailAddress: 'Your email address',
     yourEmailPlaceholder: 'name@example.com',
+    emailPlaceholder: 'name@example.com',
     completeOrder: 'Complete order',
     securePayment: 'Secure payment',
     directAccess: 'Direct access',
     directAccessText: 'After payment you can open your tour immediately.',
+    paymentBenefit1: 'Right after payment you receive a personal start link.',
+    paymentBenefit2: 'You can open the tour easily on your phone.',
+    paymentBenefit3: 'Pay securely and start right away.',
+
+    payAndReceiveLink: 'Pay and receive your start link',
 
     accessActive: 'Access active',
+    accessBadge: 'Access active',
     accessText:
       'Your tour is ready. We only use your location to start the next story at the right moment.',
     startMyTour: 'Start tour',
@@ -203,11 +234,10 @@ export const translations = {
     listenAtSpecialPlaces: 'Listen to stories at special places.',
     directStartAfterPurchase: 'You can start immediately after purchase.',
 
-    payAndReceiveLink: 'Pay and receive your start link',
-
     successBadge: 'Your order was successful',
     successTitle: 'Your tour is ready',
-    successText: 'Everything worked. You can continue directly to your personal tour.',
+    successText:
+      'Everything worked. You can continue directly to your personal tour.',
     successBenefit1: 'Your payment has been confirmed',
     successBenefit2: 'Your audio is ready on your phone',
     successBenefit3: 'You can start immediately whenever you want',
@@ -256,6 +286,7 @@ export const translations = {
 
   de: {
     appName: "Wad'n Verhaal",
+
     chooseLanguage: 'Sprache wählen',
     chooseLanguageText:
       'Wähle hier deine Sprache. Die App verwendet diese Auswahl danach automatisch überall.',
@@ -299,23 +330,37 @@ export const translations = {
 
     availableRoutes: 'Verfügbare Routen',
     chooseTour: 'Wähle deine Tour',
-    chooseTourText: 'Wähle die Route, die zu deinem Tag auf Ameland passt, und starte einfach auf deinem Handy.',
+    chooseTourText:
+      'Wähle die Route, die zu deinem Tag auf Ameland passt, und starte einfach auf deinem Handy.',
     noToursAvailable: 'Zurzeit sind noch keine Touren verfügbar.',
+    noTours: 'Zurzeit sind noch keine Touren verfügbar.',
 
     walkingTour: 'Wandertour',
+    walkingTourShort: 'Wandertour',
     bikeTour: 'Fahrradtour',
+    walkTour: 'Wandertour',
 
     checkoutLabel: 'Kasse',
     checkoutTitle: 'Fast fertig',
-    checkoutText: 'Schließe deine Bestellung ab und erhalte direkten Zugang zu deiner Tour.',
+    almostDone: 'Fast fertig',
+    checkoutText:
+      'Schließe deine Bestellung ab und erhalte direkten Zugang zu deiner Tour.',
     yourEmail: 'Deine E-Mail-Adresse',
+    emailAddress: 'Deine E-Mail-Adresse',
     yourEmailPlaceholder: 'name@beispiel.de',
+    emailPlaceholder: 'name@beispiel.de',
     completeOrder: 'Bestellung abschließen',
     securePayment: 'Sicher bezahlen',
     directAccess: 'Direkter Zugang',
     directAccessText: 'Nach der Zahlung kannst du deine Tour sofort öffnen.',
+    paymentBenefit1: 'Direkt nach der Zahlung erhältst du einen persönlichen Startlink.',
+    paymentBenefit2: 'Du öffnest die Tour ganz einfach auf deinem Handy.',
+    paymentBenefit3: 'Sicher bezahlen und danach sofort loslegen.',
+
+    payAndReceiveLink: 'Bezahlen und Startlink erhalten',
 
     accessActive: 'Zugang aktiv',
+    accessBadge: 'Zugang aktiv',
     accessText:
       'Deine Tour ist bereit. Wir verwenden deinen Standort nur, um die nächste Geschichte im richtigen Moment zu starten.',
     startMyTour: 'Tour starten',
@@ -328,11 +373,10 @@ export const translations = {
     listenAtSpecialPlaces: 'Höre Geschichten an besonderen Orten.',
     directStartAfterPurchase: 'Nach dem Kauf kannst du sofort starten.',
 
-    payAndReceiveLink: 'Bezahlen und Startlink erhalten',
-
     successBadge: 'Deine Bestellung war erfolgreich',
     successTitle: 'Deine Tour ist bereit',
-    successText: 'Alles hat geklappt. Du kannst direkt mit deiner persönlichen Tour weitermachen.',
+    successText:
+      'Alles hat geklappt. Du kannst direkt mit deiner persönlichen Tour weitermachen.',
     successBenefit1: 'Deine Zahlung wurde bestätigt',
     successBenefit2: 'Dein Audio ist auf deinem Handy bereit',
     successBenefit3: 'Du kannst sofort starten, wann immer du möchtest',
