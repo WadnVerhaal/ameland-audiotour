@@ -50,12 +50,8 @@ export const translations = {
     backToHome: 'Terug naar home',
     backToTours: 'Terug naar alle tours',
 
-notFoundTitle: 'Pagina niet gevonden',
-notFoundText: 'De pagina die je zoekt bestaat niet of is verplaatst.',
-notFoundTitle: 'Page not found',
-notFoundText: 'The page you are looking for does not exist or has been moved.',
-notFoundTitle: 'Seite nicht gefunden',
-notFoundText: 'Die Seite, die du suchst, existiert nicht oder wurde verschoben.',
+    notFoundTitle: 'Pagina niet gevonden',
+    notFoundText: 'De pagina die je zoekt bestaat niet of is verplaatst.',
 
     availableRoutes: 'Beschikbare routes',
     chooseTour: 'Kies je tour',
@@ -200,6 +196,9 @@ notFoundText: 'Die Seite, die du suchst, existiert nicht oder wurde verschoben.'
     backToHome: 'Back to home',
     backToTours: 'Back to all tours',
 
+    notFoundTitle: 'Page not found',
+    notFoundText: 'The page you are looking for does not exist or has been moved.',
+
     availableRoutes: 'Available routes',
     chooseTour: 'Choose your tour',
     chooseTourText:
@@ -342,6 +341,9 @@ notFoundText: 'Die Seite, die du suchst, existiert nicht oder wurde verschoben.'
     back: 'Zurück',
     backToHome: 'Zurück zur Startseite',
     backToTours: 'Zurück zu allen Touren',
+
+    notFoundTitle: 'Seite nicht gefunden',
+    notFoundText: 'Die Seite, die du suchst, existiert nicht oder wurde verschoben.',
 
     availableRoutes: 'Verfügbare Routen',
     chooseTour: 'Wähle deine Tour',
