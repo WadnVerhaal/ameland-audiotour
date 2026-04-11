@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CheckCircle2, Headphones, MapPinned, ArrowLeft, RefreshCw } from 'lucide-react'
+import { CheckCircle2, Headphones, MapPinned, ArrowLeft } from 'lucide-react'
 import { getAccessTokenByOrderId } from '@/lib/data/access'
 import { translations } from '@/lib/app-language'
 import { getServerLanguage } from '@/lib/app-language-server'
@@ -17,6 +17,10 @@ export default async function SuccessPage({ params }: Props) {
 
   return (
     <main className="mx-auto max-w-md px-4 py-5">
+      {!token ? (
+        <meta httpEquiv="refresh" content="2" />
+      ) : null}
+
       <section className="overflow-hidden rounded-[2rem] border border-app bg-app-card shadow-soft">
         <div className="h-28 bg-[linear-gradient(90deg,#ece0b2_0%,#dde8e0_100%)]" />
 
@@ -27,7 +31,15 @@ export default async function SuccessPage({ params }: Props) {
 
           <h1 className="mt-4 text-3xl font-bold text-app-accent">{t.successTitle}</h1>
 
-          <p className="mt-4 text-sm leading-8 text-app-muted">{t.successText}</p>
+          <p className="mt-4 text-sm leading-8 text-app-muted">
+            {token
+              ? t.successText
+              : language === 'en'
+                ? 'Your payment has been received. We are preparing your personal tour now. This usually only takes a few seconds.'
+                : language === 'de'
+                  ? 'Deine Zahlung wurde empfangen. Wir bereiten jetzt deine persönliche Tour vor. Das dauert normalerweise nur ein paar Sekunden.'
+                  : 'Je betaling is ontvangen. We maken je persoonlijke tour nu klaar. Dit duurt meestal maar een paar seconden.'}
+          </p>
         </div>
       </section>
 
@@ -35,15 +47,41 @@ export default async function SuccessPage({ params }: Props) {
         <div className="space-y-4 text-sm text-app-muted">
           <div className="flex items-start gap-3">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
-            <span>{t.successBenefit1}</span>
+            <span>
+              {token
+                ? t.successBenefit1
+                : language === 'en'
+                  ? 'Your order was completed successfully'
+                  : language === 'de'
+                    ? 'Deine Bestellung wurde erfolgreich abgeschlossen'
+                    : 'Je bestelling is succesvol afgerond'}
+            </span>
           </div>
+
           <div className="flex items-start gap-3">
             <Headphones className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
-            <span>{t.successBenefit2}</span>
+            <span>
+              {token
+                ? t.successBenefit2
+                : language === 'en'
+                  ? 'Your personal tour is now being prepared'
+                  : language === 'de'
+                    ? 'Deine persönliche Tour wird jetzt vorbereitet'
+                    : 'Je persoonlijke tour wordt nu klaargezet'}
+            </span>
           </div>
+
           <div className="flex items-start gap-3">
             <MapPinned className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
-            <span>{t.successBenefit3}</span>
+            <span>
+              {token
+                ? t.successBenefit3
+                : language === 'en'
+                  ? 'This page refreshes automatically. You will continue as soon as your tour is ready.'
+                  : language === 'de'
+                    ? 'Diese Seite aktualisiert sich automatisch. Du gehst weiter, sobald deine Tour bereit ist.'
+                    : 'Deze pagina ververst automatisch. Je gaat verder zodra je tour klaar is.'}
+            </span>
           </div>
         </div>
       </section>
@@ -57,19 +95,13 @@ export default async function SuccessPage({ params }: Props) {
             {t.openMyTourNow}
           </Link>
         ) : (
-          <>
-            <div className="rounded-[1.5rem] border border-[#e5d3a4] bg-[#fff7df] p-4 text-sm text-[#7c5b16]">
-              Je betaling is verwerkt. Je tour wordt nu klaargezet. Open deze pagina zo opnieuw.
-            </div>
-
-            <Link
-              href={`/success/${orderId}`}
-              className="inline-flex w-full items-center justify-center rounded-2xl bg-app-accent px-4 py-4 text-sm font-semibold text-white shadow-card transition hover:opacity-95"
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Opnieuw laden
-            </Link>
-          </>
+          <div className="inline-flex w-full items-center justify-center rounded-2xl bg-app-accent px-4 py-4 text-sm font-semibold text-white shadow-card opacity-90">
+            {language === 'en'
+              ? 'Preparing your tour...'
+              : language === 'de'
+                ? 'Deine Tour wird vorbereitet...'
+                : 'Je tour wordt klaargemaakt...'}
+          </div>
         )}
 
         <Link
