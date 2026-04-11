@@ -1,7 +1,8 @@
 import Link from 'next/link'
-import Script from 'next/script'
 import { redirect } from 'next/navigation'
 import { CheckCircle2, Headphones, MapPinned, ArrowLeft, RefreshCw } from 'lucide-react'
+import { createServerSupabase } from '@/lib/supabase/server'
+import { mollie } from '@/lib/mollie/client'
 import { getAccessTokenByOrderId } from '@/lib/data/access'
 import { translations } from '@/lib/app-language'
 import { getServerLanguage } from '@/lib/app-language-server'
@@ -32,10 +33,75 @@ const waitingCopy = {
     text: 'Deine Zahlung ist eingegangen. Wir bereiten deine persönliche Tour jetzt vor. Das dauert normalerweise nur ein paar Sekunden.',
     benefit1: 'Deine Bestellung wurde erfolgreich abgeschlossen',
     benefit2: 'Deine persönliche Tour wird jetzt vorbereitet',
-    benefit3: 'Diese Seite wird automatisch aktualisiert. Falls nichts passiert, versuche es bitte manuell erneut.',
+    benefit3: 'Diese Seite aktualisiert sich automatisch. Falls nichts passiert, versuche es bitte manuell erneut.',
     retry: 'Erneut versuchen',
   },
 } as const
+
+async function ensurePaidOrderHasAccessToken(orderId: string) {
+  const supabase = createServerSupabase()
+
+  const { data: order, error: orderError } = await supabase
+    .from('orders')
+    .select('id, payment_status, payment_reference')
+    .eq('id', orderId)
+    .single()
+
+  if (orderError || !order) {
+    return null
+  }
+
+  if (order.payment_status === 'paid') {
+    return await getAccessTokenByOrderId(orderId)
+  }
+
+  if (!order.payment_reference) {
+    return null
+  }
+
+  try {
+    const payment = await mollie().payments.get(order.payment_reference)
+
+    if (payment.status !== 'paid') {
+      return null
+    }
+
+    const { error: updateError } = await supabase
+      .from('orders')
+      .update({ payment_status: 'paid' })
+      .eq('id', orderId)
+
+    if (updateError) {
+      return null
+    }
+
+    const { data: existingToken } = await supabase
+      .from('access_tokens')
+      .select('token')
+      .eq('order_id', orderId)
+      .maybeSingle()
+
+    if (!existingToken) {
+      const token = crypto.randomUUID()
+
+      const { error: insertError } = await supabase
+        .from('access_tokens')
+        .insert({
+          order_id: orderId,
+          token,
+          expires_at: null,
+        })
+
+      if (insertError) {
+        return null
+      }
+    }
+
+    return await getAccessTokenByOrderId(orderId)
+  } catch {
+    return null
+  }
+}
 
 export default async function SuccessPage({ params }: Props) {
   const { orderId } = await params
@@ -43,7 +109,7 @@ export default async function SuccessPage({ params }: Props) {
   const t = translations[language]
   const waiting = waitingCopy[language]
 
-  const token = await getAccessTokenByOrderId(orderId)
+  const token = await ensurePaidOrderHasAccessToken(orderId)
 
   if (token) {
     redirect(`/access/${token}`)
@@ -51,13 +117,7 @@ export default async function SuccessPage({ params }: Props) {
 
   return (
     <main className="mx-auto max-w-md px-4 py-5">
-      <Script id="success-auto-refresh" strategy="afterInteractive">
-        {`
-          setTimeout(function () {
-            window.location.reload();
-          }, 3000);
-        `}
-      </Script>
+      <meta httpEquiv="refresh" content="3" />
 
       <section className="overflow-hidden rounded-[2rem] border border-app bg-app-card shadow-soft">
         <div className="h-28 bg-[linear-gradient(90deg,#ece0b2_0%,#dde8e0_100%)]" />
