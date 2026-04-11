@@ -30,11 +30,17 @@ import {
   translations,
 } from '@/lib/app-language'
 import { distanceInMeters } from '@/lib/utils/geo'
+import TourCompletionContainer from '@/components/tour/tour-completion-container'
 
 type Props = {
   token: string
   stops: TourStop[]
   language: AppLanguage
+  tourId?: string
+  tourSlug?: string
+  tourTitle?: string
+  customerEmail?: string | null
+  distanceKm?: number | null
 }
 
 type Position = {
@@ -126,7 +132,16 @@ function RecenterMap({
   return null
 }
 
-export function TourPlayer({ stops, language: initialLanguage }: Props) {
+export function TourPlayer({
+  token,
+  stops,
+  language: initialLanguage,
+  tourId,
+  tourSlug,
+  tourTitle,
+  customerEmail,
+  distanceKm,
+}: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const watchIdRef = useRef<number | null>(null)
   const lastRoutePositionRef = useRef<Position | null>(null)
@@ -144,10 +159,19 @@ export function TourPlayer({ stops, language: initialLanguage }: Props) {
   const [routeLine, setRouteLine] = useState<RoutePoint[]>([])
   const [routeDistance, setRouteDistance] = useState<number | null>(null)
   const [routeDurationSeconds, setRouteDurationSeconds] = useState<number | null>(null)
+  const [showCompletionScreen, setShowCompletionScreen] = useState(false)
+  const [finalAudioFinished, setFinalAudioFinished] = useState(false)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
 
   const currentStop = useMemo(() => stops[currentIndex] ?? null, [stops, currentIndex])
   const t = translations[language]
   const currentStopTitle = getStopTitle(currentStop, language) ?? t.activeStopFallback
+  const resolvedTourId = tourId ?? token
+  const resolvedTourSlug = tourSlug ?? token
+  const resolvedTourTitle = tourTitle ?? 'Ameland audiotour'
+
+  const isLastStop = currentIndex === stops.length - 1
+  const hasReachedLastStop = hasArrived && isLastStop
 
   useEffect(() => {
     setLanguage(initialLanguage)
@@ -161,6 +185,26 @@ export function TourPlayer({ stops, language: initialLanguage }: Props) {
       // ignore
     }
   }, [initialLanguage])
+
+  useEffect(() => {
+    const startedAt = Date.now()
+
+    const interval = window.setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000))
+    }, 1000)
+
+    return () => window.clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    setFinalAudioFinished(false)
+  }, [currentIndex])
+
+  useEffect(() => {
+    if (hasReachedLastStop && finalAudioFinished) {
+      setShowCompletionScreen(true)
+    }
+  }, [hasReachedLastStop, finalAudioFinished])
 
   async function checkPermissionState() {
     try {
@@ -476,12 +520,33 @@ export function TourPlayer({ stops, language: initialLanguage }: Props) {
     width: '100%',
   }
 
+  if (showCompletionScreen) {
+    return (
+      <TourCompletionContainer
+        tourId={resolvedTourId}
+        tourSlug={resolvedTourSlug}
+        tourTitle={resolvedTourTitle}
+        email={customerEmail ?? null}
+        stopsTotal={stops.length}
+        stopsCompleted={stops.length}
+        durationSeconds={elapsedSeconds}
+        distanceKm={distanceKm ?? 0}
+      />
+    )
+  }
+
   return (
     <div className="space-y-3">
       <audio
         ref={audioRef}
         onEnded={() => {
           setPlaying(false)
+
+          if (isLastStop) {
+            setFinalAudioFinished(true)
+            return
+          }
+
           if (currentIndex < stops.length - 1) {
             setCurrentIndex((prev) => prev + 1)
           }
