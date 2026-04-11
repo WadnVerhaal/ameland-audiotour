@@ -9,31 +9,24 @@ export default function HomePage() {
         <div className="relative p-6">
           <div className="inline-flex items-center gap-2 rounded-full bg-app-soft px-3 py-1 text-xs font-semibold text-[#6a5c37]">
             <Sparkles className="h-3.5 w-3.5" />
-            Wad'n Verhaal
+            Wad&apos;n Verhaal
           </div>
 
           <h1 className="mt-4 text-3xl font-bold leading-tight text-app-accent">
             Ontdek Ameland met verhalen op de kaart
           </h1>
 
-          <p className="mt-3 text-sm leading-6 text-app-muted">
+          <p className="mt-3 max-w-[30ch] text-sm leading-6 text-app-muted">
             Start een rustige audiotour op je telefoon, volg live waar je bent en loop eenvoudig naar het volgende verhaalpunt.
           </p>
 
-          <div className="mt-5 flex gap-3">
+          <div className="mt-6">
             <Link
               href="/tours"
-              className="inline-flex items-center rounded-2xl bg-app-accent px-4 py-3 text-sm font-medium text-white"
+              className="inline-flex w-full items-center justify-center rounded-2xl bg-app-accent px-4 py-3.5 text-sm font-semibold text-white shadow-card transition hover:opacity-95"
             >
               Start een tour
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-
-            <Link
-              href="/privacy"
-              className="inline-flex rounded-2xl border border-app bg-white px-4 py-3 text-sm font-medium text-app-accent"
-            >
-              Meer info
             </Link>
           </div>
 
