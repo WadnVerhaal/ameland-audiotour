@@ -1,67 +1,96 @@
-import Link from 'next/link';
-import Image from 'next/image';
-import { notFound } from 'next/navigation';
-import { Clock3, MapPin, Headphones, Check } from 'lucide-react';
-import { getTourBySlug } from '@/lib/data/tours';
-import { formatEuroFromCents } from '@/lib/utils/money';
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { Check, ArrowLeft, Clock3, MapPin, Headphones, Footprints, Bike } from 'lucide-react'
+import { getTourBySlug } from '@/lib/data/tours'
+import { formatEuroFromCents } from '@/lib/utils/money'
+import { translations, getStopTitle } from '@/lib/app-language'
+import { getServerLanguage } from '@/lib/app-language-server'
 
-function getTourImage(slug: string) {
-  if (slug.includes('verborgen-verhalen')) return '/images/tour-dorp.jpg';
-  if (slug.includes('fiets')) return '/images/tour-fietsen.jpg';
-  return '/images/tour-duinen.jpg';
+type Props = {
+  params: Promise<{ slug: string }>
 }
 
-export default async function TourDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const tour = await getTourBySlug(slug);
-  if (!tour || !tour.is_active) notFound();
+function getTourImage(slug: string) {
+  if (slug.includes('verborgen-verhalen')) return '/images/tour-dorp.jpg'
+  if (slug.includes('fiets')) return '/images/tour-fietsen.jpg'
+  return '/images/tour-duinen.jpg'
+}
+
+export default async function TourDetailPage({ params }: Props) {
+  const { slug } = await params
+  const tour = await getTourBySlug(slug)
+  if (!tour) notFound()
+
+  const language = await getServerLanguage()
+  const t = translations[language]
+
+  const modeLabel = tour.mode === 'bike' ? t.bikeTour : t.walkingTour
+  const ModeIcon = tour.mode === 'bike' ? Bike : Footprints
 
   return (
     <main className="mx-auto max-w-md px-4 py-5">
       <section className="overflow-hidden rounded-[2rem] border border-app bg-app-card shadow-soft">
-        <div className="relative h-56 w-full">
-          <Image
+        <div className="relative h-64 w-full overflow-hidden">
+          <img
             src={getTourImage(tour.slug)}
             alt={tour.title}
-            fill
-            className="object-cover"
-            priority
+            className="h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#f8f4eb] via-[#f8f4eb]/35 to-transparent" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.08)_0%,rgba(247,243,234,0.16)_55%,rgba(247,243,234,0.95)_100%)]" />
         </div>
 
         <div className="p-5">
-          <div className="inline-flex rounded-full bg-app-soft px-3 py-1 text-xs font-semibold text-[#6a5c37]">
-            {tour.mode === 'bike' ? 'Fietstour' : 'Wandeltour'}
+          <div className="flex items-center justify-between gap-3">
+            <span className="inline-flex items-center rounded-full bg-app-soft px-3 py-1 text-xs font-semibold text-[#6a5c37]">
+              {modeLabel}
+            </span>
+
+            <Link
+              href="/tours"
+              className="inline-flex items-center text-sm font-medium text-app-muted transition hover:text-app-accent"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {t.backToTours}
+            </Link>
           </div>
 
           <h1 className="mt-4 text-3xl font-bold leading-tight text-app-accent">
             {tour.title}
           </h1>
 
-          <p className="mt-3 text-sm leading-6 text-app-muted">{tour.description}</p>
+          <p className="mt-4 text-sm leading-8 text-app-muted">
+            {tour.description}
+          </p>
 
-          <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-2xl bg-white p-3 shadow-card">
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-white p-4 shadow-card">
               <div className="flex items-center gap-2 text-app-accent">
                 <Clock3 className="h-4 w-4" />
-                <span className="font-medium">{tour.duration_minutes} min</span>
+                <span className="text-sm font-semibold">{tour.duration_minutes} min</span>
               </div>
             </div>
-            <div className="rounded-2xl bg-white p-3 shadow-card">
+
+            <div className="rounded-2xl bg-white p-4 shadow-card">
               <div className="flex items-center gap-2 text-app-accent">
                 <MapPin className="h-4 w-4" />
-                <span className="font-medium">{tour.distance_km} km</span>
+                <span className="text-sm font-semibold">{tour.distance_km} km</span>
               </div>
             </div>
-            <div className="rounded-2xl bg-white p-3 shadow-card">
+
+            <div className="rounded-2xl bg-white p-4 shadow-card">
               <div className="flex items-center gap-2 text-app-accent">
                 <Headphones className="h-4 w-4" />
-                <span className="font-medium">{tour.stops.length} stops</span>
+                <span className="text-sm font-semibold">
+                  {tour.stops.length} {t.stopsLabel}
+                </span>
               </div>
             </div>
-            <div className="rounded-2xl bg-white p-3 shadow-card">
-              <div className="font-medium text-app-accent">{formatEuroFromCents(tour.price_cents)}</div>
+
+            <div className="rounded-2xl bg-white p-4 shadow-card">
+              <div className="flex items-center gap-2 text-app-accent">
+                <ModeIcon className="h-4 w-4" />
+                <span className="text-sm font-semibold">{formatEuroFromCents(tour.price_cents)}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -69,52 +98,47 @@ export default async function TourDetailPage({ params }: { params: Promise<{ slu
 
       <section className="mt-5 rounded-[1.75rem] border border-app bg-app-card p-5 shadow-card">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-app-muted">
-          Wat je kunt verwachten
+          {t.whatToExpect}
         </p>
 
-        <div className="mt-4 space-y-3">
-          <div className="flex items-start gap-3 text-sm text-app-muted">
+        <div className="mt-4 space-y-4 text-sm text-app-muted">
+          <div className="flex items-start gap-3">
             <Check className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
-            <span>Ontdek Ameland op je eigen tempo</span>
+            <span>{t.discoverAtYourOwnPace}</span>
           </div>
-          <div className="flex items-start gap-3 text-sm text-app-muted">
+          <div className="flex items-start gap-3">
             <Check className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
-            <span>Luister onderweg naar verhalen op bijzondere plekken</span>
+            <span>{t.listenAtSpecialPlaces}</span>
           </div>
-          <div className="flex items-start gap-3 text-sm text-app-muted">
+          <div className="flex items-start gap-3">
             <Check className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
-            <span>Direct te starten op je telefoon na aankoop</span>
+            <span>{t.directStartAfterPurchase}</span>
           </div>
         </div>
       </section>
 
       <section className="mt-5 rounded-[1.75rem] border border-app bg-app-card p-5 shadow-card">
-        <h2 className="text-lg font-semibold text-app-accent">Voorproefje van de route</h2>
+        <h2 className="text-lg font-semibold text-app-accent">{t.routePreview}</h2>
+
         <div className="mt-4 space-y-3">
-          {tour.stops.map((stop) => (
-            <div key={stop.id} className="rounded-2xl bg-white p-4 text-sm shadow-card">
-              <span className="font-semibold text-app-accent">{stop.order_index}.</span>{' '}
-              <span className="text-app">{stop.title}</span>
+          {tour.stops.slice(0, 3).map((stop, index) => (
+            <div key={stop.id} className="rounded-2xl bg-white p-4 shadow-card">
+              <span className="font-semibold text-app-accent">
+                {index + 1}. {getStopTitle(stop, language) ?? stop.title}
+              </span>
             </div>
           ))}
         </div>
       </section>
 
-      <div className="mt-5 space-y-3">
+      <div className="mt-5">
         <Link
           href={`/checkout/${tour.slug}`}
-          className="block rounded-2xl bg-app-accent px-4 py-4 text-center font-medium text-white"
+          className="inline-flex w-full items-center justify-center rounded-2xl bg-app-accent px-4 py-4 text-sm font-semibold text-white shadow-card transition hover:opacity-95"
         >
-          Bestel deze tour voor {formatEuroFromCents(tour.price_cents)}
-        </Link>
-
-        <Link
-          href="/tours"
-          className="block rounded-2xl border border-app bg-white px-4 py-4 text-center font-medium text-app-accent"
-        >
-          Terug naar alle tours
+          {t.payAndReceiveLink}
         </Link>
       </div>
     </main>
-  );
+  )
 }
