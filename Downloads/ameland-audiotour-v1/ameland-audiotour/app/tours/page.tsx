@@ -46,7 +46,7 @@ export default async function ToursPage() {
               key={tour.id}
               className="rounded-[1.75rem] border border-app bg-app-card p-3 shadow-card"
             >
-              <TourCard tour={tour} />
+              <TourCard tour={tour} language={language} />
             </div>
           ))
         )}
