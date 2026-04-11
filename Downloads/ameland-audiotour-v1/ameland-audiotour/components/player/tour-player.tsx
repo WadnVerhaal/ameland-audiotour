@@ -34,6 +34,7 @@ import { distanceInMeters } from '@/lib/utils/geo'
 type Props = {
   token: string
   stops: TourStop[]
+  language: AppLanguage
 }
 
 type Position = {
@@ -125,13 +126,13 @@ function RecenterMap({
   return null
 }
 
-export function TourPlayer({ stops }: Props) {
+export function TourPlayer({ stops, language: initialLanguage }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const watchIdRef = useRef<number | null>(null)
   const lastRoutePositionRef = useRef<Position | null>(null)
   const lastRouteRequestAtRef = useRef<number>(0)
 
-  const [language, setLanguage] = useState<AppLanguage>('nl')
+  const [language, setLanguage] = useState<AppLanguage>(initialLanguage)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [gpsAllowed, setGpsAllowed] = useState(false)
   const [playing, setPlaying] = useState(false)
@@ -149,15 +150,17 @@ export function TourPlayer({ stops }: Props) {
   const currentStopTitle = getStopTitle(currentStop, language) ?? t.activeStopFallback
 
   useEffect(() => {
+    setLanguage(initialLanguage)
+
     try {
       const storedLanguage = window.localStorage.getItem(APP_LANGUAGE_STORAGE_KEY)
       if (isAppLanguage(storedLanguage)) {
         setLanguage(storedLanguage)
       }
     } catch {
-      setLanguage('nl')
+      // ignore
     }
-  }, [])
+  }, [initialLanguage])
 
   async function checkPermissionState() {
     try {
