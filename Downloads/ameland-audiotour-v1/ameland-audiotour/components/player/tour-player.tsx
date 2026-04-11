@@ -499,7 +499,7 @@ export function TourPlayer({ stops }: Props) {
                 {currentStopTitle}
               </h1>
               <p className="mt-1 text-xs text-white/75">
-                {t.stop} {currentIndex + 1} {t.of} {stops.length}
+               {t.stopLabel} {currentIndex + 1} {t.of} {stops.length}
               </p>
             </div>
 
