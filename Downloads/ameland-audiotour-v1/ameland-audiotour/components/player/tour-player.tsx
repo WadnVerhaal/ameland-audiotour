@@ -70,6 +70,16 @@ function estimateWalkingSecondsFromMeters(meters: number) {
   return Math.max(60, Math.round(meters / walkingSpeedMetersPerSecond));
 }
 
+function normalizeWalkingDuration(distanceMeters: number, apiDurationSeconds: number | null | undefined) {
+  const baseline = estimateWalkingSecondsFromMeters(distanceMeters);
+
+  if (!apiDurationSeconds || !Number.isFinite(apiDurationSeconds)) {
+    return baseline;
+  }
+
+  return Math.max(Math.round(apiDurationSeconds), baseline);
+}
+
 function RecenterMap({
   position,
   stop,
@@ -284,10 +294,9 @@ export function TourPlayer({ stops }: Props) {
 
   const distanceToStop = routeDistance ?? fallbackDistanceToStop;
   const timeToStopSeconds =
-    routeDurationSeconds ??
-    (fallbackDistanceToStop !== null
-      ? estimateWalkingSecondsFromMeters(fallbackDistanceToStop)
-      : null);
+    distanceToStop !== null
+      ? normalizeWalkingDuration(distanceToStop, routeDurationSeconds)
+      : null;
 
   useEffect(() => {
     if (!position || !currentStop?.lat || !currentStop?.lng || !currentStop.audio_url || playing) {
@@ -359,16 +368,13 @@ export function TourPlayer({ stops }: Props) {
           ([lng, lat]: [number, number]) => [lat, lng]
         );
 
+        const nextDistance = route.distance ?? distanceInMeters(startLat, startLng, stopLat, stopLng);
+
         setRouteLine(coordinates);
-        setRouteDistance(route.distance ?? null);
-        setRouteDurationSeconds(route.duration ?? null);
+        setRouteDistance(nextDistance);
+        setRouteDurationSeconds(normalizeWalkingDuration(nextDistance, route.duration ?? null));
       } catch {
-        const straightDistance = distanceInMeters(
-          startLat,
-          startLng,
-          stopLat,
-          stopLng
-        );
+        const straightDistance = distanceInMeters(startLat, startLng, stopLat, stopLng);
 
         setRouteLine([
           [startLat, startLng],
@@ -442,7 +448,7 @@ export function TourPlayer({ stops }: Props) {
   const progress = stops.length > 0 ? ((currentIndex + 1) / stops.length) * 100 : 0;
 
   const mapStyle: CSSProperties = {
-    height: '300px',
+    height: '360px',
     width: '100%',
   };
 
@@ -460,11 +466,11 @@ export function TourPlayer({ stops }: Props) {
         onPlay={() => setPlaying(true)}
       />
 
-      <section className="overflow-hidden rounded-[1.5rem] border border-app bg-app-card shadow-card">
-        <div className="bg-[linear-gradient(135deg,#10233f_0%,#163863_40%,#245a8b_100%)] p-3 text-white">
+      <section className="overflow-hidden rounded-[1.75rem] border border-app bg-app-card shadow-card">
+        <div className="bg-[linear-gradient(135deg,#12325a_0%,#183e6d_45%,#245a8b_100%)] p-3 text-white">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="inline-flex rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/90">
+              <div className="inline-flex rounded-full bg-white/12 px-2.5 py-1 text-[11px] font-semibold text-white/90">
                 Tour actief
               </div>
               <h1 className="mt-2 line-clamp-2 break-words pr-2 text-base font-semibold leading-5 sm:text-lg">
@@ -489,59 +495,57 @@ export function TourPlayer({ stops }: Props) {
               style={{ width: `${progress}%` }}
             />
           </div>
-        </div>
-      </section>
 
-      <section className="overflow-hidden rounded-[1.5rem] border border-app bg-app-card shadow-card">
-        <div className="relative">
-          <MapContainer center={mapCenter} zoom={16} style={mapStyle} scrollWheelZoom>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-
-            <RecenterMap position={position} stop={currentStop} />
-
-            {position ? (
-              <>
-                <Marker position={[position.lat, position.lng]} icon={userIcon}>
-                  <Popup>Jij bent hier</Popup>
-                </Marker>
-                {position.accuracy ? (
-                  <Circle center={[position.lat, position.lng]} radius={position.accuracy} />
-                ) : null}
-              </>
-            ) : null}
-
-            {currentStop?.lat && currentStop?.lng ? (
-              <>
-                <Marker
-                  position={[Number(currentStop.lat), Number(currentStop.lng)]}
-                  icon={stopIcon}
-                >
-                  <Popup>
-                    <div className="font-medium">{currentStop.title}</div>
-                    <div className="text-sm text-slate-500">Volgende stop</div>
-                  </Popup>
-                </Marker>
-                <Circle
-                  center={[Number(currentStop.lat), Number(currentStop.lng)]}
-                  radius={Number(currentStop.trigger_radius_meters ?? 35)}
-                />
-              </>
-            ) : null}
-
-            {routeLine.length > 1 ? (
-              <Polyline
-                positions={routeLine}
-                pathOptions={{
-                  color: '#2563eb',
-                  weight: 5,
-                  opacity: 0.85,
-                }}
+          <div className="mt-3 overflow-hidden rounded-[1.35rem] border border-white/10">
+            <MapContainer center={mapCenter} zoom={16} style={mapStyle} scrollWheelZoom>
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-            ) : null}
-          </MapContainer>
+
+              <RecenterMap position={position} stop={currentStop} />
+
+              {position ? (
+                <>
+                  <Marker position={[position.lat, position.lng]} icon={userIcon}>
+                    <Popup>Jij bent hier</Popup>
+                  </Marker>
+                  {position.accuracy ? (
+                    <Circle center={[position.lat, position.lng]} radius={position.accuracy} />
+                  ) : null}
+                </>
+              ) : null}
+
+              {currentStop?.lat && currentStop?.lng ? (
+                <>
+                  <Marker
+                    position={[Number(currentStop.lat), Number(currentStop.lng)]}
+                    icon={stopIcon}
+                  >
+                    <Popup>
+                      <div className="font-medium">{currentStop.title}</div>
+                      <div className="text-sm text-slate-500">Volgende stop</div>
+                    </Popup>
+                  </Marker>
+                  <Circle
+                    center={[Number(currentStop.lat), Number(currentStop.lng)]}
+                    radius={Number(currentStop.trigger_radius_meters ?? 35)}
+                  />
+                </>
+              ) : null}
+
+              {routeLine.length > 1 ? (
+                <Polyline
+                  positions={routeLine}
+                  pathOptions={{
+                    color: '#2563eb',
+                    weight: 5,
+                    opacity: 0.85,
+                  }}
+                />
+              ) : null}
+            </MapContainer>
+          </div>
         </div>
       </section>
 
