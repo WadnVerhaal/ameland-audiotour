@@ -145,27 +145,35 @@ export function TourPlayer({ stops }: Props) {
     }
   }
 
+  function applyPosition(pos: GeolocationPosition) {
+    setGpsAllowed(true);
+    setPermissionState('granted');
+    setPosition({
+      lat: pos.coords.latitude,
+      lng: pos.coords.longitude,
+      accuracy: pos.coords.accuracy,
+    });
+    setError(null);
+  }
+
+  function clearLocationWatch() {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+  }
+
   function startWatchingLocation() {
     if (!navigator.geolocation) {
       setError('Je apparaat ondersteunt geen locatie.');
       return;
     }
 
-    if (watchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
-    }
+    clearLocationWatch();
 
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        setGpsAllowed(true);
-        setPermissionState('granted');
-        setPosition({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-        });
-        setError(null);
+        applyPosition(pos);
       },
       (geoError) => {
         setGpsAllowed(false);
@@ -173,7 +181,7 @@ export function TourPlayer({ stops }: Props) {
         if (geoError.code === geoError.PERMISSION_DENIED) {
           setPermissionState('denied');
           setError(
-            'Locatie is geweigerd. Klik op het slotje links van de adresbalk en sta locatie toe, of gebruik de knop "Locatie inschakelen".'
+            'Locatie is geweigerd. Sta locatie toe in je browser of probeer het opnieuw met de knop hieronder.'
           );
           return;
         }
@@ -188,29 +196,52 @@ export function TourPlayer({ stops }: Props) {
 
   function requestLocationAgain() {
     setError(null);
-    void checkPermissionState();
 
     if (!navigator.geolocation) {
       setError('Je apparaat ondersteunt geen locatie.');
       return;
     }
 
+    clearLocationWatch();
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setGpsAllowed(true);
-        setPermissionState('granted');
-        setPosition({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-        });
+        applyPosition(pos);
         startWatchingLocation();
       },
-      (geoError) => {
+      async (geoError) => {
+        await checkPermissionState();
+
         if (geoError.code === geoError.PERMISSION_DENIED) {
+          setGpsAllowed(false);
+
+          if (navigator.permissions) {
+            try {
+              const result = await navigator.permissions.query({
+                name: 'geolocation' as PermissionName,
+              });
+
+              if (result.state === 'prompt') {
+                setPermissionState('prompt');
+                setError('De browser heeft de locatiemelding niet geopend. Probeer het nog eens.');
+                return;
+              }
+
+              if (result.state === 'denied') {
+                setPermissionState('denied');
+                setError(
+                  'Locatie blijft geblokkeerd door de browser. Klik op het slotje links van de adresbalk en zet locatie op toestaan.'
+                );
+                return;
+              }
+            } catch {
+              // fallback below
+            }
+          }
+
           setPermissionState('denied');
           setError(
-            'Locatie is nog steeds geweigerd. Klik op het slotje links van de adresbalk en zet locatie op toestaan.'
+            'Locatie kon niet opnieuw worden ingeschakeld. Controleer je browserinstellingen en sta locatie toe.'
           );
           return;
         }
@@ -226,9 +257,7 @@ export function TourPlayer({ stops }: Props) {
     startWatchingLocation();
 
     return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-      }
+      clearLocationWatch();
     };
   }, []);
 
@@ -307,7 +336,7 @@ export function TourPlayer({ stops }: Props) {
         const url =
           `https://router.project-osrm.org/route/v1/foot/` +
           `${startLng},${startLat};${stopLng},${stopLat}` +
-          `?overview=full&geometries=geojson`;
+          `?overview=full&geometries=geojson&alternatives=false`;
 
         const response = await fetch(url, {
           method: 'GET',
@@ -534,7 +563,7 @@ export function TourPlayer({ stops }: Props) {
               Richting
             </div>
             <p className="mt-1 text-xs font-medium text-app-accent">
-              Route over wegen
+              Kortste wandelroute
             </p>
           </div>
 
@@ -594,7 +623,7 @@ export function TourPlayer({ stops }: Props) {
             className="inline-flex items-center justify-center rounded-xl border border-app bg-white px-4 py-2.5 text-sm font-medium text-app-accent"
           >
             <LocateFixed className="mr-2 h-4 w-4" />
-            {permissionState === 'denied' ? 'Probeer locatie opnieuw' : 'Locatie inschakelen'}
+            Locatie inschakelen
           </button>
 
           <button
