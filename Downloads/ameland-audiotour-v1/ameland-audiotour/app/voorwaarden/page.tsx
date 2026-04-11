@@ -17,10 +17,6 @@ export default async function VoorwaardenPage() {
         <p className="mt-3 text-sm leading-6 text-stone-600">
           {t.termsText2}
         </p>
-
-        <p className="mt-3 text-sm leading-6 text-stone-600">
-          {t.termsText3}
-        </p>
       </div>
     </main>
   )
