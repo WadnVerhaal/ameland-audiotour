@@ -1,25 +1,81 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { mollie } from '@/lib/mollie/client';
-import { createServerSupabase } from '@/lib/supabase/server';
+import { NextRequest, NextResponse } from 'next/server'
+import { mollie } from '@/lib/mollie/client'
+import { createServerSupabase } from '@/lib/supabase/server'
+
+function mapPaymentStatus(status: string) {
+  if (status === 'paid') return 'paid'
+  if (status === 'failed') return 'failed'
+  if (status === 'expired') return 'expired'
+  if (status === 'canceled') return 'failed'
+  return 'pending'
+}
 
 export async function POST(req: NextRequest) {
-  const formData = await req.formData();
-  const paymentId = String(formData.get('id') || '');
-  if (!paymentId) return NextResponse.json({ ok: false }, { status: 400 });
+  try {
+    const formData = await req.formData()
+    const paymentId = String(formData.get('id') || '').trim()
 
-  const payment = await mollie().payments.get(paymentId);
-  const metadata = payment.metadata as { orderId?: string } | undefined;
-const orderId = String(metadata?.orderId || '');
-  if (!orderId) return NextResponse.json({ ok: false }, { status: 400 });
+    if (!paymentId) {
+      return NextResponse.json({ ok: false, error: 'Missing payment id' }, { status: 400 })
+    }
 
-  let status = 'pending';
+    const payment = await mollie().payments.get(paymentId)
+    const metadata = payment.metadata as { orderId?: string } | undefined
+    const orderId = String(metadata?.orderId || '').trim()
 
-if (payment.status === 'paid') status = 'paid';
-if (payment.status === 'failed') status = 'failed';
-if (payment.status === 'expired') status = 'expired';
+    if (!orderId) {
+      return NextResponse.json({ ok: false, error: 'Missing order id' }, { status: 400 })
+    }
 
-  const supabase = createServerSupabase();
-  await supabase.from('orders').update({ payment_status: status }).eq('id', orderId);
+    const supabase = createServerSupabase()
+    const paymentStatus = mapPaymentStatus(payment.status)
 
-  return NextResponse.json({ ok: true });
+    const { error: updateError } = await supabase
+      .from('orders')
+      .update({
+        payment_status: paymentStatus,
+        payment_reference: paymentId,
+      })
+      .eq('id', orderId)
+
+    if (updateError) {
+      console.error('Webhook order update failed:', updateError)
+      return NextResponse.json({ ok: false, error: 'Order update failed' }, { status: 500 })
+    }
+
+    if (paymentStatus === 'paid') {
+      const { data: existingToken, error: tokenReadError } = await supabase
+        .from('access_tokens')
+        .select('id')
+        .eq('order_id', orderId)
+        .maybeSingle()
+
+      if (tokenReadError) {
+        console.error('Webhook token lookup failed:', tokenReadError)
+        return NextResponse.json({ ok: false, error: 'Token lookup failed' }, { status: 500 })
+      }
+
+      if (!existingToken) {
+        const token = crypto.randomUUID()
+
+        const { error: insertError } = await supabase
+          .from('access_tokens')
+          .insert({
+            order_id: orderId,
+            token,
+            expires_at: null,
+          })
+
+        if (insertError) {
+          console.error('Webhook token insert failed:', insertError)
+          return NextResponse.json({ ok: false, error: 'Token creation failed' }, { status: 500 })
+        }
+      }
+    }
+
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    console.error('Mollie webhook failed:', error)
+    return NextResponse.json({ ok: false, error: 'Webhook failed' }, { status: 500 })
+  }
 }
