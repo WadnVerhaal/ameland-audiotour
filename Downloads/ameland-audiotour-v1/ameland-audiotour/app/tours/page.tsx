@@ -1,14 +1,14 @@
-﻿import { getActiveTours } from '@/lib/data/tours';
-import { TourCard } from '@/components/marketing/tour-card';
-import Link from 'next/link';
-import { ArrowLeft, MapPinned } from 'lucide-react';
-import { translations } from '@/lib/app-language';
-import { getServerLanguage } from '@/lib/app-language-server';
+﻿import { getActiveTours } from '@/lib/data/tours'
+import { TourCard } from '@/components/marketing/tour-card'
+import Link from 'next/link'
+import { ArrowLeft, MapPinned } from 'lucide-react'
+import { translations } from '@/lib/app-language'
+import { getServerLanguage } from '@/lib/app-language-server'
 
 export default async function ToursPage() {
-  const tours = await getActiveTours();
-  const language = await getServerLanguage();
-  const t = translations[language];
+  const tours = await getActiveTours()
+  const language = await getServerLanguage()
+  const t = translations[language]
 
   return (
     <main className="mx-auto max-w-md px-4 py-5">
@@ -38,7 +38,7 @@ export default async function ToursPage() {
       <section className="mt-5 space-y-4">
         {tours.length === 0 ? (
           <div className="rounded-[1.75rem] border border-app bg-app-card p-5 shadow-card">
-            <p className="text-sm text-app-muted">{t.noTours}</p>
+            <p className="text-sm text-app-muted">{t.noToursAvailable}</p>
           </div>
         ) : (
           tours.map((tour) => (
@@ -52,5 +52,5 @@ export default async function ToursPage() {
         )}
       </section>
     </main>
-  );
+  )
 }
