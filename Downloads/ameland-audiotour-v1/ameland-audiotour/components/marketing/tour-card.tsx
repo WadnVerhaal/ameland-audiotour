@@ -1,18 +1,20 @@
-import Link from 'next/link';
-import Image from 'next/image';
-import { Clock3, MapPin, Bike, Footprints } from 'lucide-react';
-import { Tour } from '@/types/tour';
-import { formatEuroFromCents } from '@/lib/utils/money';
+import Link from 'next/link'
+import Image from 'next/image'
+import { Clock3, MapPin, Bike, Footprints } from 'lucide-react'
+import { Tour } from '@/types/tour'
+import { formatEuroFromCents } from '@/lib/utils/money'
+import { AppLanguage, translations } from '@/lib/app-language'
 
 function getTourImage(slug: string) {
-  if (slug.includes('verborgen-verhalen')) return '/images/tour-dorp.jpg';
-  if (slug.includes('fiets')) return '/images/tour-fietsen.jpg';
-  return '/images/tour-duinen.jpg';
+  if (slug.includes('verborgen-verhalen')) return '/images/tour-dorp.jpg'
+  if (slug.includes('fiets')) return '/images/tour-fietsen.jpg'
+  return '/images/tour-duinen.jpg'
 }
 
-export function TourCard({ tour }: { tour: Tour }) {
-  const modeLabel = tour.mode === 'bike' ? 'Fietstour' : 'Wandeltour';
-  const ModeIcon = tour.mode === 'bike' ? Bike : Footprints;
+export function TourCard({ tour, language }: { tour: Tour; language: AppLanguage }) {
+  const t = translations[language]
+  const modeLabel = tour.mode === 'bike' ? t.bikeTour : t.walkTour
+  const ModeIcon = tour.mode === 'bike' ? Bike : Footprints
 
   return (
     <Link
@@ -61,5 +63,5 @@ export function TourCard({ tour }: { tour: Tour }) {
         </div>
       </div>
     </Link>
-  );
+  )
 }
