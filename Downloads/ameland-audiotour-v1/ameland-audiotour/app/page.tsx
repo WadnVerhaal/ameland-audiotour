@@ -1,6 +1,7 @@
 ﻿import Link from 'next/link';
 import { Headphones, Bike, Clock3, MapPinned, ArrowRight, Sparkles } from 'lucide-react';
-import { getServerLanguage, translations } from '@/lib/app-language';
+import { translations } from '@/lib/app-language';
+import { getServerLanguage } from '@/lib/app-language-server';
 import { LanguagePicker } from '@/components/language-picker';
 
 export default async function HomePage() {

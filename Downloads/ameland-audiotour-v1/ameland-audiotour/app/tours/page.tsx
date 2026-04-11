@@ -2,7 +2,8 @@
 import { TourCard } from '@/components/marketing/tour-card';
 import Link from 'next/link';
 import { ArrowLeft, MapPinned } from 'lucide-react';
-import { getServerLanguage, translations } from '@/lib/app-language';
+import { translations } from '@/lib/app-language';
+import { getServerLanguage } from '@/lib/app-language-server';
 
 export default async function ToursPage() {
   const tours = await getActiveTours();

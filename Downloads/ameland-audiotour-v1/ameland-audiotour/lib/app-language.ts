@@ -1,26 +1,14 @@
-import { cookies } from 'next/headers'
 import { TourStop } from '@/types/tour'
 
 export type AppLanguage = 'nl' | 'en' | 'de'
 
-export const APP_LANGUAGE_COOKIE = 'wadnverhaal_language'
-
-export async function getServerLanguage(): Promise<AppLanguage> {
-  const cookieStore = await cookies()
-  const value = cookieStore.get(APP_LANGUAGE_COOKIE)?.value
-
-  if (value === 'en' || value === 'de' || value === 'nl') {
-    return value
-  }
-
-  return 'nl'
-}
+export const APP_LANGUAGE_COOKIE = 'wadnverhaal-language'
 
 export const translations = {
   nl: {
+    chooseLanguage: 'Kies taal',
+    chooseLanguageText: 'Selecteer de taal waarin je de app wilt gebruiken.',
     appName: "Wad'n Verhaal",
-    chooseLanguage: 'Taal',
-    chooseLanguageText: 'Kies hier je taal. De hele app gebruikt daarna automatisch deze taal.',
     discoverTitle: 'Ontdek Ameland met verhalen op de kaart',
     discoverText:
       'Start een rustige audiotour op je telefoon, volg live waar je bent en loop eenvoudig naar het volgende verhaalpunt.',
@@ -49,10 +37,9 @@ export const translations = {
     tourActive: 'Tour actief',
     status: 'Status',
     arrived: 'Aangekomen',
-    onTheWay: 'Onderweg',
+    onderweg: 'Onderweg',
     stopLabel: 'Stop',
     of: 'van',
-    activeStopFallback: 'Tour',
     youAreHere: 'Jij bent hier',
     nextStop: 'Volgende stop',
     you: 'Jij',
@@ -69,6 +56,7 @@ export const translations = {
     pauseAudio: 'Pauzeer audio',
     playAudio: 'Speel audio af',
     allStops: 'Alle stops',
+    activeStopFallback: 'Tour',
     permissionUnsupported: 'Je apparaat ondersteunt geen locatie.',
     locationDenied:
       'Locatie is geweigerd. Sta locatie toe in je browser of probeer het opnieuw met de knop hieronder.',
@@ -85,25 +73,25 @@ export const translations = {
       'Audio kon niet automatisch starten. Druk op afspelen om handmatig te starten.',
   },
   en: {
+    chooseLanguage: 'Choose language',
+    chooseLanguageText: 'Select the language you want to use in the app.',
     appName: "Wad'n Verhaal",
-    chooseLanguage: 'Language',
-    chooseLanguageText: 'Choose your language here. The entire app will then automatically use this language.',
-    discoverTitle: 'Discover Ameland with stories on the map',
+    discoverTitle: 'Discover Ameland through stories on the map',
     discoverText:
-      'Start a calm audio tour on your phone, follow your live position and walk easily to the next story point.',
+      'Start a calm audio tour on your phone, follow your live location and walk easily to the next story stop.',
     startTour: 'Start a tour',
     liveMap: 'Live map',
-    liveMapText: 'See exactly where you are and where you are going.',
+    liveMapText: 'See exactly where you are and where you are heading.',
     audioOnTheGo: 'Audio on the go',
-    audioOnTheGoText: 'Stories and atmosphere exactly at the right location.',
-    startDirectly: 'Start directly',
+    audioOnTheGoText: 'Stories and atmosphere at exactly the right place.',
+    startDirectly: 'Start immediately',
     startDirectlyText: 'No hassle, just open and begin.',
     walkOrBike: 'Walk or bike',
     walkOrBikeText: 'Choose the route that fits your day on Ameland.',
     howItWorks: 'How it works',
     step1: 'Choose your tour',
     step2: 'Open the tour on your phone',
-    step3: 'Follow the route live and listen along the way',
+    step3: 'Follow the live route and listen along the way',
     privacy: 'Privacy',
     terms: 'Terms',
     back: 'Back',
@@ -116,10 +104,9 @@ export const translations = {
     tourActive: 'Tour active',
     status: 'Status',
     arrived: 'Arrived',
-    onTheWay: 'On the way',
+    onderweg: 'On the way',
     stopLabel: 'Stop',
     of: 'of',
-    activeStopFallback: 'Tour',
     youAreHere: 'You are here',
     nextStop: 'Next stop',
     you: 'You',
@@ -136,6 +123,7 @@ export const translations = {
     pauseAudio: 'Pause audio',
     playAudio: 'Play audio',
     allStops: 'All stops',
+    activeStopFallback: 'Tour',
     permissionUnsupported: 'Your device does not support location access.',
     locationDenied:
       'Location access was denied. Allow location in your browser or try again with the button below.',
@@ -152,17 +140,17 @@ export const translations = {
       'Audio could not start automatically. Press play to start it manually.',
   },
   de: {
+    chooseLanguage: 'Sprache wählen',
+    chooseLanguageText: 'Wähle die Sprache, in der du die App benutzen möchtest.',
     appName: "Wad'n Verhaal",
-    chooseLanguage: 'Sprache',
-    chooseLanguageText: 'Wähle hier deine Sprache. Die ganze App verwendet danach automatisch diese Sprache.',
     discoverTitle: 'Entdecke Ameland mit Geschichten auf der Karte',
     discoverText:
       'Starte eine ruhige Audiotour auf deinem Handy, verfolge deinen Standort live und gehe einfach zum nächsten Erzählpunkt.',
     startTour: 'Tour starten',
     liveMap: 'Live-Karte',
-    liveMapText: 'Sieh sofort, wo du bist und wohin du gehst.',
+    liveMapText: 'Sieh direkt, wo du bist und wohin du gehst.',
     audioOnTheGo: 'Audio unterwegs',
-    audioOnTheGoText: 'Geschichten und Atmosphäre genau am richtigen Ort.',
+    audioOnTheGoText: 'Geschichten und Erlebnis genau am richtigen Ort.',
     startDirectly: 'Direkt starten',
     startDirectlyText: 'Kein Aufwand, einfach öffnen und loslegen.',
     walkOrBike: 'Wandern oder Radfahren',
@@ -170,7 +158,7 @@ export const translations = {
     howItWorks: 'So funktioniert es',
     step1: 'Wähle deine Tour',
     step2: 'Öffne die Tour auf deinem Handy',
-    step3: 'Folge der Route live und höre unterwegs zu',
+    step3: 'Folge der Live-Route und höre unterwegs zu',
     privacy: 'Datenschutz',
     terms: 'Bedingungen',
     back: 'Zurück',
@@ -183,10 +171,9 @@ export const translations = {
     tourActive: 'Tour aktiv',
     status: 'Status',
     arrived: 'Angekommen',
-    onTheWay: 'Unterwegs',
+    onderweg: 'Unterwegs',
     stopLabel: 'Stopp',
     of: 'von',
-    activeStopFallback: 'Tour',
     youAreHere: 'Du bist hier',
     nextStop: 'Nächster Stopp',
     you: 'Du',
@@ -203,51 +190,33 @@ export const translations = {
     pauseAudio: 'Audio pausieren',
     playAudio: 'Audio abspielen',
     allStops: 'Alle Stopps',
-    permissionUnsupported: 'Dein Gerät unterstützt keinen Standortzugriff.',
+    activeStopFallback: 'Tour',
+    permissionUnsupported: 'Dein Gerät unterstützt keine Standortfreigabe.',
     locationDenied:
-      'Der Standortzugriff wurde verweigert. Erlaube den Standort im Browser oder versuche es erneut mit der Schaltfläche unten.',
+      'Standort wurde verweigert. Erlaube den Standort im Browser oder versuche es erneut mit der Schaltfläche unten.',
     locationUnavailable:
-      'Der Standort konnte nicht abgerufen werden. Du kannst der Tour trotzdem manuell folgen.',
+      'Standort konnte nicht abgerufen werden. Du kannst der Tour trotzdem manuell folgen.',
     locationPromptNotOpened:
       'Der Browser hat die Standortabfrage nicht geöffnet. Bitte versuche es erneut.',
     locationStillBlocked:
-      'Der Standort ist weiterhin im Browser blockiert. Klicke auf das Schloss in der Adressleiste und erlaube den Standortzugriff.',
+      'Der Standort ist weiterhin im Browser blockiert. Klicke auf das Schloss links in der Adressleiste und erlaube den Standort.',
     locationRetryFailed:
-      'Der Standort konnte nicht erneut aktiviert werden. Prüfe deine Browsereinstellungen und erlaube den Standortzugriff.',
-    locationRestartFailed: 'Der Standort konnte nicht erneut gestartet werden.',
+      'Standort konnte nicht erneut aktiviert werden. Prüfe deine Browsereinstellungen und erlaube den Standort.',
+    locationRestartFailed: 'Standort konnte nicht erneut gestartet werden.',
     audioAutoStartFailed:
-      'Audio konnte nicht automatisch gestartet werden. Drücke auf Play, um manuell zu starten.',
+      'Audio konnte nicht automatisch gestartet werden. Drücke auf Play, um es manuell zu starten.',
   },
 } as const
 
-export function getStopTitle(
-  stop: TourStop | null,
-  language: AppLanguage
-) {
+export function getStopTitle(stop: TourStop | null, language: AppLanguage) {
   if (!stop) return null
-
-  if (language === 'en' && 'title_en' in stop && stop.title_en) {
-    return stop.title_en
-  }
-
-  if (language === 'de' && 'title_de' in stop && stop.title_de) {
-    return stop.title_de
-  }
-
+  if (language === 'en' && stop.title_en) return stop.title_en
+  if (language === 'de' && stop.title_de) return stop.title_de
   return stop.title
 }
 
-export function getStopShortDescription(
-  stop: TourStop,
-  language: AppLanguage
-) {
-  if (language === 'en' && 'short_description_en' in stop && stop.short_description_en) {
-    return stop.short_description_en
-  }
-
-  if (language === 'de' && 'short_description_de' in stop && stop.short_description_de) {
-    return stop.short_description_de
-  }
-
+export function getStopShortDescription(stop: TourStop, language: AppLanguage) {
+  if (language === 'en' && stop.short_description_en) return stop.short_description_en
+  if (language === 'de' && stop.short_description_de) return stop.short_description_de
   return stop.short_description
 }
