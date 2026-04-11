@@ -36,6 +36,9 @@ type Position = {
 
 type RoutePoint = [number, number];
 type GeoPermissionState = 'unknown' | 'granted' | 'prompt' | 'denied';
+type AppLanguage = 'nl' | 'en' | 'de';
+
+const LANGUAGE_STORAGE_KEY = 'wadnverhaal-player-language';
 
 const userIcon = new L.DivIcon({
   className: '',
@@ -50,6 +53,117 @@ const stopIcon = new L.DivIcon({
   iconSize: [20, 20],
   iconAnchor: [10, 10],
 });
+
+const translations = {
+  nl: {
+    languageLabel: 'Taal',
+    tourActive: 'Tour actief',
+    status: 'Status',
+    arrived: 'Aangekomen',
+    onderweg: 'Onderweg',
+    stopLabel: 'Stop',
+    of: 'van',
+    youAreHere: 'Jij bent hier',
+    nextStop: 'Volgende stop',
+    you: 'Jij',
+    locationActive: 'Locatie actief',
+    locationOff: 'Locatie uit',
+    direction: 'Richting',
+    shortestWalkingRoute: 'Kortste wandelroute',
+    distance: 'Afstand',
+    time: 'Tijd',
+    previous: 'Vorige',
+    next: 'Volgende',
+    enableLocation: 'Locatie inschakelen',
+    openWalkingRoute: 'Open wandelroute',
+    pauseAudio: 'Pauzeer audio',
+    playAudio: 'Speel audio af',
+    allStops: 'Alle stops',
+    activeStopFallback: 'Tour',
+    permissionUnsupported: 'Je apparaat ondersteunt geen locatie.',
+    locationDenied: 'Locatie is geweigerd. Sta locatie toe in je browser of probeer het opnieuw met de knop hieronder.',
+    locationUnavailable: 'Locatie kon niet worden opgehaald. Je kunt de tour nog wel handmatig volgen.',
+    locationPromptNotOpened: 'De browser heeft de locatiemelding niet geopend. Probeer het nog eens.',
+    locationStillBlocked: 'Locatie blijft geblokkeerd door de browser. Klik op het slotje links van de adresbalk en zet locatie op toestaan.',
+    locationRetryFailed: 'Locatie kon niet opnieuw worden ingeschakeld. Controleer je browserinstellingen en sta locatie toe.',
+    locationRestartFailed: 'Locatie kon niet opnieuw worden gestart.',
+    audioAutoStartFailed: 'Audio kon niet automatisch starten. Druk op afspelen om handmatig te starten.',
+  },
+  en: {
+    languageLabel: 'Language',
+    tourActive: 'Tour active',
+    status: 'Status',
+    arrived: 'Arrived',
+    onderweg: 'On the way',
+    stopLabel: 'Stop',
+    of: 'of',
+    youAreHere: 'You are here',
+    nextStop: 'Next stop',
+    you: 'You',
+    locationActive: 'Location active',
+    locationOff: 'Location off',
+    direction: 'Direction',
+    shortestWalkingRoute: 'Shortest walking route',
+    distance: 'Distance',
+    time: 'Time',
+    previous: 'Previous',
+    next: 'Next',
+    enableLocation: 'Enable location',
+    openWalkingRoute: 'Open walking route',
+    pauseAudio: 'Pause audio',
+    playAudio: 'Play audio',
+    allStops: 'All stops',
+    activeStopFallback: 'Tour',
+    permissionUnsupported: 'Your device does not support location access.',
+    locationDenied: 'Location access was denied. Allow location in your browser or try again with the button below.',
+    locationUnavailable: 'Location could not be retrieved. You can still follow the tour manually.',
+    locationPromptNotOpened: 'The browser did not open the location prompt. Please try again.',
+    locationStillBlocked: 'Location is still blocked by the browser. Click the lock icon in the address bar and allow location access.',
+    locationRetryFailed: 'Location could not be enabled again. Check your browser settings and allow location access.',
+    locationRestartFailed: 'Location could not be restarted.',
+    audioAutoStartFailed: 'Audio could not start automatically. Press play to start it manually.',
+  },
+  de: {
+    languageLabel: 'Sprache',
+    tourActive: 'Tour aktiv',
+    status: 'Status',
+    arrived: 'Angekommen',
+    onderweg: 'Unterwegs',
+    stopLabel: 'Stopp',
+    of: 'von',
+    youAreHere: 'Du bist hier',
+    nextStop: 'Nächster Stopp',
+    you: 'Du',
+    locationActive: 'Standort aktiv',
+    locationOff: 'Standort aus',
+    direction: 'Richtung',
+    shortestWalkingRoute: 'Kürzeste Fußroute',
+    distance: 'Entfernung',
+    time: 'Zeit',
+    previous: 'Zurück',
+    next: 'Weiter',
+    enableLocation: 'Standort aktivieren',
+    openWalkingRoute: 'Fußroute öffnen',
+    pauseAudio: 'Audio pausieren',
+    playAudio: 'Audio abspielen',
+    allStops: 'Alle Stopps',
+    activeStopFallback: 'Tour',
+    permissionUnsupported: 'Dein Gerät unterstützt keine Standortfreigabe.',
+    locationDenied: 'Standort wurde verweigert. Erlaube den Standort im Browser oder versuche es erneut mit der Schaltfläche unten.',
+    locationUnavailable: 'Standort konnte nicht abgerufen werden. Du kannst die Tour trotzdem manuell folgen.',
+    locationPromptNotOpened: 'Der Browser hat die Standortabfrage nicht geöffnet. Bitte versuche es erneut.',
+    locationStillBlocked: 'Der Standort ist weiterhin im Browser blockiert. Klicke auf das Schloss links in der Adressleiste und erlaube den Standort.',
+    locationRetryFailed: 'Standort konnte nicht erneut aktiviert werden. Prüfe deine Browsereinstellungen und erlaube den Standort.',
+    locationRestartFailed: 'Standort konnte nicht erneut gestartet werden.',
+    audioAutoStartFailed: 'Audio konnte nicht automatisch gestartet werden. Drücke auf Play, um es manuell zu starten.',
+  },
+} as const;
+
+const languageOptions: Array<{ code: AppLanguage; flag: string; label: string }> = [
+  { code: 'nl', flag: '🇳🇱', label: 'NL' },
+  { code: 'en', flag: '🇬🇧', label: 'EN' },
+  { code: 'de', flag: '🇩🇪', label: 'DE' },
+];
 
 function formatDistance(meters: number) {
   const roundedMeters = Math.round(meters);
@@ -78,6 +192,19 @@ function normalizeWalkingDuration(distanceMeters: number, apiDurationSeconds: nu
   }
 
   return Math.max(Math.round(apiDurationSeconds), baseline);
+}
+
+function getStopTitle(stop: TourStop | null, language: AppLanguage) {
+  if (!stop) return null;
+  if (language === 'en' && stop.title_en) return stop.title_en;
+  if (language === 'de' && stop.title_de) return stop.title_de;
+  return stop.title;
+}
+
+function getStopShortDescription(stop: TourStop, language: AppLanguage) {
+  if (language === 'en' && stop.short_description_en) return stop.short_description_en;
+  if (language === 'de' && stop.short_description_de) return stop.short_description_de;
+  return stop.short_description;
 }
 
 function RecenterMap({
@@ -120,6 +247,7 @@ export function TourPlayer({ stops }: Props) {
   const lastRoutePositionRef = useRef<Position | null>(null);
   const lastRouteRequestAtRef = useRef<number>(0);
 
+  const [language, setLanguage] = useState<AppLanguage>('nl');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [gpsAllowed, setGpsAllowed] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -133,6 +261,19 @@ export function TourPlayer({ stops }: Props) {
   const [routeDurationSeconds, setRouteDurationSeconds] = useState<number | null>(null);
 
   const currentStop = useMemo(() => stops[currentIndex] ?? null, [stops, currentIndex]);
+  const t = translations[language];
+  const currentStopTitle = getStopTitle(currentStop, language) ?? t.activeStopFallback;
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (stored === 'nl' || stored === 'en' || stored === 'de') {
+      setLanguage(stored);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+  }, [language]);
 
   async function checkPermissionState() {
     try {
@@ -175,7 +316,7 @@ export function TourPlayer({ stops }: Props) {
 
   function startWatchingLocation() {
     if (!navigator.geolocation) {
-      setError('Je apparaat ondersteunt geen locatie.');
+      setError(t.permissionUnsupported);
       return;
     }
 
@@ -190,13 +331,11 @@ export function TourPlayer({ stops }: Props) {
 
         if (geoError.code === geoError.PERMISSION_DENIED) {
           setPermissionState('denied');
-          setError(
-            'Locatie is geweigerd. Sta locatie toe in je browser of probeer het opnieuw met de knop hieronder.'
-          );
+          setError(t.locationDenied);
           return;
         }
 
-        setError('Locatie kon niet worden opgehaald. Je kunt de tour nog wel handmatig volgen.');
+        setError(t.locationUnavailable);
       },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
     );
@@ -208,7 +347,7 @@ export function TourPlayer({ stops }: Props) {
     setError(null);
 
     if (!navigator.geolocation) {
-      setError('Je apparaat ondersteunt geen locatie.');
+      setError(t.permissionUnsupported);
       return;
     }
 
@@ -233,30 +372,26 @@ export function TourPlayer({ stops }: Props) {
 
               if (result.state === 'prompt') {
                 setPermissionState('prompt');
-                setError('De browser heeft de locatiemelding niet geopend. Probeer het nog eens.');
+                setError(t.locationPromptNotOpened);
                 return;
               }
 
               if (result.state === 'denied') {
                 setPermissionState('denied');
-                setError(
-                  'Locatie blijft geblokkeerd door de browser. Klik op het slotje links van de adresbalk en zet locatie op toestaan.'
-                );
+                setError(t.locationStillBlocked);
                 return;
               }
             } catch {
-              // fallback below
+              //
             }
           }
 
           setPermissionState('denied');
-          setError(
-            'Locatie kon niet opnieuw worden ingeschakeld. Controleer je browserinstellingen en sta locatie toe.'
-          );
+          setError(t.locationRetryFailed);
           return;
         }
 
-        setError('Locatie kon niet opnieuw worden gestart.');
+        setError(t.locationRestartFailed);
       },
       { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
     );
@@ -269,6 +404,7 @@ export function TourPlayer({ stops }: Props) {
     return () => {
       clearLocationWatch();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -403,7 +539,7 @@ export function TourPlayer({ stops }: Props) {
       setPlaying(true);
       setError(null);
     } catch {
-      setError('Audio kon niet automatisch starten. Druk op afspelen om handmatig te starten.');
+      setError(t.audioAutoStartFailed);
     }
   }
 
@@ -468,23 +604,45 @@ export function TourPlayer({ stops }: Props) {
 
       <section className="overflow-hidden rounded-[1.75rem] border border-app bg-app-card shadow-card">
         <div className="bg-[linear-gradient(135deg,#12325a_0%,#183e6d_45%,#245a8b_100%)] p-3 text-white">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-white/75">
+              {t.languageLabel}
+            </div>
+            <div className="flex items-center gap-2 rounded-full bg-white/10 p-1">
+              {languageOptions.map((option) => (
+                <button
+                  key={option.code}
+                  onClick={() => setLanguage(option.code)}
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition ${
+                    language === option.code
+                      ? 'bg-white text-[#183e6d]'
+                      : 'text-white/85 hover:bg-white/10'
+                  }`}
+                >
+                  <span>{option.flag}</span>
+                  <span>{option.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="inline-flex rounded-full bg-white/12 px-2.5 py-1 text-[11px] font-semibold text-white/90">
-                Tour actief
+                {t.tourActive}
               </div>
               <h1 className="mt-2 line-clamp-2 break-words pr-2 text-base font-semibold leading-5 sm:text-lg">
-                {currentStop?.title ?? 'Tour'}
+                {currentStopTitle}
               </h1>
               <p className="mt-1 text-xs text-white/75">
-                Stop {currentIndex + 1} van {stops.length}
+                {t.stopLabel} {currentIndex + 1} {t.of} {stops.length}
               </p>
             </div>
 
             <div className="rounded-xl bg-white/10 px-3 py-2 text-right">
-              <div className="text-[11px] text-white/70">Status</div>
+              <div className="text-[11px] text-white/70">{t.status}</div>
               <div className="text-xs font-semibold">
-                {hasArrived ? 'Aangekomen' : 'Onderweg'}
+                {hasArrived ? t.arrived : t.onderweg}
               </div>
             </div>
           </div>
@@ -508,7 +666,7 @@ export function TourPlayer({ stops }: Props) {
               {position ? (
                 <>
                   <Marker position={[position.lat, position.lng]} icon={userIcon}>
-                    <Popup>Jij bent hier</Popup>
+                    <Popup>{t.youAreHere}</Popup>
                   </Marker>
                   {position.accuracy ? (
                     <Circle center={[position.lat, position.lng]} radius={position.accuracy} />
@@ -523,8 +681,8 @@ export function TourPlayer({ stops }: Props) {
                     icon={stopIcon}
                   >
                     <Popup>
-                      <div className="font-medium">{currentStop.title}</div>
-                      <div className="text-sm text-slate-500">Volgende stop</div>
+                      <div className="font-medium">{currentStopTitle}</div>
+                      <div className="text-sm text-slate-500">{t.nextStop}</div>
                     </Popup>
                   </Marker>
                   <Circle
@@ -554,27 +712,27 @@ export function TourPlayer({ stops }: Props) {
           <div className="rounded-xl bg-[#f8f4eb] p-2.5">
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-app-muted">
               <LocateFixed className="h-3.5 w-3.5 text-app-accent" />
-              Jij
+              {t.you}
             </div>
             <p className="mt-1 text-xs font-medium text-app-accent">
-              {gpsAllowed ? 'Locatie actief' : 'Locatie uit'}
+              {gpsAllowed ? t.locationActive : t.locationOff}
             </p>
           </div>
 
           <div className="rounded-xl bg-[#f8f4eb] p-2.5">
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-app-muted">
               <Route className="h-3.5 w-3.5 text-app-accent" />
-              Richting
+              {t.direction}
             </div>
             <p className="mt-1 text-xs font-medium text-app-accent">
-              Kortste wandelroute
+              {t.shortestWalkingRoute}
             </p>
           </div>
 
           <div className="rounded-xl bg-[#f8f4eb] p-2.5">
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-app-muted">
               <Compass className="h-3.5 w-3.5 text-app-accent" />
-              Afstand
+              {t.distance}
             </div>
             <p className="mt-1 text-xs font-medium text-app-accent">
               {distanceToStop !== null ? formatDistance(distanceToStop) : '--'}
@@ -584,7 +742,7 @@ export function TourPlayer({ stops }: Props) {
           <div className="rounded-xl bg-[#f8f4eb] p-2.5">
             <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-app-muted">
               <Navigation className="h-3.5 w-3.5 text-app-accent" />
-              Tijd
+              {t.time}
             </div>
             <p className="mt-1 text-xs font-medium text-app-accent">
               {timeToStopSeconds !== null ? estimateWalkingTime(timeToStopSeconds) : '--'}
@@ -601,7 +759,7 @@ export function TourPlayer({ stops }: Props) {
             className="inline-flex items-center justify-center rounded-xl border border-app px-3 py-2.5 text-sm font-medium text-app-accent disabled:opacity-40"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Vorige
+            {t.previous}
           </button>
 
           <button
@@ -616,7 +774,7 @@ export function TourPlayer({ stops }: Props) {
             disabled={currentIndex === stops.length - 1}
             className="inline-flex items-center justify-center rounded-xl border border-app px-3 py-2.5 text-sm font-medium text-app-accent disabled:opacity-40"
           >
-            Volgende
+            {t.next}
             <ArrowRight className="ml-2 h-4 w-4" />
           </button>
         </div>
@@ -627,7 +785,7 @@ export function TourPlayer({ stops }: Props) {
             className="inline-flex items-center justify-center rounded-xl border border-app bg-white px-4 py-2.5 text-sm font-medium text-app-accent"
           >
             <LocateFixed className="mr-2 h-4 w-4" />
-            Locatie inschakelen
+            {t.enableLocation}
           </button>
 
           <button
@@ -635,7 +793,7 @@ export function TourPlayer({ stops }: Props) {
             className="inline-flex items-center justify-center rounded-xl bg-app-accent px-4 py-2.5 text-sm font-medium text-white"
           >
             <Navigation className="mr-2 h-4 w-4" />
-            Open wandelroute
+            {t.openWalkingRoute}
           </button>
 
           <button
@@ -643,7 +801,7 @@ export function TourPlayer({ stops }: Props) {
             className="inline-flex items-center justify-center rounded-xl border border-app bg-white px-4 py-2.5 text-sm font-medium text-app-accent"
           >
             <Volume2 className="mr-2 h-4 w-4" />
-            {playing ? 'Pauzeer audio' : 'Speel audio af'}
+            {playing ? t.pauseAudio : t.playAudio}
           </button>
         </div>
       </section>
@@ -661,7 +819,7 @@ export function TourPlayer({ stops }: Props) {
         >
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-app-accent" />
-            <h2 className="font-semibold text-app-accent">Alle stops</h2>
+            <h2 className="font-semibold text-app-accent">{t.allStops}</h2>
           </div>
           {showStops ? (
             <ChevronUp className="h-5 w-5 text-app-accent" />
@@ -672,30 +830,35 @@ export function TourPlayer({ stops }: Props) {
 
         {showStops ? (
           <div className="mt-3 space-y-2">
-            {stops.map((stop, index) => (
-              <button
-                key={stop.id}
-                onClick={() => goToStop(index)}
-                className={`block w-full rounded-xl p-3 text-left text-sm transition ${
-                  currentIndex === index
-                    ? 'bg-app-accent text-white'
-                    : 'bg-white text-app shadow-card'
-                }`}
-              >
-                <div className="font-medium">
-                  {index + 1}. {stop.title}
-                </div>
-                {stop.short_description ? (
-                  <div
-                    className={`mt-1 text-xs ${
-                      currentIndex === index ? 'text-white/80' : 'text-app-muted'
-                    }`}
-                  >
-                    {stop.short_description}
+            {stops.map((stop, index) => {
+              const stopTitle = getStopTitle(stop, language) ?? stop.title;
+              const stopDescription = getStopShortDescription(stop, language);
+
+              return (
+                <button
+                  key={stop.id}
+                  onClick={() => goToStop(index)}
+                  className={`block w-full rounded-xl p-3 text-left text-sm transition ${
+                    currentIndex === index
+                      ? 'bg-app-accent text-white'
+                      : 'bg-white text-app shadow-card'
+                  }`}
+                >
+                  <div className="font-medium">
+                    {index + 1}. {stopTitle}
                   </div>
-                ) : null}
-              </button>
-            ))}
+                  {stopDescription ? (
+                    <div
+                      className={`mt-1 text-xs ${
+                        currentIndex === index ? 'text-white/80' : 'text-app-muted'
+                      }`}
+                    >
+                      {stopDescription}
+                    </div>
+                  ) : null}
+                </button>
+              );
+            })}
           </div>
         ) : null}
       </section>

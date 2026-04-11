@@ -22,7 +22,11 @@ export type TourStop = {
   tour_id: string;
   order_index: number;
   title: string;
+  title_en: string | null;
+  title_de: string | null;
   short_description: string | null;
+  short_description_en: string | null;
+  short_description_de: string | null;
   audio_url: string | null;
   image_url: string | null;
   lat: number | null;

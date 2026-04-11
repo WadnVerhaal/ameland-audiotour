@@ -107,3 +107,8 @@ for each row execute procedure set_updated_at();
 create index if not exists idx_tour_stops_tour_id on tour_stops(tour_id);
 create index if not exists idx_orders_tour_id on orders(tour_id);
 create index if not exists idx_orders_partner_id on orders(partner_id);
+alter table tour_stops
+add column if not exists title_en text,
+add column if not exists title_de text,
+add column if not exists short_description_en text,
+add column if not exists short_description_de text;
