@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { CheckCircle2, Headphones, MapPinned, ArrowLeft } from 'lucide-react'
+import { CheckCircle2, Headphones, MapPinned, ArrowLeft, RefreshCw } from 'lucide-react'
 import { getAccessTokenByOrderId } from '@/lib/data/access'
 import { translations } from '@/lib/app-language'
 import { getServerLanguage } from '@/lib/app-language-server'
@@ -12,10 +11,6 @@ type Props = {
 export default async function SuccessPage({ params }: Props) {
   const { orderId } = await params
   const token = await getAccessTokenByOrderId(orderId)
-
-  if (!token) {
-    redirect('/tours')
-  }
 
   const language = await getServerLanguage()
   const t = translations[language]
@@ -42,12 +37,10 @@ export default async function SuccessPage({ params }: Props) {
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
             <span>{t.successBenefit1}</span>
           </div>
-
           <div className="flex items-start gap-3">
             <Headphones className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
             <span>{t.successBenefit2}</span>
           </div>
-
           <div className="flex items-start gap-3">
             <MapPinned className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
             <span>{t.successBenefit3}</span>
@@ -56,12 +49,28 @@ export default async function SuccessPage({ params }: Props) {
       </section>
 
       <div className="mt-5 space-y-3">
-        <Link
-          href={`/access/${token}`}
-          className="inline-flex w-full items-center justify-center rounded-2xl bg-app-accent px-4 py-4 text-sm font-semibold text-white shadow-card transition hover:opacity-95"
-        >
-          {t.openMyTourNow}
-        </Link>
+        {token ? (
+          <Link
+            href={`/access/${token}`}
+            className="inline-flex w-full items-center justify-center rounded-2xl bg-app-accent px-4 py-4 text-sm font-semibold text-white shadow-card transition hover:opacity-95"
+          >
+            {t.openMyTourNow}
+          </Link>
+        ) : (
+          <>
+            <div className="rounded-[1.5rem] border border-[#e5d3a4] bg-[#fff7df] p-4 text-sm text-[#7c5b16]">
+              Je betaling is verwerkt. Je tour wordt nu klaargezet. Open deze pagina zo opnieuw.
+            </div>
+
+            <Link
+              href={`/success/${orderId}`}
+              className="inline-flex w-full items-center justify-center rounded-2xl bg-app-accent px-4 py-4 text-sm font-semibold text-white shadow-card transition hover:opacity-95"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Opnieuw laden
+            </Link>
+          </>
+        )}
 
         <Link
           href="/tours"
