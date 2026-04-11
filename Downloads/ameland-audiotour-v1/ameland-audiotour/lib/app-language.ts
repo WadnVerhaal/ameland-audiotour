@@ -50,6 +50,13 @@ export const translations = {
     backToHome: 'Terug naar home',
     backToTours: 'Terug naar alle tours',
 
+notFoundTitle: 'Pagina niet gevonden',
+notFoundText: 'De pagina die je zoekt bestaat niet of is verplaatst.',
+notFoundTitle: 'Page not found',
+notFoundText: 'The page you are looking for does not exist or has been moved.',
+notFoundTitle: 'Seite nicht gefunden',
+notFoundText: 'Die Seite, die du suchst, existiert nicht oder wurde verschoben.',
+
     availableRoutes: 'Beschikbare routes',
     chooseTour: 'Kies je tour',
     chooseTourText:
