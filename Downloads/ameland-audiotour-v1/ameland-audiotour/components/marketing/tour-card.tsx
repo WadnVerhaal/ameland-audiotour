@@ -1,20 +1,38 @@
-import Link from 'next/link'
-import Image from 'next/image'
-import { Clock3, MapPin, Bike, Footprints } from 'lucide-react'
-import { Tour } from '@/types/tour'
-import { formatEuroFromCents } from '@/lib/utils/money'
-import { AppLanguage, translations } from '@/lib/app-language'
+import Link from 'next/link';
+import Image from 'next/image';
+import { Clock3, MapPin, Bike, Footprints } from 'lucide-react';
+import { Tour } from '@/types/tour';
+import { formatEuroFromCents } from '@/lib/utils/money';
+import { AppLanguage, translations } from '@/lib/app-language';
 
 function getTourImage(slug: string) {
-  if (slug.includes('verborgen-verhalen')) return '/images/tour-dorp.jpg'
-  if (slug.includes('fiets')) return '/images/tour-fietsen.jpg'
-  return '/images/tour-duinen.jpg'
+  if (slug.includes('verborgen-verhalen')) return '/images/tour-dorp.jpg';
+  if (slug.includes('fiets')) return '/images/tour-fietsen.jpg';
+  return '/images/tour-duinen.jpg';
 }
 
-export function TourCard({ tour, language }: { tour: Tour; language: AppLanguage }) {
-  const t = translations[language]
-  const modeLabel = tour.mode === 'bike' ? t.bikeTour : t.walkTour
-  const ModeIcon = tour.mode === 'bike' ? Bike : Footprints
+function getModeLabel(mode: string, language: AppLanguage) {
+  if (mode === 'bike') {
+    if (language === 'en') return 'Bike tour';
+    if (language === 'de') return 'Fahrradtour';
+    return 'Fietstour';
+  }
+
+  if (language === 'en') return 'Walking tour';
+  if (language === 'de') return 'Wandertour';
+  return 'Wandeltour';
+}
+
+export function TourCard({
+  tour,
+  language,
+}: {
+  tour: Tour;
+  language: AppLanguage;
+}) {
+  const t = translations[language];
+  const modeLabel = getModeLabel(tour.mode, language);
+  const ModeIcon = tour.mode === 'bike' ? Bike : Footprints;
 
   return (
     <Link
@@ -36,10 +54,14 @@ export function TourCard({ tour, language }: { tour: Tour; language: AppLanguage
             <div className="inline-flex rounded-full bg-app-soft px-2.5 py-1 text-[11px] font-semibold text-[#6a5c37]">
               {modeLabel}
             </div>
+
             <h2 className="mt-3 text-lg font-semibold leading-tight text-app-accent">
               {tour.title}
             </h2>
-            <p className="mt-1 text-sm text-app-muted">{tour.subtitle}</p>
+
+            {tour.subtitle ? (
+              <p className="mt-1 text-sm text-app-muted">{tour.subtitle}</p>
+            ) : null}
           </div>
 
           <span className="rounded-full bg-white px-3 py-1 text-sm font-semibold text-app-accent shadow-card">
@@ -52,10 +74,12 @@ export function TourCard({ tour, language }: { tour: Tour; language: AppLanguage
             <Clock3 className="h-3.5 w-3.5" />
             {tour.duration_minutes} min
           </span>
+
           <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-card">
             <MapPin className="h-3.5 w-3.5" />
             {tour.distance_km} km
           </span>
+
           <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-card">
             <ModeIcon className="h-3.5 w-3.5" />
             {modeLabel}
@@ -63,5 +87,5 @@ export function TourCard({ tour, language }: { tour: Tour; language: AppLanguage
         </div>
       </div>
     </Link>
-  )
+  );
 }
