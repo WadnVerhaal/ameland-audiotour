@@ -89,15 +89,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mt-5 rounded-[1.75rem] border border-app bg-app-card p-5 shadow-card">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-app-muted">Waarom dit fijn werkt</p>
-        <div className="mt-3 space-y-2 text-sm leading-6 text-app-muted">
-          <p>Duidelijke routebeleving op mobiel</p>
-          <p>Rustige vormgeving die buiten goed leesbaar blijft</p>
-          <p>Klaar voor live navigatie en automatische audio</p>
-        </div>
-      </section>
-
       <div className="mt-5 text-center text-xs text-app-muted">
         <Link href="/privacy" className="underline">
           Privacy
