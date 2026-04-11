@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { TourStop } from '@/types/tour'
 import {
+  APP_LANGUAGE_STORAGE_KEY,
   type AppLanguage,
   getStopShortDescription,
   getStopTitle,
@@ -43,8 +44,6 @@ type Position = {
 
 type RoutePoint = [number, number]
 type GeoPermissionState = 'unknown' | 'granted' | 'prompt' | 'denied'
-
-const LANGUAGE_STORAGE_KEY = 'wadnverhaal-player-language'
 
 const userIcon = new L.DivIcon({
   className: '',
@@ -151,7 +150,7 @@ export function TourPlayer({ stops }: Props) {
 
   useEffect(() => {
     try {
-      const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
+      const storedLanguage = window.localStorage.getItem(APP_LANGUAGE_STORAGE_KEY)
       if (isAppLanguage(storedLanguage)) {
         setLanguage(storedLanguage)
       }
@@ -499,7 +498,7 @@ export function TourPlayer({ stops }: Props) {
                 {currentStopTitle}
               </h1>
               <p className="mt-1 text-xs text-white/75">
-               {t.stopLabel} {currentIndex + 1} {t.of} {stops.length}
+                {t.stopLabel} {currentIndex + 1} {t.of} {stops.length}
               </p>
             </div>
 
