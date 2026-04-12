@@ -3,7 +3,8 @@ import { ArrowLeft, Check, MapPinned } from 'lucide-react'
 import { getActiveTours } from '@/lib/data/tours'
 import { translations as appTranslations } from '@/lib/app-language'
 import { getServerLanguage } from '@/lib/app-language-server'
-import { getTranslation, type Locale } from '@/lib/i18n'
+
+type AppLanguage = 'nl' | 'en' | 'de'
 
 type MarketingTour = {
   title: string
@@ -41,8 +42,139 @@ type ActiveTourRecord = {
   updated_at: string
 }
 
-function isLocale(value: string): value is Locale {
-  return value === 'nl' || value === 'en' || value === 'de'
+const websiteTours: Record<AppLanguage, MarketingTour[]> = {
+  nl: [
+    {
+      title: 'Historische Dorpswandeling',
+      badge: 'Binnenkort',
+      duration: '45–60 min',
+      image: '/images/tour-fietsen.jpg',
+      points: [
+        'Verhalen over dorp en geschiedenis',
+        'Zelfstandig en eenvoudig te volgen',
+        'Ideaal als eerste kennismaking',
+      ],
+      cta: 'Binnenkort',
+      featured: false,
+      available: false,
+    },
+    {
+      title: 'Maak kennis met Hollum',
+      badge: 'Meest gekozen',
+      duration: '90 min',
+      image: '/images/tour-duinen.jpg',
+      points: [
+        'Een rustige wandeling langs bijzondere plekken',
+        'Live kaart en audio precies op de juiste locatie',
+        'Perfect als eerste kennismaking met Hollum',
+      ],
+      cta: 'Bestel direct',
+      featured: true,
+      available: true,
+    },
+    {
+      title: 'Fietsroute door Duin & Dorp',
+      badge: 'Binnenkort',
+      duration: '60–90 min',
+      image: '/images/tour-dorp.jpg',
+      points: [
+        'Route door landschap en dorp',
+        'Luisteren op bijzondere plekken',
+        'Een complete eilandbeleving',
+      ],
+      cta: 'Binnenkort',
+      featured: false,
+      available: false,
+    },
+  ],
+  en: [
+    {
+      title: 'Historic Village Walk',
+      badge: 'Coming soon',
+      duration: '45–60 min',
+      image: '/images/tour-fietsen.jpg',
+      points: [
+        'Stories about the village and its history',
+        'Easy to follow on your own',
+        'Ideal as a first introduction',
+      ],
+      cta: 'Coming soon',
+      featured: false,
+      available: false,
+    },
+    {
+      title: 'Meet Hollum',
+      badge: 'Most popular',
+      duration: '90 min',
+      image: '/images/tour-duinen.jpg',
+      points: [
+        'A relaxed walk past special places',
+        'Live map and audio at exactly the right location',
+        'Perfect as a first introduction to Hollum',
+      ],
+      cta: 'Order now',
+      featured: true,
+      available: true,
+    },
+    {
+      title: 'Cycling Route through Dunes & Village',
+      badge: 'Coming soon',
+      duration: '60–90 min',
+      image: '/images/tour-dorp.jpg',
+      points: [
+        'Route through landscape and village',
+        'Listen at special locations',
+        'A complete island experience',
+      ],
+      cta: 'Coming soon',
+      featured: false,
+      available: false,
+    },
+  ],
+  de: [
+    {
+      title: 'Historischer Dorfrundgang',
+      badge: 'Bald verfügbar',
+      duration: '45–60 Min.',
+      image: '/images/tour-fietsen.jpg',
+      points: [
+        'Geschichten über das Dorf und seine Geschichte',
+        'Selbstständig und einfach zu folgen',
+        'Ideal als erste Einführung',
+      ],
+      cta: 'Bald verfügbar',
+      featured: false,
+      available: false,
+    },
+    {
+      title: 'Hollum kennenlernen',
+      badge: 'Am beliebtesten',
+      duration: '90 Min.',
+      image: '/images/tour-duinen.jpg',
+      points: [
+        'Ein ruhiger Spaziergang entlang besonderer Orte',
+        'Live-Karte und Audio genau am richtigen Ort',
+        'Perfekt als erster Eindruck von Hollum',
+      ],
+      cta: 'Jetzt buchen',
+      featured: true,
+      available: true,
+    },
+    {
+      title: 'Fahrradroute durch Dünen & Dorf',
+      badge: 'Bald verfügbar',
+      duration: '60–90 Min.',
+      image: '/images/tour-dorp.jpg',
+      points: [
+        'Route durch Landschaft und Dorf',
+        'An besonderen Orten zuhören',
+        'Ein vollständiges Inselerlebnis',
+      ],
+      cta: 'Bald verfügbar',
+      featured: false,
+      available: false,
+    },
+  ],
 }
 
 function normalize(value: string) {
@@ -54,31 +186,35 @@ function normalize(value: string) {
     .trim()
 }
 
-function getDbTitleForLanguage(tour: ActiveTourRecord, locale: Locale) {
-  if (locale === 'en' && tour.title_en) return tour.title_en
-  if (locale === 'de' && tour.title_de) return tour.title_de
+function getDbTitleForLanguage(tour: ActiveTourRecord, language: AppLanguage) {
+  if (language === 'en' && tour.title_en) return tour.title_en
+  if (language === 'de' && tour.title_de) return tour.title_de
   return tour.title
 }
 
 function findMatchingActiveTour(
   marketingTour: MarketingTour,
   activeTours: ActiveTourRecord[],
-  locale: Locale
+  language: AppLanguage
 ) {
   const marketingTitle = normalize(marketingTour.title)
 
-  const exact = activeTours.find((tour) => normalize(getDbTitleForLanguage(tour, locale)) === marketingTitle)
+  const exact = activeTours.find(
+    (tour) => normalize(getDbTitleForLanguage(tour, language)) === marketingTitle
+  )
   if (exact) return exact
 
-  const hollum = marketingTitle.includes('hollum')
-    ? activeTours.find((tour) => normalize(getDbTitleForLanguage(tour, locale)).includes('hollum'))
-    : null
-  if (hollum) return hollum
+  if (marketingTitle.includes('hollum')) {
+    const hollum = activeTours.find((tour) =>
+      normalize(getDbTitleForLanguage(tour, language)).includes('hollum')
+    )
+    if (hollum) return hollum
+  }
 
   return activeTours[0] ?? null
 }
 
-function getIntro(language: Locale) {
+function getIntro(language: AppLanguage) {
   if (language === 'de') {
     return 'Wähle die Route, die zu deinem Tag auf Ameland passt. Bereits verfügbare Touren kannst du direkt starten. Die anderen siehst du hier schon als Vorschau.'
   }
@@ -88,12 +224,6 @@ function getIntro(language: Locale) {
   }
 
   return 'Kies de route die past bij jouw dag op Ameland. Tours die al beschikbaar zijn kun je direct starten. De andere zie je hier alvast als voorproefje.'
-}
-
-function getComingSoonButton(language: Locale) {
-  if (language === 'de') return 'Bald verfügbar'
-  if (language === 'en') return 'Coming soon'
-  return 'Binnenkort'
 }
 
 function TourRow({
@@ -114,11 +244,7 @@ function TourRow({
       } md:grid-cols-[220px_1fr_auto] md:items-center`}
     >
       <div className="relative h-52 overflow-hidden rounded-[1.5rem]">
-        <img
-          src={tour.image}
-          alt={tour.title}
-          className="h-full w-full object-cover"
-        />
+        <img src={tour.image} alt={tour.title} className="h-full w-full object-cover" />
 
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,48,56,0.02)_0%,rgba(8,48,56,0.08)_46%,rgba(8,48,56,0.35)_100%)]" />
 
@@ -198,11 +324,11 @@ function TourRow({
 export default async function ToursPage() {
   const activeTours = (await getActiveTours()) as ActiveTourRecord[]
   const language = await getServerLanguage()
-  const appT = appTranslations[language]
-  const locale: Locale = isLocale(language) ? language : 'nl'
-  const websiteT = getTranslation(locale)
+  const safeLanguage: AppLanguage =
+    language === 'en' || language === 'de' ? language : 'nl'
+  const t = appTranslations[safeLanguage]
 
-  const marketingTours = websiteT.tours
+  const marketingTours = websiteTours[safeLanguage]
   const orderedTours = [
     ...marketingTours.filter((tour) => tour.available),
     ...marketingTours.filter((tour) => !tour.available),
@@ -217,34 +343,32 @@ export default async function ToursPage() {
             className="inline-flex items-center text-sm font-medium text-[#5b757b] transition hover:text-[#0f4b58]"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            {appT.back}
+            {t.back}
           </Link>
 
           <div className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#eef8f8] px-3 py-1 text-xs font-semibold text-[#4f8a8e]">
             <MapPinned className="h-3.5 w-3.5" />
-            {appT.availableRoutes}
+            {t.availableRoutes}
           </div>
         </div>
 
         <h1 className="mt-6 text-3xl font-semibold text-[#143a43] md:text-4xl">
-          {appT.chooseTour}
+          {t.chooseTour}
         </h1>
 
         <p className="mt-3 max-w-3xl text-sm leading-7 text-[#5b757b] md:text-base">
-          {getIntro(locale)}
+          {getIntro(safeLanguage)}
         </p>
       </section>
 
       <section className="mt-5 overflow-hidden rounded-[2.4rem] border border-[#dbecef] bg-white shadow-[0_24px_70px_rgba(15,75,88,0.08)]">
         {orderedTours.length === 0 ? (
-          <div className="px-5 py-6 text-sm text-[#5b757b]">
-            {appT.noToursAvailable}
-          </div>
+          <div className="px-5 py-6 text-sm text-[#5b757b]">{t.noToursAvailable}</div>
         ) : (
           <div className="divide-y divide-[#e7f1f2]">
             {orderedTours.map((marketingTour) => {
               const matchedActiveTour = marketingTour.available
-                ? findMatchingActiveTour(marketingTour, activeTours, locale)
+                ? findMatchingActiveTour(marketingTour, activeTours, safeLanguage)
                 : null
 
               return (
@@ -257,9 +381,7 @@ export default async function ToursPage() {
                       ? `/checkout/${matchedActiveTour.slug}`
                       : undefined
                   }
-                  buttonLabel={
-                    marketingTour.available ? marketingTour.cta : getComingSoonButton(locale)
-                  }
+                  buttonLabel={marketingTour.cta}
                 />
               )
             })}
