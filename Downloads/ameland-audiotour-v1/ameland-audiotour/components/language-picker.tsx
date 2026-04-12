@@ -8,10 +8,10 @@ import {
   AppLanguage,
 } from '@/lib/app-language'
 
-const options: Array<{ code: AppLanguage; flag: string; label: string }> = [
-  { code: 'nl', flag: '🇳🇱', label: 'NL' },
-  { code: 'en', flag: '🇬🇧', label: 'EN' },
-  { code: 'de', flag: '🇩🇪', label: 'DE' },
+const options: Array<{ code: AppLanguage; label: string }> = [
+  { code: 'nl', label: 'NL' },
+  { code: 'en', label: 'EN' },
+  { code: 'de', label: 'DE' },
 ]
 
 export function LanguagePicker({
@@ -34,21 +34,25 @@ export function LanguagePicker({
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-full bg-white/80 p-1 shadow-card">
-      {options.map((option) => (
-        <button
-          key={option.code}
-          onClick={() => changeLanguage(option.code)}
-          className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-            language === option.code
-              ? 'bg-app-accent text-white'
-              : 'text-app-accent hover:bg-app-soft'
-          }`}
-        >
-          <span>{option.flag}</span>
-          <span>{option.label}</span>
-        </button>
-      ))}
+    <div className="flex items-center gap-2 rounded-full border border-[#d8e9ea] bg-[#f7ffff] p-1">
+      {options.map((option) => {
+        const active = language === option.code
+
+        return (
+          <button
+            key={option.code}
+            onClick={() => changeLanguage(option.code)}
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold tracking-[0.08em] transition ${
+              active
+                ? 'bg-[#0f4b58] text-white'
+                : 'text-[#2b5a64] hover:bg-white'
+            }`}
+            type="button"
+          >
+            {option.label}
+          </button>
+        )
+      })}
     </div>
   )
 }

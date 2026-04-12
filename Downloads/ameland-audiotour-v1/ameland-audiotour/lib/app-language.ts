@@ -445,7 +445,7 @@ export const translations = {
     notFoundTitle: 'Seite nicht gefunden',
     notFoundText: 'Die Seite, die du suchst, existiert nicht oder wurde verschoben.',
 
-    availableRoutes: 'Verfügbare Routen',
+    availableRoutes: 'Verfügbare routes',
     chooseTour: 'Wähle deine Tour',
     chooseTourText:
       'Wähle die Route, die zu deinem Tag auf Ameland passt, und starte einfach auf deinem Handy.',
@@ -587,7 +587,7 @@ export const translations = {
     completionShareText:
       'Ich habe gerade die Audiotour "{tourTitle}" auf Ameland abgeschlossen. Eine wirklich schöne Art, die Insel zu erleben.',
     completionMoreLabel: 'Lust auf mehr?',
-    completionMoreTitle: 'Entdecke noch eine andere Route auf Ameland',
+    completionMoreTitle: 'Entdecke noch eine andere Route op Ameland',
     completionMoreText:
       'Erlebe die Insel noch einmal – mit einer anderen Geschichte, einer anderen Stimmung und neuen Orten.',
     completionNextTourButton: 'Nächste Tour ansehen',

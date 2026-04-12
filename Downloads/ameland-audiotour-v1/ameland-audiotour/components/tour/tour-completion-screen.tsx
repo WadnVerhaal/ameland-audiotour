@@ -40,9 +40,17 @@ type Props = {
   shareUrl?: string
 }
 
-type ThemeColors = {
-  accent: string
-  softRgb: string
+const BRAND = {
+  border: '#dbecef',
+  borderStrong: '#cfe3e5',
+  heading: '#0d3d48',
+  body: '#143a43',
+  muted: '#5b757b',
+  accent: '#0f4b58',
+  accentAlt: '#12879a',
+  coral: '#ef7f63',
+  shadow: '0 24px 70px rgba(15,75,88,0.08)',
+  shadowStrong: '0 30px 80px rgba(15,75,88,0.20)',
 }
 
 const bonusMessages = {
@@ -78,18 +86,6 @@ const bonusMessages = {
   ],
 } as const
 
-function hexToRgba(hex: string, alpha: number) {
-  const cleaned = hex.replace('#', '').trim()
-
-  if (cleaned.length !== 6) return `rgba(31,79,130,${alpha})`
-
-  const r = parseInt(cleaned.slice(0, 2), 16)
-  const g = parseInt(cleaned.slice(2, 4), 16)
-  const b = parseInt(cleaned.slice(4, 6), 16)
-
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
 function StatCard({
   icon,
   label,
@@ -100,12 +96,18 @@ function StatCard({
   value: string
 }) {
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-card">
-      <div className="mb-2 flex items-center gap-2 text-app-muted">
+    <div
+      className="rounded-[1.5rem] border bg-white p-4"
+      style={{
+        borderColor: BRAND.border,
+        boxShadow: '0 12px 35px rgba(18,75,84,0.08)',
+      }}
+    >
+      <div className="mb-2 flex items-center gap-2 text-[#5a8d93]">
         {icon}
         <span className="text-[11px] font-semibold uppercase tracking-[0.16em]">{label}</span>
       </div>
-      <div className="text-base font-semibold text-app-accent">{value}</div>
+      <div className="text-base font-semibold text-[#143a43]">{value}</div>
     </div>
   )
 }
@@ -127,7 +129,9 @@ function StarRating({
             type="button"
             onClick={() => onChange(star)}
             className={`rounded-full p-2 transition ${
-              active ? 'bg-app-soft text-app-accent' : 'bg-white text-app-muted hover:bg-app-soft'
+              active
+                ? 'bg-[#eef8f8] text-[#0f4b58]'
+                : 'bg-white text-[#7ba5aa] hover:bg-[#f8ffff]'
             }`}
             aria-label={`Rate ${star}`}
           >
@@ -161,30 +165,6 @@ export default function TourCompletionScreen({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [themeColors, setThemeColors] = useState<ThemeColors>({
-    accent: '#1f4f82',
-    softRgb: '220,236,255',
-  })
-
-  useMemo(() => {
-    if (typeof window === 'undefined') return
-
-    const rootStyles = getComputedStyle(document.documentElement)
-    const accent = rootStyles.getPropertyValue('--accent').trim() || '#1f4f82'
-    const soft = rootStyles.getPropertyValue('--accent-soft').trim() || '#dcecff'
-
-    const cleanedSoft = soft.replace('#', '')
-    let softRgb = '220,236,255'
-
-    if (cleanedSoft.length === 6) {
-      const r = parseInt(cleanedSoft.slice(0, 2), 16)
-      const g = parseInt(cleanedSoft.slice(2, 4), 16)
-      const b = parseInt(cleanedSoft.slice(4, 6), 16)
-      softRgb = `${r},${g},${b}`
-    }
-
-    setThemeColors({ accent, softRgb })
-  }, [])
 
   const bonus = useMemo(() => {
     const items = bonusMessages[language]
@@ -238,32 +218,30 @@ export default function TourCompletionScreen({
 
   return (
     <section className="mx-auto w-full max-w-2xl px-4 pb-24 pt-6">
-      <div className="overflow-hidden rounded-[2rem] border border-app bg-app-card shadow-soft">
-        <div className="relative overflow-hidden border-b border-app px-5 pb-6 pt-6">
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `radial-gradient(circle at top right, rgba(${themeColors.softRgb},0.95), transparent 38%)`,
-            }}
-          />
+      <div
+        className="overflow-hidden rounded-[2.4rem] border bg-white"
+        style={{
+          borderColor: BRAND.border,
+          boxShadow: BRAND.shadow,
+        }}
+      >
+        <div className="relative overflow-hidden border-b px-5 pb-6 pt-6" style={{ borderColor: '#e7f1f2' }}>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(27,150,165,0.10),transparent_30%),radial-gradient(circle_at_top_right,rgba(239,127,99,0.08),transparent_24%)]" />
           <div className="relative">
-            <div
-              className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full text-app-accent"
-              style={{ background: hexToRgba(themeColors.accent, 0.1) }}
-            >
+            <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#eef8f8] text-[#0f4b58]">
               <CheckCircle2 className="h-8 w-8" />
             </div>
 
-            <div className="inline-flex items-center gap-2 rounded-full bg-app-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-app-accent">
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#eef8f8] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#4f8a8e]">
               <Waves className="h-3.5 w-3.5" />
               {t.completionBadge}
             </div>
 
-            <h1 className="mt-4 text-2xl font-bold tracking-tight text-app-accent">
+            <h1 className="mt-4 text-2xl font-semibold tracking-tight text-[#143a43]">
               {t.completionTitle}
             </h1>
 
-            <p className="mt-3 max-w-xl text-sm leading-6 text-app-muted">
+            <p className="mt-3 max-w-xl text-sm leading-6 text-[#5b757b]">
               {t.completionIntro.replace('{tourTitle}', tourTitle)}
             </p>
           </div>
@@ -271,22 +249,22 @@ export default function TourCompletionScreen({
 
         <div className="grid grid-cols-2 gap-3 px-5 py-5">
           <StatCard
-            icon={<Map className="h-4 w-4 text-app-accent" />}
+            icon={<Map className="h-4 w-4 text-[#12879a]" />}
             label={t.completionStopsLabel}
             value={`${stopsCompleted}/${stopsTotal} ${t.completionStopsValue}`}
           />
           <StatCard
-            icon={<Route className="h-4 w-4 text-app-accent" />}
+            icon={<Route className="h-4 w-4 text-[#12879a]" />}
             label={t.distance}
             value={`${distanceKm.toFixed(1)} km`}
           />
           <StatCard
-            icon={<Clock3 className="h-4 w-4 text-app-accent" />}
+            icon={<Clock3 className="h-4 w-4 text-[#12879a]" />}
             label={t.completionDurationLabel}
             value={`${durationMinutes} min`}
           />
           <StatCard
-            icon={<CheckCircle2 className="h-4 w-4 text-app-accent" />}
+            icon={<CheckCircle2 className="h-4 w-4 text-[#12879a]" />}
             label={t.completionFinishedLabel}
             value={completedAtLabel}
           />
@@ -294,23 +272,23 @@ export default function TourCompletionScreen({
 
         <div className="px-5 pb-5">
           <div
-            className="rounded-[1.5rem] border p-4"
+            className="rounded-[1.6rem] border p-4"
             style={{
-              borderColor: hexToRgba(themeColors.accent, 0.14),
-              background: hexToRgba(themeColors.accent, 0.06),
+              borderColor: '#d7ecea',
+              background: '#f8ffff',
             }}
           >
-            <div className="mb-2 flex items-center gap-2 text-app-accent">
+            <div className="mb-2 flex items-center gap-2 text-[#12879a]">
               <Gift className="h-5 w-5" />
-              <h2 className="text-sm font-semibold">{bonus.title}</h2>
+              <h2 className="text-sm font-semibold text-[#143a43]">{bonus.title}</h2>
             </div>
-            <p className="text-sm leading-6 text-app-muted">{bonus.text}</p>
+            <p className="text-sm leading-6 text-[#5b757b]">{bonus.text}</p>
           </div>
         </div>
 
-        <div className="border-t border-app px-5 py-5">
-          <div className="mb-4 flex items-center gap-2 text-app-accent">
-            <MessageSquareText className="h-5 w-5" />
+        <div className="border-t px-5 py-5" style={{ borderColor: '#e7f1f2' }}>
+          <div className="mb-4 flex items-center gap-2 text-[#143a43]">
+            <MessageSquareText className="h-5 w-5 text-[#12879a]" />
             <h2 className="text-lg font-semibold">{t.completionExperienceTitle}</h2>
           </div>
 
@@ -321,14 +299,15 @@ export default function TourCompletionScreen({
               {rating > 0 && (
                 <>
                   <div className="mt-5">
-                    <label className="mb-2 block text-sm font-medium text-app-accent">
+                    <label className="mb-2 block text-sm font-medium text-[#143a43]">
                       {feedbackPrompt}
                     </label>
                     <textarea
                       value={feedbackText}
                       onChange={(e) => setFeedbackText(e.target.value)}
                       rows={4}
-                      className="w-full rounded-2xl border border-app bg-white px-4 py-3 text-sm text-app outline-none transition focus:border-app-accent"
+                      className="w-full rounded-2xl border bg-white px-4 py-3 text-sm text-[#143a43] outline-none transition"
+                      style={{ borderColor: BRAND.borderStrong }}
                       placeholder={
                         rating >= 4
                           ? t.completionFeedbackPlaceholderPositive
@@ -338,19 +317,20 @@ export default function TourCompletionScreen({
                   </div>
 
                   <div className="mt-5">
-                    <label className="mb-2 block text-sm font-medium text-app-accent">
+                    <label className="mb-2 block text-sm font-medium text-[#143a43]">
                       {t.completionFavoriteLabel}
                     </label>
                     <input
                       value={favoritePart}
                       onChange={(e) => setFavoritePart(e.target.value)}
-                      className="w-full rounded-2xl border border-app bg-white px-4 py-3 text-sm text-app outline-none transition focus:border-app-accent"
+                      className="w-full rounded-2xl border bg-white px-4 py-3 text-sm text-[#143a43] outline-none transition"
+                      style={{ borderColor: BRAND.borderStrong }}
                       placeholder={t.completionFavoritePlaceholder}
                     />
                   </div>
 
                   <div className="mt-5">
-                    <p className="mb-2 text-sm font-medium text-app-accent">
+                    <p className="mb-2 text-sm font-medium text-[#143a43]">
                       {t.completionRecommendLabel}
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -367,9 +347,13 @@ export default function TourCompletionScreen({
                             onClick={() => setRecommendation(option.value)}
                             className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                               active
-                                ? 'border-transparent bg-app-accent text-white'
-                                : 'border-app bg-white text-app-accent hover:bg-app-soft'
+                                ? 'text-white'
+                                : 'bg-white text-[#0f4b58] hover:bg-[#f8ffff]'
                             }`}
+                            style={{
+                              background: active ? BRAND.accent : '#ffffff',
+                              borderColor: active ? BRAND.accent : BRAND.borderStrong,
+                            }}
                           >
                             {option.label}
                           </button>
@@ -382,7 +366,11 @@ export default function TourCompletionScreen({
                     type="button"
                     onClick={handleSubmit}
                     disabled={!rating || isSubmitting}
-                    className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-app-accent px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+                    style={{
+                      background: BRAND.accent,
+                      boxShadow: '0 16px 38px rgba(15,75,88,0.20)',
+                    }}
                   >
                     {isSubmitting ? t.completionSubmitting : t.completionSubmit}
                   </button>
@@ -393,9 +381,9 @@ export default function TourCompletionScreen({
             <div
               className="rounded-2xl border p-4 text-sm"
               style={{
-                borderColor: hexToRgba(themeColors.accent, 0.16),
-                background: hexToRgba(themeColors.accent, 0.08),
-                color: themeColors.accent,
+                borderColor: '#d7ecea',
+                background: '#eef8f8',
+                color: '#0f4b58',
               }}
             >
               {t.completionSubmitted}
@@ -403,34 +391,47 @@ export default function TourCompletionScreen({
           )}
         </div>
 
-        <div className="border-t border-app px-5 py-5">
+        <div className="border-t px-5 py-5" style={{ borderColor: '#e7f1f2' }}>
           <div className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-[1.5rem] bg-white p-4 shadow-card">
-              <div className="mb-2 flex items-center gap-2 text-app-accent">
-                <BadgeCheck className="h-5 w-5" />
+            <div
+              className="rounded-[1.5rem] border bg-white p-4"
+              style={{
+                borderColor: BRAND.border,
+                boxShadow: '0 12px 35px rgba(18,75,84,0.08)',
+              }}
+            >
+              <div className="mb-2 flex items-center gap-2 text-[#143a43]">
+                <BadgeCheck className="h-5 w-5 text-[#12879a]" />
                 <h3 className="text-sm font-semibold">{t.completionBadgeCardTitle}</h3>
               </div>
-              <p className="text-base font-semibold text-app-accent">
+              <p className="text-base font-semibold text-[#143a43]">
                 {t.completionBadgeCardName}
               </p>
-              <p className="mt-1 text-sm leading-6 text-app-muted">
+              <p className="mt-1 text-sm leading-6 text-[#5b757b]">
                 {t.completionBadgeCardText}
               </p>
             </div>
 
-            <div className="rounded-[1.5rem] bg-white p-4 shadow-card">
-              <div className="mb-2 flex items-center gap-2 text-app-accent">
-                <Share2 className="h-5 w-5" />
+            <div
+              className="rounded-[1.5rem] border bg-white p-4"
+              style={{
+                borderColor: BRAND.border,
+                boxShadow: '0 12px 35px rgba(18,75,84,0.08)',
+              }}
+            >
+              <div className="mb-2 flex items-center gap-2 text-[#143a43]">
+                <Share2 className="h-5 w-5 text-[#12879a]" />
                 <h3 className="text-sm font-semibold">{t.completionShareTitle}</h3>
               </div>
-              <p className="mb-3 text-sm leading-6 text-app-muted">
+              <p className="mb-3 text-sm leading-6 text-[#5b757b]">
                 {t.completionShareBody}
               </p>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={handleShare}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-app bg-white px-4 py-2.5 text-sm font-semibold text-app-accent transition hover:bg-app-soft"
+                  className="inline-flex items-center gap-2 rounded-2xl border bg-white px-4 py-2.5 text-sm font-semibold text-[#0f4b58] transition hover:bg-[#f8ffff]"
+                  style={{ borderColor: BRAND.borderStrong }}
                 >
                   <Share2 className="h-4 w-4" />
                   {t.completionShareButton}
@@ -439,7 +440,8 @@ export default function TourCompletionScreen({
                   <button
                     type="button"
                     onClick={handleCopyLink}
-                    className="inline-flex items-center gap-2 rounded-2xl border border-app bg-white px-4 py-2.5 text-sm font-semibold text-app-accent transition hover:bg-app-soft"
+                    className="inline-flex items-center gap-2 rounded-2xl border bg-white px-4 py-2.5 text-sm font-semibold text-[#0f4b58] transition hover:bg-[#f8ffff]"
+                    style={{ borderColor: BRAND.borderStrong }}
                   >
                     <Copy className="h-4 w-4" />
                     {copied ? t.completionCopied : t.completionCopy}
@@ -450,33 +452,39 @@ export default function TourCompletionScreen({
           </div>
         </div>
 
-        <div className="border-t border-app px-5 py-5">
-          <div className="rounded-[1.75rem] bg-app-accent p-5 text-white shadow-card">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
-              {t.completionMoreLabel}
-            </p>
-            <h2 className="mt-2 text-xl font-semibold">{t.completionMoreTitle}</h2>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-white/80">
-              {t.completionMoreText}
-            </p>
+        <div className="border-t px-5 py-5" style={{ borderColor: '#e7f1f2' }}>
+          <div
+            className="relative overflow-hidden rounded-[2rem] p-5 text-white"
+            style={{ boxShadow: BRAND.shadowStrong }}
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.10),transparent_30%),linear-gradient(135deg,#0f4b58_0%,#0d3f4d_58%,#0a3340_100%)]" />
+            <div className="relative">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9cd4d1]">
+                {t.completionMoreLabel}
+              </p>
+              <h2 className="mt-2 text-xl font-semibold">{t.completionMoreTitle}</h2>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-[#d3ebea]">
+                {t.completionMoreText}
+              </p>
 
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={onViewNextTour}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-app-accent transition hover:opacity-95"
-              >
-                {t.completionNextTourButton}
-                <ArrowRight className="h-4 w-4" />
-              </button>
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={onViewNextTour}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-[#0f4b58] transition hover:bg-[#f3ffff]"
+                >
+                  {t.completionNextTourButton}
+                  <ArrowRight className="h-4 w-4" />
+                </button>
 
-              <button
-                type="button"
-                onClick={onBackToOverview}
-                className="inline-flex items-center justify-center rounded-2xl border border-white/25 px-5 py-3 text-sm font-semibold text-white transition hover:border-white/45"
-              >
-                {t.completionBackButton}
-              </button>
+                <button
+                  type="button"
+                  onClick={onBackToOverview}
+                  className="inline-flex items-center justify-center rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:border-white/40"
+                >
+                  {t.completionBackButton}
+                </button>
+              </div>
             </div>
           </div>
         </div>

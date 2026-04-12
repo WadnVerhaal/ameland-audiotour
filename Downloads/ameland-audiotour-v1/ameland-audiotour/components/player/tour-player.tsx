@@ -66,47 +66,54 @@ type Position = {
 type RoutePoint = [number, number]
 type GeoPermissionState = 'unknown' | 'granted' | 'prompt' | 'denied'
 
-type ThemeColors = {
-  accent: string
-  badge: string
-  softRgb: string
+const BRAND = {
+  pageBg: '#f4fbfb',
+  panelBg: '#ffffff',
+  panelSoft: '#f7ffff',
+  border: '#dbecef',
+  borderStrong: '#cfe3e5',
+  heading: '#0d3d48',
+  body: '#143a43',
+  muted: '#5b757b',
+  accent: '#0f4b58',
+  accentAlt: '#12879a',
+  coral: '#ef7f63',
+  successSoft: '#eef8f8',
+  shadow: '0 24px 70px rgba(15,75,88,0.08)',
+  shadowStrong: '0 34px 90px rgba(15,75,88,0.14)',
 }
 
-function createUserIcon(accent: string) {
-  return new L.DivIcon({
-    className: '',
-    html: `
-      <div style="
-        width:18px;
-        height:18px;
-        border-radius:9999px;
-        background:${accent};
-        border:3px solid #ffffff;
-        box-shadow:0 0 0 4px rgba(31,79,130,.18);
-      "></div>
-    `,
-    iconSize: [18, 18],
-    iconAnchor: [9, 9],
-  })
-}
+const userIcon = new L.DivIcon({
+  className: '',
+  html: `
+    <div style="
+      width:18px;
+      height:18px;
+      border-radius:9999px;
+      background:#0f4b58;
+      border:3px solid #ffffff;
+      box-shadow:0 0 0 4px rgba(15,75,88,.16);
+    "></div>
+  `,
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+})
 
-function createStopIcon(badge: string) {
-  return new L.DivIcon({
-    className: '',
-    html: `
-      <div style="
-        width:20px;
-        height:20px;
-        border-radius:9999px;
-        background:${badge};
-        border:3px solid #ffffff;
-        box-shadow:0 0 0 4px rgba(95,143,199,.18);
-      "></div>
-    `,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-  })
-}
+const stopIcon = new L.DivIcon({
+  className: '',
+  html: `
+    <div style="
+      width:20px;
+      height:20px;
+      border-radius:9999px;
+      background:#ef7f63;
+      border:3px solid #ffffff;
+      box-shadow:0 0 0 4px rgba(239,127,99,.16);
+    "></div>
+  `,
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+})
 
 function formatDistance(meters: number) {
   const roundedMeters = Math.round(meters)
@@ -140,18 +147,6 @@ function normalizeWalkingDuration(
   return Math.max(Math.round(apiDurationSeconds), baseline)
 }
 
-function hexToRgba(hex: string, alpha: number) {
-  const cleaned = hex.replace('#', '').trim()
-
-  if (cleaned.length !== 6) return `rgba(31,79,130,${alpha})`
-
-  const r = parseInt(cleaned.slice(0, 2), 16)
-  const g = parseInt(cleaned.slice(2, 4), 16)
-  const b = parseInt(cleaned.slice(4, 6), 16)
-
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
 function RecenterMap({
   position,
   stop,
@@ -169,7 +164,7 @@ function RecenterMap({
         [position.lat, position.lng],
         [Number(stop.lat), Number(stop.lng)]
       )
-      map.fitBounds(bounds, { padding: [30, 30], animate: true, maxZoom: 17 })
+      map.fitBounds(bounds, { padding: [28, 28], animate: true, maxZoom: 17 })
       return
     }
 
@@ -196,12 +191,18 @@ function InfoCard({
   value: string
 }) {
   return (
-    <div className="rounded-2xl bg-white p-3 shadow-card">
-      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-app-muted">
+    <div
+      className="rounded-[1.35rem] border bg-white p-3"
+      style={{
+        borderColor: BRAND.border,
+        boxShadow: '0 12px 35px rgba(18,75,84,0.06)',
+      }}
+    >
+      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#5a8d93]">
         {icon}
         <span>{label}</span>
       </div>
-      <p className="mt-2 text-sm font-semibold text-app-accent">{value}</p>
+      <p className="mt-2 text-sm font-semibold text-[#143a43]">{value}</p>
     </div>
   )
 }
@@ -236,11 +237,6 @@ export function TourPlayer({
   const [routeDurationSeconds, setRouteDurationSeconds] = useState<number | null>(null)
   const [showCompletionScreen, setShowCompletionScreen] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
-  const [themeColors, setThemeColors] = useState<ThemeColors>({
-    accent: '#1f4f82',
-    badge: '#5f8fc7',
-    softRgb: '220,236,255',
-  })
 
   const currentStop = useMemo(() => stops[currentIndex] ?? null, [stops, currentIndex])
   const t = translations[language]
@@ -249,32 +245,6 @@ export function TourPlayer({
   const resolvedTourSlug = tourSlug ?? token
   const resolvedTourTitle = tourTitle ?? 'Ameland audiotour'
   const isLastStop = currentIndex === stops.length - 1
-
-  const userIcon = useMemo(() => createUserIcon(themeColors.accent), [themeColors.accent])
-  const stopIcon = useMemo(() => createStopIcon(themeColors.badge), [themeColors.badge])
-
-  useEffect(() => {
-    const rootStyles = getComputedStyle(document.documentElement)
-    const accent = rootStyles.getPropertyValue('--accent').trim() || '#1f4f82'
-    const badge = rootStyles.getPropertyValue('--badge').trim() || accent
-    const soft = rootStyles.getPropertyValue('--accent-soft').trim() || '#dcecff'
-
-    const cleanedSoft = soft.replace('#', '')
-    let softRgb = '220,236,255'
-
-    if (cleanedSoft.length === 6) {
-      const r = parseInt(cleanedSoft.slice(0, 2), 16)
-      const g = parseInt(cleanedSoft.slice(2, 4), 16)
-      const b = parseInt(cleanedSoft.slice(4, 6), 16)
-      softRgb = `${r},${g},${b}`
-    }
-
-    setThemeColors({
-      accent,
-      badge,
-      softRgb,
-    })
-  }, [])
 
   useEffect(() => {
     setLanguage(initialLanguage)
@@ -421,6 +391,7 @@ export function TourPlayer({
 
   function pauseCurrentStop() {
     if (!audioRef.current) return
+
     audioRef.current.pause()
     setPlaying(false)
   }
@@ -652,6 +623,7 @@ export function TourPlayer({
         stopsCompleted={stops.length}
         durationSeconds={elapsedSeconds}
         distanceKm={distanceKm ?? 0}
+        language={language}
       />
     )
   }
@@ -665,26 +637,27 @@ export function TourPlayer({
         onPlay={() => setPlaying(true)}
       />
 
-      <section className="relative overflow-hidden rounded-[2rem] border border-app bg-app-card shadow-soft">
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `radial-gradient(circle at top right, rgba(${themeColors.softRgb},0.95), transparent 35%)`,
-          }}
-        />
-        <div className="relative p-4">
+      <section
+        className="relative overflow-hidden rounded-[2.4rem] border bg-white"
+        style={{
+          borderColor: BRAND.border,
+          boxShadow: BRAND.shadowStrong,
+        }}
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(27,150,165,0.10),transparent_30%),radial-gradient(circle_at_top_right,rgba(239,127,99,0.08),transparent_24%)]" />
+        <div className="relative p-4 md:p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="inline-flex items-center gap-2 rounded-full bg-app-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-app-accent">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#eef8f8] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#4f8a8e]">
                 <Waves className="h-3.5 w-3.5" />
                 {t.tourActive}
               </div>
 
-              <h1 className="mt-3 text-xl font-bold leading-tight text-app-accent">
+              <h1 className="mt-3 text-xl font-semibold leading-tight text-[#143a43]">
                 {currentStopTitle}
               </h1>
 
-              <p className="mt-2 text-sm text-app-muted">
+              <p className="mt-2 text-sm text-[#5b757b]">
                 {t.stopLabel} {currentIndex + 1} {t.of} {stops.length}
               </p>
             </div>
@@ -692,11 +665,12 @@ export function TourPlayer({
             <div
               className="shrink-0 rounded-2xl px-3 py-2 text-right"
               style={{
-                background: hasArrived ? hexToRgba(themeColors.accent, 0.09) : '#ffffff',
-                color: themeColors.accent,
+                background: hasArrived ? '#eef8f8' : '#ffffff',
+                color: BRAND.accent,
+                border: `1px solid ${BRAND.border}`,
               }}
             >
-              <div className="text-[11px] uppercase tracking-[0.16em] text-app-muted">
+              <div className="text-[11px] uppercase tracking-[0.16em] text-[#5a8d93]">
                 {t.status}
               </div>
               <div className="mt-1 text-sm font-semibold">
@@ -705,14 +679,20 @@ export function TourPlayer({
             </div>
           </div>
 
-          <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/80">
+          <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[#e7f1f2]">
             <div
-              className="h-full rounded-full bg-app-accent transition-all"
-              style={{ width: `${progress}%` }}
+              className="h-full rounded-full transition-all"
+              style={{ width: `${progress}%`, background: BRAND.accent }}
             />
           </div>
 
-          <div className="mt-4 overflow-hidden rounded-[1.6rem] border border-app bg-white shadow-card">
+          <div
+            className="mt-4 overflow-hidden rounded-[1.8rem] border bg-white"
+            style={{
+              borderColor: BRAND.borderStrong,
+              boxShadow: '0 12px 35px rgba(18,75,84,0.08)',
+            }}
+          >
             <MapContainer center={mapCenter} zoom={16} style={mapStyle} scrollWheelZoom>
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -731,8 +711,8 @@ export function TourPlayer({
                       center={[position.lat, position.lng]}
                       radius={position.accuracy}
                       pathOptions={{
-                        color: themeColors.accent,
-                        fillColor: themeColors.accent,
+                        color: BRAND.accent,
+                        fillColor: BRAND.accent,
                         fillOpacity: 0.08,
                         opacity: 0.18,
                       }}
@@ -756,10 +736,10 @@ export function TourPlayer({
                     center={[Number(currentStop.lat), Number(currentStop.lng)]}
                     radius={Number(currentStop.trigger_radius_meters ?? 35)}
                     pathOptions={{
-                      color: themeColors.badge,
-                      fillColor: themeColors.badge,
+                      color: BRAND.coral,
+                      fillColor: BRAND.coral,
                       fillOpacity: 0.1,
-                      opacity: 0.35,
+                      opacity: 0.28,
                     }}
                   />
                 </>
@@ -769,62 +749,74 @@ export function TourPlayer({
                 <Polyline
                   positions={routeLine}
                   pathOptions={{
-                    color: themeColors.accent,
+                    color: BRAND.accentAlt,
                     weight: 5,
-                    opacity: 0.85,
+                    opacity: 0.9,
                   }}
                 />
               ) : null}
             </MapContainer>
           </div>
 
-          <div className="mt-4 rounded-[1.35rem] border border-app bg-white/80 p-4">
+          <div
+            className="mt-4 rounded-[1.6rem] border bg-[#f8ffff] p-4"
+            style={{ borderColor: BRAND.borderStrong }}
+          >
             <div className="flex items-start gap-3">
-              <Volume2 className="mt-0.5 h-5 w-5 text-app-accent" />
+              <Volume2 className="mt-0.5 h-5 w-5 text-[#12879a]" />
               <div>
-                <p className="text-sm font-semibold text-app-accent">
-                  {t.safeListeningTitle}
-                </p>
-                <p className="mt-1 text-sm leading-6 text-app-muted">
-                  {t.safeListeningText}
-                </p>
+                <p className="text-sm font-semibold text-[#143a43]">{t.safeListeningTitle}</p>
+                <p className="mt-1 text-sm leading-6 text-[#5b757b]">{t.safeListeningText}</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="rounded-[1.75rem] border border-app bg-app-card p-3 shadow-card">
+      <section
+        className="rounded-[2rem] border bg-white p-3"
+        style={{
+          borderColor: BRAND.border,
+          boxShadow: BRAND.shadow,
+        }}
+      >
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <InfoCard
-            icon={<LocateFixed className="h-3.5 w-3.5 text-app-accent" />}
+            icon={<LocateFixed className="h-3.5 w-3.5 text-[#12879a]" />}
             label={t.you}
             value={gpsAllowed ? t.locationActive : t.locationOff}
           />
           <InfoCard
-            icon={<Route className="h-3.5 w-3.5 text-app-accent" />}
+            icon={<Route className="h-3.5 w-3.5 text-[#12879a]" />}
             label={t.direction}
             value={t.shortestWalkingRoute}
           />
           <InfoCard
-            icon={<Compass className="h-3.5 w-3.5 text-app-accent" />}
+            icon={<Compass className="h-3.5 w-3.5 text-[#12879a]" />}
             label={t.distance}
             value={distanceToStop !== null ? formatDistance(distanceToStop) : '--'}
           />
           <InfoCard
-            icon={<Navigation className="h-3.5 w-3.5 text-app-accent" />}
+            icon={<Navigation className="h-3.5 w-3.5 text-[#12879a]" />}
             label={t.time}
             value={timeToStopSeconds !== null ? estimateWalkingTime(timeToStopSeconds) : '--'}
           />
         </div>
       </section>
 
-      <section className="rounded-[1.75rem] border border-app bg-app-card p-4 shadow-card">
+      <section
+        className="rounded-[2rem] border bg-white p-4"
+        style={{
+          borderColor: BRAND.border,
+          boxShadow: BRAND.shadow,
+        }}
+      >
         <div className="grid grid-cols-3 items-center gap-3">
           <button
             onClick={previousStop}
             disabled={currentIndex === 0}
-            className="inline-flex items-center justify-center rounded-2xl border border-app bg-white px-3 py-3 text-sm font-semibold text-app-accent transition hover:bg-app-soft disabled:opacity-40"
+            className="inline-flex items-center justify-center rounded-2xl border bg-white px-3 py-3 text-sm font-semibold text-[#0f4b58] transition hover:bg-[#f8ffff] disabled:opacity-40"
+            style={{ borderColor: BRAND.borderStrong }}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t.previous}
@@ -832,7 +824,11 @@ export function TourPlayer({
 
           <button
             onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())}
-            className="inline-flex h-14 w-14 items-center justify-center justify-self-center rounded-full bg-app-accent text-white shadow-soft transition hover:opacity-95"
+            className="inline-flex h-14 w-14 items-center justify-center justify-self-center rounded-full text-white transition hover:opacity-95"
+            style={{
+              background: BRAND.accent,
+              boxShadow: '0 16px 38px rgba(15,75,88,0.20)',
+            }}
             aria-label={playing ? t.pauseAudio : t.playAudio}
           >
             {playing ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5" />}
@@ -841,7 +837,8 @@ export function TourPlayer({
           <button
             onClick={nextStop}
             disabled={currentIndex === stops.length - 1}
-            className="inline-flex items-center justify-center rounded-2xl border border-app bg-white px-3 py-3 text-sm font-semibold text-app-accent transition hover:bg-app-soft disabled:opacity-40"
+            className="inline-flex items-center justify-center rounded-2xl border bg-white px-3 py-3 text-sm font-semibold text-[#0f4b58] transition hover:bg-[#f8ffff] disabled:opacity-40"
+            style={{ borderColor: BRAND.borderStrong }}
           >
             {t.next}
             <ArrowRight className="ml-2 h-4 w-4" />
@@ -851,7 +848,8 @@ export function TourPlayer({
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
           <button
             onClick={requestLocationAgain}
-            className="inline-flex items-center justify-center rounded-2xl border border-app bg-white px-4 py-3 text-sm font-semibold text-app-accent transition hover:bg-app-soft"
+            className="inline-flex items-center justify-center rounded-2xl border bg-white px-4 py-3 text-sm font-semibold text-[#0f4b58] transition hover:bg-[#f8ffff]"
+            style={{ borderColor: BRAND.borderStrong }}
           >
             <LocateFixed className="mr-2 h-4 w-4" />
             {t.enableLocation}
@@ -859,7 +857,11 @@ export function TourPlayer({
 
           <button
             onClick={openWalkingRoute}
-            className="inline-flex items-center justify-center rounded-2xl bg-app-accent px-4 py-3 text-sm font-semibold text-white shadow-card transition hover:opacity-95"
+            className="inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-semibold text-white transition hover:opacity-95"
+            style={{
+              background: BRAND.accent,
+              boxShadow: '0 12px 30px rgba(15,75,88,0.18)',
+            }}
           >
             <MapPinned className="mr-2 h-4 w-4" />
             {t.openWalkingRoute}
@@ -867,7 +869,8 @@ export function TourPlayer({
 
           <button
             onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())}
-            className="inline-flex items-center justify-center rounded-2xl border border-app bg-white px-4 py-3 text-sm font-semibold text-app-accent transition hover:bg-app-soft"
+            className="inline-flex items-center justify-center rounded-2xl border bg-white px-4 py-3 text-sm font-semibold text-[#0f4b58] transition hover:bg-[#f8ffff]"
+            style={{ borderColor: BRAND.borderStrong }}
           >
             <Volume2 className="mr-2 h-4 w-4" />
             {playing ? t.pauseAudio : t.playAudio}
@@ -877,30 +880,37 @@ export function TourPlayer({
 
       {error ? (
         <div
-          className="rounded-[1.5rem] border p-4 text-sm leading-6 shadow-card"
+          className="rounded-[1.6rem] border p-4 text-sm leading-6"
           style={{
-            borderColor: hexToRgba(themeColors.accent, 0.18),
-            background: hexToRgba(themeColors.accent, 0.08),
-            color: themeColors.accent,
+            borderColor: '#ffd7cc',
+            background: '#fff4f1',
+            color: '#b85c45',
+            boxShadow: '0 12px 35px rgba(239,127,99,0.10)',
           }}
         >
           {error}
         </div>
       ) : null}
 
-      <section className="rounded-[1.75rem] border border-app bg-app-card p-4 shadow-card">
+      <section
+        className="rounded-[2rem] border bg-white p-4"
+        style={{
+          borderColor: BRAND.border,
+          boxShadow: BRAND.shadow,
+        }}
+      >
         <button
           onClick={() => setShowStops((prev) => !prev)}
           className="flex w-full items-center justify-between gap-3"
         >
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-app-accent" />
-            <h2 className="text-base font-semibold text-app-accent">{t.allStops}</h2>
+            <CheckCircle2 className="h-4 w-4 text-[#12879a]" />
+            <h2 className="text-base font-semibold text-[#143a43]">{t.allStops}</h2>
           </div>
           {showStops ? (
-            <ChevronUp className="h-5 w-5 text-app-accent" />
+            <ChevronUp className="h-5 w-5 text-[#0f4b58]" />
           ) : (
-            <ChevronDown className="h-5 w-5 text-app-accent" />
+            <ChevronDown className="h-5 w-5 text-[#0f4b58]" />
           )}
         </button>
 
@@ -914,11 +924,16 @@ export function TourPlayer({
                 <button
                   key={stop.id}
                   onClick={() => goToStop(index)}
-                  className={`block w-full rounded-[1.25rem] border p-4 text-left transition ${
-                    currentIndex === index
-                      ? 'border-transparent bg-app-accent text-white shadow-card'
-                      : 'border-app bg-white text-app shadow-card hover:bg-app-soft'
+                  className={`block w-full rounded-[1.35rem] border p-4 text-left transition ${
+                    currentIndex === index ? 'text-white' : 'bg-white text-[#143a43] hover:bg-[#f8ffff]'
                   }`}
+                  style={{
+                    background: currentIndex === index ? BRAND.accent : '#ffffff',
+                    borderColor: currentIndex === index ? BRAND.accent : BRAND.borderStrong,
+                    boxShadow: currentIndex === index
+                      ? '0 16px 38px rgba(15,75,88,0.16)'
+                      : '0 10px 28px rgba(18,75,84,0.05)',
+                  }}
                 >
                   <div className="font-semibold">
                     {index + 1}. {stopTitle}
@@ -926,7 +941,7 @@ export function TourPlayer({
                   {stopDescription ? (
                     <div
                       className={`mt-2 text-sm leading-6 ${
-                        currentIndex === index ? 'text-white/80' : 'text-app-muted'
+                        currentIndex === index ? 'text-white/80' : 'text-[#5b757b]'
                       }`}
                     >
                       {stopDescription}
@@ -940,11 +955,15 @@ export function TourPlayer({
       </section>
 
       {permissionState === 'denied' ? (
-        <section className="rounded-[1.5rem] border border-app bg-white p-4 shadow-card">
-          <p className="text-sm font-semibold text-app-accent">{t.locationOffTitle}</p>
-          <p className="mt-1 text-sm leading-6 text-app-muted">
-            {t.locationOffText}
-          </p>
+        <section
+          className="rounded-[1.6rem] border bg-white p-4"
+          style={{
+            borderColor: BRAND.border,
+            boxShadow: BRAND.shadow,
+          }}
+        >
+          <p className="text-sm font-semibold text-[#143a43]">{t.locationOffTitle}</p>
+          <p className="mt-1 text-sm leading-6 text-[#5b757b]">{t.locationOffText}</p>
         </section>
       ) : null}
     </div>
