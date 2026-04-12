@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { APP_LANGUAGE_COOKIE, AppLanguage } from '@/lib/app-language'
+import {
+  APP_LANGUAGE_COOKIE,
+  APP_LANGUAGE_STORAGE_KEY,
+  AppLanguage,
+} from '@/lib/app-language'
 
 const options: Array<{ code: AppLanguage; flag: string; label: string }> = [
   { code: 'nl', flag: '🇳🇱', label: 'NL' },
@@ -24,7 +28,7 @@ export function LanguagePicker({
 
   function changeLanguage(nextLanguage: AppLanguage) {
     setLanguage(nextLanguage)
-    localStorage.setItem('wadnverhaal-player-language', nextLanguage)
+    localStorage.setItem(APP_LANGUAGE_STORAGE_KEY, nextLanguage)
     document.cookie = `${APP_LANGUAGE_COOKIE}=${nextLanguage}; path=/; max-age=31536000; samesite=lax`
     router.refresh()
   }

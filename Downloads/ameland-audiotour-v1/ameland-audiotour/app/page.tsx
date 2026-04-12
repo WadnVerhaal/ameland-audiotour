@@ -1,15 +1,35 @@
-﻿import Link from 'next/link';
-import { Headphones, Bike, Clock3, MapPinned, ArrowRight, Sparkles } from 'lucide-react';
-import { translations } from '@/lib/app-language';
-import { getServerLanguage } from '@/lib/app-language-server';
-import { LanguagePicker } from '@/components/language-picker';
+﻿import Link from 'next/link'
+import {
+  Headphones,
+  Bike,
+  Clock3,
+  MapPinned,
+  ArrowRight,
+  Sparkles,
+} from 'lucide-react'
+import { translations, isAppLanguage, type AppLanguage } from '@/lib/app-language'
+import { getServerLanguage } from '@/lib/app-language-server'
+import { LanguagePicker } from '@/components/language-picker'
+import { LanguageParamSync } from '@/components/language-param-sync'
 
-export default async function HomePage() {
-  const language = await getServerLanguage();
-  const t = translations[language];
+type Props = {
+  searchParams: Promise<{
+    lang?: string
+  }>
+}
+
+export default async function HomePage({ searchParams }: Props) {
+  const params = await searchParams
+  const queryLang = params.lang
+  const cookieLanguage = await getServerLanguage()
+
+  const language: AppLanguage = isAppLanguage(queryLang) ? queryLang : cookieLanguage
+  const t = translations[language]
 
   return (
     <main className="mx-auto max-w-md px-4 py-5">
+      <LanguageParamSync lang={queryLang} />
+
       <section className="mb-4 rounded-[1.5rem] border border-app bg-app-card p-4 shadow-card">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -117,5 +137,5 @@ export default async function HomePage() {
         </Link>
       </div>
     </main>
-  );
+  )
 }
