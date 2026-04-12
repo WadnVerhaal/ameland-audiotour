@@ -10,11 +10,14 @@ type MarketingTour = {
   title: string
   badge: string
   duration: string
+  image: string
   points: string[]
   cta: string
   featured: boolean
   available: boolean
 }
+
+type ToursFeed = Record<AppLanguage, MarketingTour[]>
 
 type ActiveTourRecord = {
   id: string
@@ -39,132 +42,6 @@ type ActiveTourRecord = {
   is_active: boolean
   created_at: string
   updated_at: string
-}
-
-const websiteTours: Record<AppLanguage, MarketingTour[]> = {
-  nl: [
-    {
-      title: 'Historische Dorpswandeling',
-      badge: 'Binnenkort',
-      duration: '45–60 min',
-      points: [
-        'Verhalen over dorp en geschiedenis',
-        'Zelfstandig en eenvoudig te volgen',
-        'Ideaal als eerste kennismaking',
-      ],
-      cta: 'Binnenkort',
-      featured: false,
-      available: false,
-    },
-    {
-      title: 'Maak kennis met Hollum',
-      badge: 'Meest gekozen',
-      duration: '90 min',
-      points: [
-        'Een rustige wandeling langs bijzondere plekken',
-        'Live kaart en audio precies op de juiste locatie',
-        'Perfect als eerste kennismaking met Hollum',
-      ],
-      cta: 'Bestel direct',
-      featured: true,
-      available: true,
-    },
-    {
-      title: 'Fietsroute door Duin & Dorp',
-      badge: 'Binnenkort',
-      duration: '60–90 min',
-      points: [
-        'Route door landschap en dorp',
-        'Luisteren op bijzondere plekken',
-        'Een complete eilandbeleving',
-      ],
-      cta: 'Binnenkort',
-      featured: false,
-      available: false,
-    },
-  ],
-  en: [
-    {
-      title: 'Historic Village Walk',
-      badge: 'Coming soon',
-      duration: '45–60 min',
-      points: [
-        'Stories about the village and its history',
-        'Easy to follow on your own',
-        'Ideal as a first introduction',
-      ],
-      cta: 'Coming soon',
-      featured: false,
-      available: false,
-    },
-    {
-      title: 'Meet Hollum',
-      badge: 'Most popular',
-      duration: '90 min',
-      points: [
-        'A relaxed walk past special places',
-        'Live map and audio at exactly the right location',
-        'Perfect as a first introduction to Hollum',
-      ],
-      cta: 'Order now',
-      featured: true,
-      available: true,
-    },
-    {
-      title: 'Cycling Route through Dunes & Village',
-      badge: 'Coming soon',
-      duration: '60–90 min',
-      points: [
-        'Route through landscape and village',
-        'Listen at special locations',
-        'A complete island experience',
-      ],
-      cta: 'Coming soon',
-      featured: false,
-      available: false,
-    },
-  ],
-  de: [
-    {
-      title: 'Historischer Dorfrundgang',
-      badge: 'Bald verfügbar',
-      duration: '45–60 Min.',
-      points: [
-        'Geschichten über das Dorf und seine Geschichte',
-        'Selbstständig und einfach zu folgen',
-        'Ideal als erste Einführung',
-      ],
-      cta: 'Bald verfügbar',
-      featured: false,
-      available: false,
-    },
-    {
-      title: 'Hollum kennenlernen',
-      badge: 'Am beliebtesten',
-      duration: '90 Min.',
-      points: [
-        'Ein ruhiger Spaziergang entlang besonderer Orte',
-        'Live-Karte und Audio genau am richtigen Ort',
-        'Perfekt als erster Eindruck von Hollum',
-      ],
-      cta: 'Jetzt buchen',
-      featured: true,
-      available: true,
-    },
-    {
-      title: 'Fahrradroute durch Dünen & Dorf',
-      badge: 'Bald verfügbar',
-      duration: '60–90 Min.',
-      points: [
-        'Route durch Landschaft und Dorf',
-        'An besonderen Orten zuhören',
-        'Ein vollständiges Inselerlebnis',
-      ],
-      cta: 'Bald verfügbar',
-      featured: false,
-      available: false,
-    },
-  ],
 }
 
 function normalize(value: string) {
@@ -216,34 +93,25 @@ function getIntro(language: AppLanguage) {
   return 'Kies de route die past bij jouw dag op Ameland. Tours die al beschikbaar zijn kun je direct starten. De andere zie je hier alvast als voorproefje.'
 }
 
-function getWebsiteTourImage(tourTitle: string, language: AppLanguage) {
-  const title = normalize(tourTitle)
+function getWebsiteBaseUrl() {
+  return (
+    process.env.WEBSITE_URL ||
+    process.env.NEXT_PUBLIC_WEBSITE_URL ||
+    'https://www.wadnverhaal.nl'
+  ).replace(/\/$/, '')
+}
 
-  if (
-    title.includes('maak kennis met hollum') ||
-    title.includes('meet hollum') ||
-    title.includes('hollum kennenlernen')
-  ) {
-    return '/images/tour-duinen.jpg'
+async function getWebsiteToursFeed(): Promise<ToursFeed> {
+  const baseUrl = getWebsiteBaseUrl()
+  const response = await fetch(`${baseUrl}/api/tours-feed`, {
+    cache: 'no-store',
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to load website tours feed: ${response.status}`)
   }
 
-  if (
-    title.includes('historische dorpswandeling') ||
-    title.includes('historic village walk') ||
-    title.includes('historischer dorfrundgang')
-  ) {
-    return '/images/tour-fietsen.jpg'
-  }
-
-  if (
-    title.includes('fietsroute door duin dorp') ||
-    title.includes('cycling route through dunes village') ||
-    title.includes('fahrradroute durch dunen dorf')
-  ) {
-    return '/images/tour-dorp.jpg'
-  }
-
-  return '/images/tour-duinen.jpg'
+  return (await response.json()) as ToursFeed
 }
 
 function TourRow({
@@ -251,16 +119,12 @@ function TourRow({
   actionHref,
   isOrderable,
   buttonLabel,
-  language,
 }: {
   tour: MarketingTour
   actionHref?: string
   isOrderable: boolean
   buttonLabel: string
-  language: AppLanguage
 }) {
-  const imageUrl = getWebsiteTourImage(tour.title, language)
-
   return (
     <div
       className={`grid gap-5 px-5 py-5 md:px-6 ${
@@ -268,7 +132,7 @@ function TourRow({
       } md:grid-cols-[220px_1fr_auto] md:items-center`}
     >
       <div className="relative h-52 overflow-hidden rounded-[1.5rem]">
-        <img src={imageUrl} alt={tour.title} className="h-full w-full object-cover" />
+        <img src={tour.image} alt={tour.title} className="h-full w-full object-cover" />
 
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,48,56,0.02)_0%,rgba(8,48,56,0.08)_46%,rgba(8,48,56,0.35)_100%)]" />
 
@@ -352,7 +216,9 @@ export default async function ToursPage() {
     language === 'en' || language === 'de' ? language : 'nl'
   const t = appTranslations[safeLanguage]
 
-  const marketingTours = websiteTours[safeLanguage]
+  const feed = await getWebsiteToursFeed()
+  const marketingTours = feed[safeLanguage] ?? []
+
   const orderedTours = [
     ...marketingTours.filter((tour) => tour.available),
     ...marketingTours.filter((tour) => !tour.available),
@@ -406,7 +272,6 @@ export default async function ToursPage() {
                       : undefined
                   }
                   buttonLabel={marketingTour.cta}
-                  language={safeLanguage}
                 />
               )
             })}
