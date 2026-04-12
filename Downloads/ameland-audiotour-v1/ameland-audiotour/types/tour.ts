@@ -34,6 +34,9 @@ export type TourStop = {
   short_description_en: string | null
   short_description_de: string | null
   audio_url: string | null
+  audio_url_nl: string | null
+  audio_url_en: string | null
+  audio_url_de: string | null
   image_url: string | null
   lat: number | null
   lng: number | null
@@ -43,7 +46,6 @@ export type TourStop = {
   created_at: string
   updated_at: string
 }
-
 export type TourWithStops = Tour & {
   stops: TourStop[]
 }

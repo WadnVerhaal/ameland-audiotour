@@ -15,6 +15,10 @@ export async function updateStopAction(tourId: string, stopId: string, formData:
   const shortDescriptionDe = String(formData.get('short_description_de') ?? '').trim() || null;
 
   const audioUrl = String(formData.get('audio_url') ?? '').trim() || null;
+  const audioUrlNl = String(formData.get('audio_url_nl') ?? '').trim() || null;
+  const audioUrlEn = String(formData.get('audio_url_en') ?? '').trim() || null;
+  const audioUrlDe = String(formData.get('audio_url_de') ?? '').trim() || null;
+
   const imageUrl = String(formData.get('image_url') ?? '').trim() || null;
   const lat = Number(formData.get('lat') ?? 0);
   const lng = Number(formData.get('lng') ?? 0);
@@ -22,21 +26,27 @@ export async function updateStopAction(tourId: string, stopId: string, formData:
   const estimatedDuration = Number(formData.get('estimated_duration_seconds') ?? 180);
   const isActive = String(formData.get('is_active') ?? '') === 'on';
 
-  const { error } = await supabase.from('tour_stops').update({
-    title,
-    title_en: titleEn,
-    title_de: titleDe,
-    short_description: shortDescription,
-    short_description_en: shortDescriptionEn,
-    short_description_de: shortDescriptionDe,
-    audio_url: audioUrl,
-    image_url: imageUrl,
-    lat,
-    lng,
-    trigger_radius_meters: triggerRadius,
-    estimated_duration_seconds: estimatedDuration,
-    is_active: isActive,
-  }).eq('id', stopId);
+  const { error } = await supabase
+    .from('tour_stops')
+    .update({
+      title,
+      title_en: titleEn,
+      title_de: titleDe,
+      short_description: shortDescription,
+      short_description_en: shortDescriptionEn,
+      short_description_de: shortDescriptionDe,
+      audio_url: audioUrl,
+      audio_url_nl: audioUrlNl,
+      audio_url_en: audioUrlEn,
+      audio_url_de: audioUrlDe,
+      image_url: imageUrl,
+      lat,
+      lng,
+      trigger_radius_meters: triggerRadius,
+      estimated_duration_seconds: estimatedDuration,
+      is_active: isActive,
+    })
+    .eq('id', stopId);
 
   if (error) throw error;
   redirect(`/admin/tours/${tourId}/stops/${stopId}`);

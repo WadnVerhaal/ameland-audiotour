@@ -20,7 +20,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react'
-import { TourStop } from '@/types/tour'
+import type { TourStop } from '@/types/tour'
 import {
   APP_LANGUAGE_STORAGE_KEY,
   type AppLanguage,
@@ -31,6 +31,18 @@ import {
 } from '@/lib/app-language'
 import { distanceInMeters } from '@/lib/utils/geo'
 import TourCompletionContainer from '@/components/tour/tour-completion-container'
+
+function getStopAudioUrl(stop: TourStop, language: string) {
+  if (language === 'en') {
+    return stop.audio_url_en || stop.audio_url_nl || stop.audio_url_de || stop.audio_url || null
+  }
+
+  if (language === 'de') {
+    return stop.audio_url_de || stop.audio_url_nl || stop.audio_url_en || stop.audio_url || null
+  }
+
+  return stop.audio_url_nl || stop.audio_url_en || stop.audio_url_de || stop.audio_url || null
+}
 
 type Props = {
   token: string
@@ -314,6 +326,34 @@ export function TourPlayer({
     )
   }
 
+  function pauseCurrentStop() {
+    if (!audioRef.current) return
+
+    audioRef.current.pause()
+    setPlaying(false)
+  }
+
+  async function playCurrentStop() {
+    if (!audioRef.current || !currentStop) return
+
+    const nextAudioUrl = getStopAudioUrl(currentStop, language)
+    if (!nextAudioUrl) return
+
+    const audio = audioRef.current
+    if (audio.src !== nextAudioUrl) {
+      audio.src = nextAudioUrl
+      audio.load()
+    }
+
+    try {
+      await audio.play()
+      setPlaying(true)
+      setError(null)
+    } catch {
+      setError(t.audioAutoStartFailed)
+    }
+  }
+
   useEffect(() => {
     void checkPermissionState()
     startWatchingLocation()
@@ -328,11 +368,21 @@ export function TourPlayer({
     setHasArrived(false)
     setPlaying(false)
 
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.currentTime = 0
+    if (!audioRef.current) return
+
+    const nextAudioUrl = currentStop ? getStopAudioUrl(currentStop, language) : null
+
+    audioRef.current.pause()
+    audioRef.current.currentTime = 0
+
+    if (nextAudioUrl) {
+      audioRef.current.src = nextAudioUrl
+      audioRef.current.load()
+    } else {
+      audioRef.current.removeAttribute('src')
+      audioRef.current.load()
     }
-  }, [currentIndex])
+  }, [currentIndex, currentStop, language])
 
   const fallbackDistanceToStop = useMemo(() => {
     if (!position || !currentStop?.lat || !currentStop?.lng) return null
@@ -352,7 +402,9 @@ export function TourPlayer({
       : null
 
   useEffect(() => {
-    if (!position || !currentStop?.lat || !currentStop?.lng || !currentStop.audio_url || playing) {
+    const currentAudioUrl = currentStop ? getStopAudioUrl(currentStop, language) : null
+
+    if (!position || !currentStop?.lat || !currentStop?.lng || !currentAudioUrl || playing) {
       return
     }
 
@@ -368,7 +420,7 @@ export function TourPlayer({
       setHasArrived(true)
       void playCurrentStop()
     }
-  }, [position, currentStop, playing])
+  }, [position, currentStop, playing, language])
 
   useEffect(() => {
     if (!position || !currentStop?.lat || !currentStop?.lng) {
@@ -446,26 +498,6 @@ export function TourPlayer({
 
     return () => controller.abort()
   }, [position, currentStop])
-
-  async function playCurrentStop() {
-    if (!audioRef.current || !currentStop?.audio_url) return
-
-    audioRef.current.src = currentStop.audio_url
-
-    try {
-      await audioRef.current.play()
-      setPlaying(true)
-      setError(null)
-    } catch {
-      setError(t.audioAutoStartFailed)
-    }
-  }
-
-  function pauseCurrentStop() {
-    if (!audioRef.current) return
-    audioRef.current.pause()
-    setPlaying(false)
-  }
 
   function nextStop() {
     pauseCurrentStop()
