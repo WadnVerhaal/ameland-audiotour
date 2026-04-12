@@ -66,37 +66,47 @@ type Position = {
 type RoutePoint = [number, number]
 type GeoPermissionState = 'unknown' | 'granted' | 'prompt' | 'denied'
 
-const userIcon = new L.DivIcon({
-  className: '',
-  html: `
-    <div style="
-      width:18px;
-      height:18px;
-      border-radius:9999px;
-      background:#1f4f82;
-      border:3px solid #ffffff;
-      box-shadow:0 0 0 4px rgba(31,79,130,.18);
-    "></div>
-  `,
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
-})
+type ThemeColors = {
+  accent: string
+  badge: string
+  softRgb: string
+}
 
-const stopIcon = new L.DivIcon({
-  className: '',
-  html: `
-    <div style="
-      width:20px;
-      height:20px;
-      border-radius:9999px;
-      background:#5f8fc7;
-      border:3px solid #ffffff;
-      box-shadow:0 0 0 4px rgba(95,143,199,.18);
-    "></div>
-  `,
-  iconSize: [20, 20],
-  iconAnchor: [10, 10],
-})
+function createUserIcon(accent: string) {
+  return new L.DivIcon({
+    className: '',
+    html: `
+      <div style="
+        width:18px;
+        height:18px;
+        border-radius:9999px;
+        background:${accent};
+        border:3px solid #ffffff;
+        box-shadow:0 0 0 4px rgba(31,79,130,.18);
+      "></div>
+    `,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+  })
+}
+
+function createStopIcon(badge: string) {
+  return new L.DivIcon({
+    className: '',
+    html: `
+      <div style="
+        width:20px;
+        height:20px;
+        border-radius:9999px;
+        background:${badge};
+        border:3px solid #ffffff;
+        box-shadow:0 0 0 4px rgba(95,143,199,.18);
+      "></div>
+    `,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+  })
+}
 
 function formatDistance(meters: number) {
   const roundedMeters = Math.round(meters)
@@ -128,6 +138,18 @@ function normalizeWalkingDuration(
   }
 
   return Math.max(Math.round(apiDurationSeconds), baseline)
+}
+
+function hexToRgba(hex: string, alpha: number) {
+  const cleaned = hex.replace('#', '').trim()
+
+  if (cleaned.length !== 6) return `rgba(31,79,130,${alpha})`
+
+  const r = parseInt(cleaned.slice(0, 2), 16)
+  const g = parseInt(cleaned.slice(2, 4), 16)
+  const b = parseInt(cleaned.slice(4, 6), 16)
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 function RecenterMap({
@@ -214,6 +236,11 @@ export function TourPlayer({
   const [routeDurationSeconds, setRouteDurationSeconds] = useState<number | null>(null)
   const [showCompletionScreen, setShowCompletionScreen] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const [themeColors, setThemeColors] = useState<ThemeColors>({
+    accent: '#1f4f82',
+    badge: '#5f8fc7',
+    softRgb: '220,236,255',
+  })
 
   const currentStop = useMemo(() => stops[currentIndex] ?? null, [stops, currentIndex])
   const t = translations[language]
@@ -222,6 +249,32 @@ export function TourPlayer({
   const resolvedTourSlug = tourSlug ?? token
   const resolvedTourTitle = tourTitle ?? 'Ameland audiotour'
   const isLastStop = currentIndex === stops.length - 1
+
+  const userIcon = useMemo(() => createUserIcon(themeColors.accent), [themeColors.accent])
+  const stopIcon = useMemo(() => createStopIcon(themeColors.badge), [themeColors.badge])
+
+  useEffect(() => {
+    const rootStyles = getComputedStyle(document.documentElement)
+    const accent = rootStyles.getPropertyValue('--accent').trim() || '#1f4f82'
+    const badge = rootStyles.getPropertyValue('--badge').trim() || accent
+    const soft = rootStyles.getPropertyValue('--accent-soft').trim() || '#dcecff'
+
+    const cleanedSoft = soft.replace('#', '')
+    let softRgb = '220,236,255'
+
+    if (cleanedSoft.length === 6) {
+      const r = parseInt(cleanedSoft.slice(0, 2), 16)
+      const g = parseInt(cleanedSoft.slice(2, 4), 16)
+      const b = parseInt(cleanedSoft.slice(4, 6), 16)
+      softRgb = `${r},${g},${b}`
+    }
+
+    setThemeColors({
+      accent,
+      badge,
+      softRgb,
+    })
+  }, [])
 
   useEffect(() => {
     setLanguage(initialLanguage)
@@ -613,11 +666,16 @@ export function TourPlayer({
       />
 
       <section className="relative overflow-hidden rounded-[2rem] border border-app bg-app-card shadow-soft">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(220,236,255,0.95),transparent_35%)]" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `radial-gradient(circle at top right, rgba(${themeColors.softRgb},0.95), transparent 35%)`,
+          }}
+        />
         <div className="relative p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="inline-flex items-center gap-2 rounded-full bg-app-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#285788]">
+              <div className="inline-flex items-center gap-2 rounded-full bg-app-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-app-accent">
                 <Waves className="h-3.5 w-3.5" />
                 {t.tourActive}
               </div>
@@ -632,9 +690,11 @@ export function TourPlayer({
             </div>
 
             <div
-              className={`shrink-0 rounded-2xl px-3 py-2 text-right ${
-                hasArrived ? 'bg-[#e8f2ff] text-[#1f4f82]' : 'bg-white text-app-accent'
-              }`}
+              className="shrink-0 rounded-2xl px-3 py-2 text-right"
+              style={{
+                background: hasArrived ? hexToRgba(themeColors.accent, 0.09) : '#ffffff',
+                color: themeColors.accent,
+              }}
             >
               <div className="text-[11px] uppercase tracking-[0.16em] text-app-muted">
                 {t.status}
@@ -671,8 +731,8 @@ export function TourPlayer({
                       center={[position.lat, position.lng]}
                       radius={position.accuracy}
                       pathOptions={{
-                        color: '#1f4f82',
-                        fillColor: '#1f4f82',
+                        color: themeColors.accent,
+                        fillColor: themeColors.accent,
                         fillOpacity: 0.08,
                         opacity: 0.18,
                       }}
@@ -696,8 +756,8 @@ export function TourPlayer({
                     center={[Number(currentStop.lat), Number(currentStop.lng)]}
                     radius={Number(currentStop.trigger_radius_meters ?? 35)}
                     pathOptions={{
-                      color: '#5f8fc7',
-                      fillColor: '#5f8fc7',
+                      color: themeColors.badge,
+                      fillColor: themeColors.badge,
                       fillOpacity: 0.1,
                       opacity: 0.35,
                     }}
@@ -709,7 +769,7 @@ export function TourPlayer({
                 <Polyline
                   positions={routeLine}
                   pathOptions={{
-                    color: '#1f4f82',
+                    color: themeColors.accent,
                     weight: 5,
                     opacity: 0.85,
                   }}
@@ -723,12 +783,10 @@ export function TourPlayer({
               <Volume2 className="mt-0.5 h-5 w-5 text-app-accent" />
               <div>
                 <p className="text-sm font-semibold text-app-accent">
-                  Luister veilig onderweg
+                  {t.safeListeningTitle}
                 </p>
                 <p className="mt-1 text-sm leading-6 text-app-muted">
-                  Gebruik bij voorkeur één oortje of open-ear audio, houd aandacht voor verkeer
-                  en omgeving, en pauzeer of spoel later terug als een fragment even niet veilig
-                  uitkomt.
+                  {t.safeListeningText}
                 </p>
               </div>
             </div>
@@ -818,7 +876,14 @@ export function TourPlayer({
       </section>
 
       {error ? (
-        <div className="rounded-[1.5rem] border border-[#cfe1f4] bg-[#edf6ff] p-4 text-sm leading-6 text-[#285788] shadow-card">
+        <div
+          className="rounded-[1.5rem] border p-4 text-sm leading-6 shadow-card"
+          style={{
+            borderColor: hexToRgba(themeColors.accent, 0.18),
+            background: hexToRgba(themeColors.accent, 0.08),
+            color: themeColors.accent,
+          }}
+        >
           {error}
         </div>
       ) : null}
@@ -876,10 +941,9 @@ export function TourPlayer({
 
       {permissionState === 'denied' ? (
         <section className="rounded-[1.5rem] border border-app bg-white p-4 shadow-card">
-          <p className="text-sm font-semibold text-app-accent">Locatie staat uit</p>
+          <p className="text-sm font-semibold text-app-accent">{t.locationOffTitle}</p>
           <p className="mt-1 text-sm leading-6 text-app-muted">
-            Je kunt de tour nog steeds volgen, maar automatische audio en live routebegeleiding
-            werken beter als locatie is toegestaan.
+            {t.locationOffText}
           </p>
         </section>
       ) : null}

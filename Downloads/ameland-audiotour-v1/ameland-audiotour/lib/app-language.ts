@@ -153,6 +153,55 @@ export const translations = {
     locationRestartFailed: 'Locatie kon niet opnieuw worden gestart.',
     audioAutoStartFailed:
       'Audio kon niet automatisch starten. Druk op afspelen om handmatig te starten.',
+
+    safeListeningTitle: 'Luister veilig onderweg',
+    safeListeningText:
+      'Gebruik bij voorkeur één oortje of open-ear audio, houd aandacht voor verkeer en omgeving, en pauzeer of spoel later terug als een fragment even niet veilig uitkomt.',
+    locationOffTitle: 'Locatie staat uit',
+    locationOffText:
+      'Je kunt de tour nog steeds volgen, maar automatische audio en live routebegeleiding werken beter als locatie is toegestaan.',
+
+    completionBadge: 'Tour voltooid',
+    completionTitle: 'Bedankt dat je met ons op pad ging',
+    completionIntro:
+      'We hopen dat je {tourTitle} onderweg nét iets anders hebt leren zien. Neem gerust nog even de tijd om om je heen te kijken. Audiofragmenten kun je later altijd opnieuw beluisteren, pauzeren en terugspoelen op een veilig moment.',
+    completionStopsLabel: 'Stops',
+    completionStopsValue: 'bezocht',
+    completionDurationLabel: 'Duur',
+    completionFinishedLabel: 'Afgerond',
+    completionExperienceTitle: 'Hoe heb je deze tour ervaren?',
+    completionFeedbackPromptPositive: 'Wat vond je het mooiste aan deze tour?',
+    completionFeedbackPromptImprove: 'Wat kunnen we verbeteren?',
+    completionFeedbackPlaceholderPositive:
+      'Bijvoorbeeld: de sfeer, de verhalen, de plekken of de route.',
+    completionFeedbackPlaceholderImprove:
+      'Bijvoorbeeld: de route, de audio, de uitleg of het gebruiksgemak.',
+    completionFavoriteLabel: 'Welk onderdeel sprong er voor jou uit?',
+    completionFavoritePlaceholder:
+      'Bijvoorbeeld: een specifieke stop, het audioverhaal of het landschap.',
+    completionRecommendLabel: 'Zou je deze tour aanraden aan anderen?',
+    recommendYes: 'Ja, zeker',
+    recommendMaybe: 'Misschien',
+    recommendNo: 'Nee',
+    completionSubmitting: 'Bezig met opslaan...',
+    completionSubmit: 'Verstuur beoordeling',
+    completionSubmitted: 'Dank je wel. Je beoordeling is opgeslagen.',
+    completionBadgeCardTitle: 'Badge vrijgespeeld',
+    completionBadgeCardName: 'Ameland Ontdekker',
+    completionBadgeCardText: 'Toegekend voor het voltooien van deze route.',
+    completionShareTitle: 'Deel jouw Ameland-moment',
+    completionShareBody: 'Ken je iemand die dit ook mooi zou vinden? Deel de tour eenvoudig.',
+    completionShareButton: 'Delen',
+    completionCopy: 'Kopieer link',
+    completionCopied: 'Gekopieerd',
+    completionShareText:
+      'Ik heb net de audiotour "{tourTitle}" op Ameland afgerond. Echt een mooie manier om het eiland te beleven.',
+    completionMoreLabel: 'Zin in meer?',
+    completionMoreTitle: 'Ontdek nog een andere route op Ameland',
+    completionMoreText:
+      'Beleef het eiland opnieuw, met een ander verhaal, een andere sfeer en nieuwe plekken.',
+    completionNextTourButton: 'Bekijk volgende tour',
+    completionBackButton: 'Terug naar overzicht',
   },
 
   en: {
@@ -298,6 +347,55 @@ export const translations = {
     locationRestartFailed: 'Location could not be restarted.',
     audioAutoStartFailed:
       'Audio could not start automatically. Press play to start it manually.',
+
+    safeListeningTitle: 'Listen safely on the move',
+    safeListeningText:
+      'Prefer using one earbud or open-ear audio, keep your attention on traffic and surroundings, and pause or rewind later if a fragment is not safe to hear right now.',
+    locationOffTitle: 'Location is off',
+    locationOffText:
+      'You can still follow the tour, but automatic audio and live route guidance work better when location access is allowed.',
+
+    completionBadge: 'Tour completed',
+    completionTitle: 'Thanks for exploring with us',
+    completionIntro:
+      'We hope {tourTitle} helped you see Ameland a little differently along the way. Feel free to take another moment to look around. You can always replay, pause, or rewind audio fragments later at a safe moment.',
+    completionStopsLabel: 'Stops',
+    completionStopsValue: 'visited',
+    completionDurationLabel: 'Duration',
+    completionFinishedLabel: 'Completed',
+    completionExperienceTitle: 'How did you experience this tour?',
+    completionFeedbackPromptPositive: 'What did you enjoy most about this tour?',
+    completionFeedbackPromptImprove: 'What could we improve?',
+    completionFeedbackPlaceholderPositive:
+      'For example: the atmosphere, the stories, the places, or the route.',
+    completionFeedbackPlaceholderImprove:
+      'For example: the route, the audio, the explanations, or the ease of use.',
+    completionFavoriteLabel: 'What part stood out most to you?',
+    completionFavoritePlaceholder:
+      'For example: a specific stop, the audio story, or the landscape.',
+    completionRecommendLabel: 'Would you recommend this tour to others?',
+    recommendYes: 'Yes, definitely',
+    recommendMaybe: 'Maybe',
+    recommendNo: 'No',
+    completionSubmitting: 'Saving...',
+    completionSubmit: 'Submit review',
+    completionSubmitted: 'Thank you. Your review has been saved.',
+    completionBadgeCardTitle: 'Badge unlocked',
+    completionBadgeCardName: 'Ameland Explorer',
+    completionBadgeCardText: 'Awarded for completing this route.',
+    completionShareTitle: 'Share your Ameland moment',
+    completionShareBody: 'Know someone who would enjoy this too? Share the tour easily.',
+    completionShareButton: 'Share',
+    completionCopy: 'Copy link',
+    completionCopied: 'Copied',
+    completionShareText:
+      'I just completed the "{tourTitle}" audio tour on Ameland. Such a beautiful way to experience the island.',
+    completionMoreLabel: 'Ready for more?',
+    completionMoreTitle: 'Discover another route on Ameland',
+    completionMoreText:
+      'Experience the island again with a different story, a different atmosphere, and new places.',
+    completionNextTourButton: 'View next tour',
+    completionBackButton: 'Back to overview',
   },
 
   de: {
@@ -444,6 +542,56 @@ export const translations = {
     locationRestartFailed: 'Standort konnte nicht erneut gestartet werden.',
     audioAutoStartFailed:
       'Audio konnte nicht automatisch gestartet werden. Drücke auf Play, um es manuell zu starten.',
+
+    safeListeningTitle: 'Unterwegs sicher hören',
+    safeListeningText:
+      'Verwende am besten einen Ohrhörer oder Open-Ear-Audio, achte auf Verkehr und Umgebung und pausiere oder spule später zurück, wenn ein Abschnitt gerade nicht sicher anzuhören ist.',
+    locationOffTitle: 'Standort ist aus',
+    locationOffText:
+      'Du kannst der Tour weiterhin folgen, aber automatische Audioausgabe und Live-Routenführung funktionieren besser, wenn der Standort erlaubt ist.',
+
+    completionBadge: 'Tour abgeschlossen',
+    completionTitle: 'Danke, dass du mit uns unterwegs warst',
+    completionIntro:
+      'Wir hoffen, dass dir {tourTitle} unterwegs einen neuen Blick auf Ameland gegeben hat. Schau dich gern noch einen Moment um. Audioabschnitte kannst du später jederzeit an einem sicheren Moment erneut anhören, pausieren oder zurückspulen.',
+    completionStopsLabel: 'Stopps',
+    completionStopsValue: 'besucht',
+    completionDurationLabel: 'Dauer',
+    completionFinishedLabel: 'Abgeschlossen',
+    completionExperienceTitle: 'Wie hast du diese Tour erlebt?',
+    completionFeedbackPromptPositive: 'Was hat dir an dieser Tour am besten gefallen?',
+    completionFeedbackPromptImprove: 'Was können wir verbessern?',
+    completionFeedbackPlaceholderPositive:
+      'Zum Beispiel: die Atmosphäre, die Geschichten, die Orte oder die Route.',
+    completionFeedbackPlaceholderImprove:
+      'Zum Beispiel: die Route, das Audio, die Erklärungen oder die Benutzerfreundlichkeit.',
+    completionFavoriteLabel: 'Welcher Teil ist dir besonders in Erinnerung geblieben?',
+    completionFavoritePlaceholder:
+      'Zum Beispiel: ein bestimmter Stopp, die Audiogeschichte oder die Landschaft.',
+    completionRecommendLabel: 'Würdest du diese Tour anderen empfehlen?',
+    recommendYes: 'Ja, auf jeden Fall',
+    recommendMaybe: 'Vielleicht',
+    recommendNo: 'Nein',
+    completionSubmitting: 'Wird gespeichert...',
+    completionSubmit: 'Bewertung senden',
+    completionSubmitted: 'Danke. Deine Bewertung wurde gespeichert.',
+    completionBadgeCardTitle: 'Abzeichen freigeschaltet',
+    completionBadgeCardName: 'Ameland-Entdecker',
+    completionBadgeCardText: 'Verliehen für das Abschließen dieser Route.',
+    completionShareTitle: 'Teile deinen Ameland-Moment',
+    completionShareBody:
+      'Kennst du jemanden, dem das auch gefallen würde? Teile die Tour ganz einfach.',
+    completionShareButton: 'Teilen',
+    completionCopy: 'Link kopieren',
+    completionCopied: 'Kopiert',
+    completionShareText:
+      'Ich habe gerade die Audiotour "{tourTitle}" auf Ameland abgeschlossen. Eine wirklich schöne Art, die Insel zu erleben.',
+    completionMoreLabel: 'Lust auf mehr?',
+    completionMoreTitle: 'Entdecke noch eine andere Route auf Ameland',
+    completionMoreText:
+      'Erlebe die Insel noch einmal – mit einer anderen Geschichte, einer anderen Stimmung und neuen Orten.',
+    completionNextTourButton: 'Nächste Tour ansehen',
+    completionBackButton: 'Zurück zur Übersicht',
   },
 } as const
 

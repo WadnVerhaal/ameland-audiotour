@@ -15,6 +15,7 @@ import {
   MessageSquareText,
   Waves,
 } from 'lucide-react'
+import { type AppLanguage, translations } from '@/lib/app-language'
 
 type Recommendation = 'yes' | 'maybe' | 'no' | null
 
@@ -27,6 +28,7 @@ type Props = {
   stopsTotal: number
   durationMinutes: number
   distanceKm: number
+  language?: AppLanguage
   onSubmitFeedback: (payload: {
     rating: number
     feedbackText: string
@@ -38,16 +40,55 @@ type Props = {
   shareUrl?: string
 }
 
-const bonusMessages = [
-  {
-    title: 'Nog één laatste eilandgeheim',
-    text: 'De mooiste verhalen van Ameland zitten vaak niet alleen in grote monumenten, maar juist in gewone plekken. Een straat, een uitzicht of een onverwachte bocht vertelt soms meer dan een bord ooit kan doen.',
-  },
-  {
-    title: 'Lokale tip voor na de tour',
-    text: 'Neem nog even de tijd om rustig om je heen te kijken of ergens in de buurt iets te drinken. Juist na afloop vallen details vaak pas echt op.',
-  },
-]
+type ThemeColors = {
+  accent: string
+  softRgb: string
+}
+
+const bonusMessages = {
+  nl: [
+    {
+      title: 'Nog één laatste eilandgeheim',
+      text: 'De mooiste verhalen van Ameland zitten vaak niet alleen in grote monumenten, maar juist in gewone plekken. Een straat, een uitzicht of een onverwachte bocht vertelt soms meer dan een bord ooit kan doen.',
+    },
+    {
+      title: 'Lokale tip voor na de tour',
+      text: 'Neem nog even de tijd om rustig om je heen te kijken of ergens in de buurt iets te drinken. Juist na afloop vallen details vaak pas echt op.',
+    },
+  ],
+  en: [
+    {
+      title: 'One last island secret',
+      text: 'The most beautiful stories of Ameland are often found not only in major monuments, but in ordinary places. A street, a view, or an unexpected turn can tell more than a sign ever could.',
+    },
+    {
+      title: 'A local tip for after the tour',
+      text: 'Take a little time to look around or have a drink nearby. Often the details stand out even more once the tour has ended.',
+    },
+  ],
+  de: [
+    {
+      title: 'Noch ein letztes Inselgeheimnis',
+      text: 'Die schönsten Geschichten von Ameland stecken oft nicht nur in großen Denkmälern, sondern gerade in ganz gewöhnlichen Orten. Eine Straße, ein Ausblick oder eine unerwartete Kurve erzählt manchmal mehr als jedes Schild.',
+    },
+    {
+      title: 'Ein lokaler Tipp nach der Tour',
+      text: 'Nimm dir noch einen Moment Zeit, dich umzusehen oder irgendwo in der Nähe etwas zu trinken. Gerade nach der Tour fallen Details oft erst richtig auf.',
+    },
+  ],
+} as const
+
+function hexToRgba(hex: string, alpha: number) {
+  const cleaned = hex.replace('#', '').trim()
+
+  if (cleaned.length !== 6) return `rgba(31,79,130,${alpha})`
+
+  const r = parseInt(cleaned.slice(0, 2), 16)
+  const g = parseInt(cleaned.slice(2, 4), 16)
+  const b = parseInt(cleaned.slice(4, 6), 16)
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
 
 function StatCard({
   icon,
@@ -86,11 +127,9 @@ function StarRating({
             type="button"
             onClick={() => onChange(star)}
             className={`rounded-full p-2 transition ${
-              active
-                ? 'bg-app-soft text-[#3c73ad]'
-                : 'bg-white text-[#9bb2c9] hover:bg-[#eef5ff]'
+              active ? 'bg-app-soft text-app-accent' : 'bg-white text-app-muted hover:bg-app-soft'
             }`}
-            aria-label={`Geef ${star} ster${star > 1 ? 'ren' : ''}`}
+            aria-label={`Rate ${star}`}
           >
             <Star className={`h-6 w-6 ${active ? 'fill-current' : ''}`} />
           </button>
@@ -108,11 +147,13 @@ export default function TourCompletionScreen({
   stopsTotal,
   durationMinutes,
   distanceKm,
+  language = 'nl',
   onSubmitFeedback,
   onViewNextTour,
   onBackToOverview,
   shareUrl,
 }: Props) {
+  const t = translations[language]
   const [rating, setRating] = useState(0)
   const [feedbackText, setFeedbackText] = useState('')
   const [recommendation, setRecommendation] = useState<Recommendation>(null)
@@ -120,14 +161,39 @@ export default function TourCompletionScreen({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [themeColors, setThemeColors] = useState<ThemeColors>({
+    accent: '#1f4f82',
+    softRgb: '220,236,255',
+  })
+
+  useMemo(() => {
+    if (typeof window === 'undefined') return
+
+    const rootStyles = getComputedStyle(document.documentElement)
+    const accent = rootStyles.getPropertyValue('--accent').trim() || '#1f4f82'
+    const soft = rootStyles.getPropertyValue('--accent-soft').trim() || '#dcecff'
+
+    const cleanedSoft = soft.replace('#', '')
+    let softRgb = '220,236,255'
+
+    if (cleanedSoft.length === 6) {
+      const r = parseInt(cleanedSoft.slice(0, 2), 16)
+      const g = parseInt(cleanedSoft.slice(2, 4), 16)
+      const b = parseInt(cleanedSoft.slice(4, 6), 16)
+      softRgb = `${r},${g},${b}`
+    }
+
+    setThemeColors({ accent, softRgb })
+  }, [])
 
   const bonus = useMemo(() => {
-    const index = tourSlug.length % bonusMessages.length
-    return bonusMessages[index]
-  }, [tourSlug])
+    const items = bonusMessages[language]
+    const index = tourSlug.length % items.length
+    return items[index]
+  }, [tourSlug, language])
 
   const feedbackPrompt =
-    rating >= 4 ? 'Wat vond je het mooiste aan deze tour?' : 'Wat kunnen we verbeteren?'
+    rating >= 4 ? t.completionFeedbackPromptPositive : t.completionFeedbackPromptImprove
 
   async function handleSubmit() {
     if (!rating || isSubmitting) return
@@ -156,7 +222,7 @@ export default function TourCompletionScreen({
   async function handleShare() {
     if (!shareUrl) return
 
-    const text = `Ik heb net de audiotour "${tourTitle}" op Ameland afgerond. Echt een mooie manier om het eiland te beleven.`
+    const text = t.completionShareText.replace('{tourTitle}', tourTitle)
 
     if (navigator.share) {
       await navigator.share({
@@ -174,25 +240,31 @@ export default function TourCompletionScreen({
     <section className="mx-auto w-full max-w-2xl px-4 pb-24 pt-6">
       <div className="overflow-hidden rounded-[2rem] border border-app bg-app-card shadow-soft">
         <div className="relative overflow-hidden border-b border-app px-5 pb-6 pt-6">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(220,236,255,0.95),transparent_38%)]" />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `radial-gradient(circle at top right, rgba(${themeColors.softRgb},0.95), transparent 38%)`,
+            }}
+          />
           <div className="relative">
-            <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#e8f2ff] text-app-accent">
+            <div
+              className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full text-app-accent"
+              style={{ background: hexToRgba(themeColors.accent, 0.1) }}
+            >
               <CheckCircle2 className="h-8 w-8" />
             </div>
 
-            <div className="inline-flex items-center gap-2 rounded-full bg-app-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#285788]">
+            <div className="inline-flex items-center gap-2 rounded-full bg-app-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-app-accent">
               <Waves className="h-3.5 w-3.5" />
-              Tour voltooid
+              {t.completionBadge}
             </div>
 
             <h1 className="mt-4 text-2xl font-bold tracking-tight text-app-accent">
-              Bedankt dat je met ons op pad ging
+              {t.completionTitle}
             </h1>
 
             <p className="mt-3 max-w-xl text-sm leading-6 text-app-muted">
-              We hopen dat je {tourTitle} onderweg nét iets anders hebt leren zien. Neem gerust
-              nog even de tijd om om je heen te kijken. Audiofragmenten kun je later altijd
-              opnieuw beluisteren, pauzeren en terugspoelen op een veilig moment.
+              {t.completionIntro.replace('{tourTitle}', tourTitle)}
             </p>
           </div>
         </div>
@@ -200,29 +272,35 @@ export default function TourCompletionScreen({
         <div className="grid grid-cols-2 gap-3 px-5 py-5">
           <StatCard
             icon={<Map className="h-4 w-4 text-app-accent" />}
-            label="Stops"
-            value={`${stopsCompleted}/${stopsTotal} bezocht`}
+            label={t.completionStopsLabel}
+            value={`${stopsCompleted}/${stopsTotal} ${t.completionStopsValue}`}
           />
           <StatCard
             icon={<Route className="h-4 w-4 text-app-accent" />}
-            label="Afstand"
+            label={t.distance}
             value={`${distanceKm.toFixed(1)} km`}
           />
           <StatCard
             icon={<Clock3 className="h-4 w-4 text-app-accent" />}
-            label="Duur"
+            label={t.completionDurationLabel}
             value={`${durationMinutes} min`}
           />
           <StatCard
             icon={<CheckCircle2 className="h-4 w-4 text-app-accent" />}
-            label="Afgerond"
+            label={t.completionFinishedLabel}
             value={completedAtLabel}
           />
         </div>
 
         <div className="px-5 pb-5">
-          <div className="rounded-[1.5rem] border border-[#d7e7fb] bg-[#eef6ff] p-4">
-            <div className="mb-2 flex items-center gap-2 text-[#285788]">
+          <div
+            className="rounded-[1.5rem] border p-4"
+            style={{
+              borderColor: hexToRgba(themeColors.accent, 0.14),
+              background: hexToRgba(themeColors.accent, 0.06),
+            }}
+          >
+            <div className="mb-2 flex items-center gap-2 text-app-accent">
               <Gift className="h-5 w-5" />
               <h2 className="text-sm font-semibold">{bonus.title}</h2>
             </div>
@@ -233,7 +311,7 @@ export default function TourCompletionScreen({
         <div className="border-t border-app px-5 py-5">
           <div className="mb-4 flex items-center gap-2 text-app-accent">
             <MessageSquareText className="h-5 w-5" />
-            <h2 className="text-lg font-semibold">Hoe heb je deze tour ervaren?</h2>
+            <h2 className="text-lg font-semibold">{t.completionExperienceTitle}</h2>
           </div>
 
           {!isSubmitted ? (
@@ -250,36 +328,36 @@ export default function TourCompletionScreen({
                       value={feedbackText}
                       onChange={(e) => setFeedbackText(e.target.value)}
                       rows={4}
-                      className="w-full rounded-2xl border border-app bg-white px-4 py-3 text-sm text-app outline-none transition focus:border-[#7da5d0]"
+                      className="w-full rounded-2xl border border-app bg-white px-4 py-3 text-sm text-app outline-none transition focus:border-app-accent"
                       placeholder={
                         rating >= 4
-                          ? 'Bijvoorbeeld: de sfeer, de verhalen, de plekken of de route.'
-                          : 'Bijvoorbeeld: de route, de audio, de uitleg of het gebruiksgemak.'
+                          ? t.completionFeedbackPlaceholderPositive
+                          : t.completionFeedbackPlaceholderImprove
                       }
                     />
                   </div>
 
                   <div className="mt-5">
                     <label className="mb-2 block text-sm font-medium text-app-accent">
-                      Welk onderdeel sprong er voor jou uit?
+                      {t.completionFavoriteLabel}
                     </label>
                     <input
                       value={favoritePart}
                       onChange={(e) => setFavoritePart(e.target.value)}
-                      className="w-full rounded-2xl border border-app bg-white px-4 py-3 text-sm text-app outline-none transition focus:border-[#7da5d0]"
-                      placeholder="Bijvoorbeeld: een specifieke stop, het audioverhaal of het landschap."
+                      className="w-full rounded-2xl border border-app bg-white px-4 py-3 text-sm text-app outline-none transition focus:border-app-accent"
+                      placeholder={t.completionFavoritePlaceholder}
                     />
                   </div>
 
                   <div className="mt-5">
                     <p className="mb-2 text-sm font-medium text-app-accent">
-                      Zou je deze tour aanraden aan anderen?
+                      {t.completionRecommendLabel}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {[
-                        { label: 'Ja, zeker', value: 'yes' as const },
-                        { label: 'Misschien', value: 'maybe' as const },
-                        { label: 'Nee', value: 'no' as const },
+                        { label: t.recommendYes, value: 'yes' as const },
+                        { label: t.recommendMaybe, value: 'maybe' as const },
+                        { label: t.recommendNo, value: 'no' as const },
                       ].map((option) => {
                         const active = recommendation === option.value
                         return (
@@ -306,14 +384,21 @@ export default function TourCompletionScreen({
                     disabled={!rating || isSubmitting}
                     className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-app-accent px-5 py-3 text-sm font-semibold text-white shadow-card transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {isSubmitting ? 'Bezig met opslaan...' : 'Verstuur beoordeling'}
+                    {isSubmitting ? t.completionSubmitting : t.completionSubmit}
                   </button>
                 </>
               )}
             </>
           ) : (
-            <div className="rounded-2xl border border-[#d9e8f8] bg-[#edf6ff] p-4 text-sm text-[#1f4f82]">
-              Dank je wel. Je beoordeling is opgeslagen.
+            <div
+              className="rounded-2xl border p-4 text-sm"
+              style={{
+                borderColor: hexToRgba(themeColors.accent, 0.16),
+                background: hexToRgba(themeColors.accent, 0.08),
+                color: themeColors.accent,
+              }}
+            >
+              {t.completionSubmitted}
             </div>
           )}
         </div>
@@ -323,21 +408,23 @@ export default function TourCompletionScreen({
             <div className="rounded-[1.5rem] bg-white p-4 shadow-card">
               <div className="mb-2 flex items-center gap-2 text-app-accent">
                 <BadgeCheck className="h-5 w-5" />
-                <h3 className="text-sm font-semibold">Badge vrijgespeeld</h3>
+                <h3 className="text-sm font-semibold">{t.completionBadgeCardTitle}</h3>
               </div>
-              <p className="text-base font-semibold text-app-accent">Ameland Ontdekker</p>
+              <p className="text-base font-semibold text-app-accent">
+                {t.completionBadgeCardName}
+              </p>
               <p className="mt-1 text-sm leading-6 text-app-muted">
-                Toegekend voor het voltooien van deze route.
+                {t.completionBadgeCardText}
               </p>
             </div>
 
             <div className="rounded-[1.5rem] bg-white p-4 shadow-card">
               <div className="mb-2 flex items-center gap-2 text-app-accent">
                 <Share2 className="h-5 w-5" />
-                <h3 className="text-sm font-semibold">Deel jouw Ameland-moment</h3>
+                <h3 className="text-sm font-semibold">{t.completionShareTitle}</h3>
               </div>
               <p className="mb-3 text-sm leading-6 text-app-muted">
-                Ken je iemand die dit ook mooi zou vinden? Deel de tour eenvoudig.
+                {t.completionShareBody}
               </p>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -346,7 +433,7 @@ export default function TourCompletionScreen({
                   className="inline-flex items-center gap-2 rounded-2xl border border-app bg-white px-4 py-2.5 text-sm font-semibold text-app-accent transition hover:bg-app-soft"
                 >
                   <Share2 className="h-4 w-4" />
-                  Delen
+                  {t.completionShareButton}
                 </button>
                 {shareUrl ? (
                   <button
@@ -355,7 +442,7 @@ export default function TourCompletionScreen({
                     className="inline-flex items-center gap-2 rounded-2xl border border-app bg-white px-4 py-2.5 text-sm font-semibold text-app-accent transition hover:bg-app-soft"
                   >
                     <Copy className="h-4 w-4" />
-                    {copied ? 'Gekopieerd' : 'Kopieer link'}
+                    {copied ? t.completionCopied : t.completionCopy}
                   </button>
                 ) : null}
               </div>
@@ -366,23 +453,20 @@ export default function TourCompletionScreen({
         <div className="border-t border-app px-5 py-5">
           <div className="rounded-[1.75rem] bg-app-accent p-5 text-white shadow-card">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
-              Zin in meer?
+              {t.completionMoreLabel}
             </p>
-            <h2 className="mt-2 text-xl font-semibold">
-              Ontdek nog een andere route op Ameland
-            </h2>
+            <h2 className="mt-2 text-xl font-semibold">{t.completionMoreTitle}</h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-white/80">
-              Beleef het eiland opnieuw, met een ander verhaal, een andere sfeer en nieuwe
-              plekken.
+              {t.completionMoreText}
             </p>
 
             <div className="mt-5 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
                 onClick={onViewNextTour}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-app-accent transition hover:bg-[#eef4fb]"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-app-accent transition hover:opacity-95"
               >
-                Bekijk volgende tour
+                {t.completionNextTourButton}
                 <ArrowRight className="h-4 w-4" />
               </button>
 
@@ -391,7 +475,7 @@ export default function TourCompletionScreen({
                 onClick={onBackToOverview}
                 className="inline-flex items-center justify-center rounded-2xl border border-white/25 px-5 py-3 text-sm font-semibold text-white transition hover:border-white/45"
               >
-                Terug naar overzicht
+                {t.completionBackButton}
               </button>
             </div>
           </div>
