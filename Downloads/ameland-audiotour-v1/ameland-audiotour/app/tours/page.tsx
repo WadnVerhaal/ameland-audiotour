@@ -1,6 +1,6 @@
 ﻿import { getAllTours } from '@/lib/data/tours'
 import Link from 'next/link'
-import { ArrowLeft, Check, Clock3, MapPinned } from 'lucide-react'
+import { ArrowLeft, Check, MapPinned } from 'lucide-react'
 import {
   translations,
   getTourTitle,
@@ -155,6 +155,32 @@ function getDurationLabel(tour: Tour, language: AppLanguage) {
   return language === 'de' ? `${minutes} Min.` : `${minutes} min`
 }
 
+function getWebsiteTourImage(tour: Tour) {
+  const slug = tour.slug?.toLowerCase() ?? ''
+  const title = tour.title?.toLowerCase() ?? ''
+
+  if (slug.includes('hollum') || title.includes('hollum')) {
+    return '/images/tour-duinen.jpg'
+  }
+
+  if (slug.includes('histor') || title.includes('histor')) {
+    return '/images/tour-fietsen.jpg'
+  }
+
+  if (
+    slug.includes('duin') ||
+    slug.includes('dorp') ||
+    slug.includes('fiets') ||
+    title.includes('duin') ||
+    title.includes('dorp') ||
+    title.includes('fiets')
+  ) {
+    return '/images/tour-dorp.jpg'
+  }
+
+  return tour.hero_image_url || '/images/tour-duinen.jpg'
+}
+
 function TourRow({
   tour,
   language,
@@ -169,6 +195,7 @@ function TourRow({
   const appCta = getAppCta(language)
   const upcomingLabel = getUpcomingBadge(language)
   const modeLabel = getModeLabel(tour.mode, language)
+  const imageUrl = getWebsiteTourImage(tour)
 
   return (
     <div
@@ -177,15 +204,11 @@ function TourRow({
       } md:grid-cols-[220px_1fr_auto] md:items-center`}
     >
       <div className="relative h-52 overflow-hidden rounded-[1.5rem]">
-        {tour.hero_image_url ? (
-          <img
-            src={tour.hero_image_url}
-            alt={title}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="h-full w-full bg-[#e7f4f3]" />
-        )}
+        <img
+          src={imageUrl}
+          alt={title}
+          className="h-full w-full object-cover"
+        />
 
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,48,56,0.02)_0%,rgba(8,48,56,0.08)_46%,rgba(8,48,56,0.35)_100%)]" />
 
