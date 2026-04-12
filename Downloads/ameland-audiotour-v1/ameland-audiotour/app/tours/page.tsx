@@ -1,23 +1,10 @@
 ﻿import Link from 'next/link'
 import { ArrowLeft, Check, MapPinned } from 'lucide-react'
-import { getActiveTours } from '@/lib/data/tours'
+import { getActiveTours, getMarketingTours, type MarketingTour } from '@/lib/data/tours'
 import { translations as appTranslations } from '@/lib/app-language'
 import { getServerLanguage } from '@/lib/app-language-server'
 
 type AppLanguage = 'nl' | 'en' | 'de'
-
-type MarketingTour = {
-  title: string
-  badge: string
-  duration: string
-  image: string
-  points: string[]
-  cta: string
-  featured: boolean
-  available: boolean
-}
-
-type ToursFeed = Record<AppLanguage, MarketingTour[]>
 
 type ActiveTourRecord = {
   id: string
@@ -93,27 +80,6 @@ function getIntro(language: AppLanguage) {
   return 'Kies de route die past bij jouw dag op Ameland. Tours die al beschikbaar zijn kun je direct starten. De andere zie je hier alvast als voorproefje.'
 }
 
-function getWebsiteBaseUrl() {
-  return (
-    process.env.WEBSITE_URL ||
-    process.env.NEXT_PUBLIC_WEBSITE_URL ||
-    'https://www.wadnverhaal.nl'
-  ).replace(/\/$/, '')
-}
-
-async function getWebsiteToursFeed(): Promise<ToursFeed> {
-  const baseUrl = getWebsiteBaseUrl()
-  const response = await fetch(`${baseUrl}/api/tours-feed`, {
-    cache: 'no-store',
-  })
-
-  if (!response.ok) {
-    throw new Error(`Failed to load website tours feed: ${response.status}`)
-  }
-
-  return (await response.json()) as ToursFeed
-}
-
 function TourRow({
   tour,
   actionHref,
@@ -132,7 +98,7 @@ function TourRow({
       } md:grid-cols-[220px_1fr_auto] md:items-center`}
     >
       <div className="relative h-52 overflow-hidden rounded-[1.5rem]">
-        <img src={tour.image} alt={tour.title} className="h-full w-full object-cover" />
+        <img src={tour.image_url} alt={tour.title} className="h-full w-full object-cover" />
 
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,48,56,0.02)_0%,rgba(8,48,56,0.08)_46%,rgba(8,48,56,0.35)_100%)]" />
 
@@ -168,7 +134,7 @@ function TourRow({
                 : 'bg-[#f2f6f6] text-[#87979b]'
             }`}
           >
-            {tour.duration}
+            {tour.duration_label}
           </span>
         </div>
 
@@ -216,8 +182,7 @@ export default async function ToursPage() {
     language === 'en' || language === 'de' ? language : 'nl'
   const t = appTranslations[safeLanguage]
 
-  const feed = await getWebsiteToursFeed()
-  const marketingTours = feed[safeLanguage] ?? []
+  const marketingTours = await getMarketingTours(safeLanguage)
 
   const orderedTours = [
     ...marketingTours.filter((tour) => tour.available),
@@ -263,7 +228,7 @@ export default async function ToursPage() {
 
               return (
                 <TourRow
-                  key={`${marketingTour.title}-${marketingTour.duration}`}
+                  key={`${marketingTour.slug}-${safeLanguage}`}
                   tour={marketingTour}
                   isOrderable={Boolean(marketingTour.available && matchedActiveTour)}
                   actionHref={
