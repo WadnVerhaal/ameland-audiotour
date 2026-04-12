@@ -19,6 +19,8 @@ import {
   Route,
   ChevronDown,
   ChevronUp,
+  Waves,
+  MapPinned,
 } from 'lucide-react'
 import type { TourStop } from '@/types/tour'
 import {
@@ -66,14 +68,32 @@ type GeoPermissionState = 'unknown' | 'granted' | 'prompt' | 'denied'
 
 const userIcon = new L.DivIcon({
   className: '',
-  html: '<div style="width:16px;height:16px;border-radius:9999px;background:#2563eb;border:3px solid white;box-shadow:0 0 0 3px rgba(37,99,235,.18)"></div>',
-  iconSize: [16, 16],
-  iconAnchor: [8, 8],
+  html: `
+    <div style="
+      width:18px;
+      height:18px;
+      border-radius:9999px;
+      background:#26443e;
+      border:3px solid #ffffff;
+      box-shadow:0 0 0 4px rgba(38,68,62,.16);
+    "></div>
+  `,
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
 })
 
 const stopIcon = new L.DivIcon({
   className: '',
-  html: '<div style="width:20px;height:20px;border-radius:9999px;background:#dc2626;border:3px solid white;box-shadow:0 0 0 3px rgba(220,38,38,.16)"></div>',
+  html: `
+    <div style="
+      width:20px;
+      height:20px;
+      border-radius:9999px;
+      background:#b97858;
+      border:3px solid #ffffff;
+      box-shadow:0 0 0 4px rgba(185,120,88,.16);
+    "></div>
+  `,
   iconSize: [20, 20],
   iconAnchor: [10, 10],
 })
@@ -127,7 +147,7 @@ function RecenterMap({
         [position.lat, position.lng],
         [Number(stop.lat), Number(stop.lng)]
       )
-      map.fitBounds(bounds, { padding: [28, 28], animate: true, maxZoom: 17 })
+      map.fitBounds(bounds, { padding: [30, 30], animate: true, maxZoom: 17 })
       return
     }
 
@@ -142,6 +162,26 @@ function RecenterMap({
   }, [position, stop, map])
 
   return null
+}
+
+function InfoCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode
+  label: string
+  value: string
+}) {
+  return (
+    <div className="rounded-2xl bg-white p-3 shadow-card">
+      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-app-muted">
+        {icon}
+        <span>{label}</span>
+      </div>
+      <p className="mt-2 text-sm font-semibold text-app-accent">{value}</p>
+    </div>
+  )
 }
 
 export function TourPlayer({
@@ -328,7 +368,6 @@ export function TourPlayer({
 
   function pauseCurrentStop() {
     if (!audioRef.current) return
-
     audioRef.current.pause()
     setPlaying(false)
   }
@@ -545,7 +584,7 @@ export function TourPlayer({
   const progress = stops.length > 0 ? ((currentIndex + 1) / stops.length) * 100 : 0
 
   const mapStyle: CSSProperties = {
-    height: '360px',
+    height: '340px',
     width: '100%',
   }
 
@@ -565,7 +604,7 @@ export function TourPlayer({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <audio
         ref={audioRef}
         onEnded={handleAudioEnded}
@@ -573,37 +612,47 @@ export function TourPlayer({
         onPlay={() => setPlaying(true)}
       />
 
-      <section className="overflow-hidden rounded-[1.75rem] border border-app bg-app-card shadow-card">
-        <div className="bg-[linear-gradient(135deg,#12325a_0%,#183e6d_45%,#245a8b_100%)] p-3 text-white">
+      <section className="relative overflow-hidden rounded-[2rem] border border-app bg-app-card shadow-soft">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(233,223,191,0.8),transparent_35%)]" />
+        <div className="relative p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="inline-flex rounded-full bg-white/12 px-2.5 py-1 text-[11px] font-semibold text-white/90">
+              <div className="inline-flex items-center gap-2 rounded-full bg-app-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a5c37]">
+                <Waves className="h-3.5 w-3.5" />
                 {t.tourActive}
               </div>
-              <h1 className="mt-2 line-clamp-2 break-words pr-2 text-base font-semibold leading-5 sm:text-lg">
+
+              <h1 className="mt-3 text-xl font-bold leading-tight text-app-accent">
                 {currentStopTitle}
               </h1>
-              <p className="mt-1 text-xs text-white/75">
+
+              <p className="mt-2 text-sm text-app-muted">
                 {t.stopLabel} {currentIndex + 1} {t.of} {stops.length}
               </p>
             </div>
 
-            <div className="rounded-xl bg-white/10 px-3 py-2 text-right">
-              <div className="text-[11px] text-white/70">{t.status}</div>
-              <div className="text-xs font-semibold">
+            <div
+              className={`shrink-0 rounded-2xl px-3 py-2 text-right ${
+                hasArrived ? 'bg-[#edf5ef] text-[#2f5a49]' : 'bg-white text-app-accent'
+              }`}
+            >
+              <div className="text-[11px] uppercase tracking-[0.16em] text-app-muted">
+                {t.status}
+              </div>
+              <div className="mt-1 text-sm font-semibold">
                 {hasArrived ? t.arrived : t.underway}
               </div>
             </div>
           </div>
 
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+          <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/80">
             <div
-              className="h-full rounded-full bg-white transition-all"
+              className="h-full rounded-full bg-app-accent transition-all"
               style={{ width: `${progress}%` }}
             />
           </div>
 
-          <div className="mt-3 overflow-hidden rounded-[1.35rem] border border-white/10">
+          <div className="mt-4 overflow-hidden rounded-[1.6rem] border border-app bg-white shadow-card">
             <MapContainer center={mapCenter} zoom={16} style={mapStyle} scrollWheelZoom>
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -618,7 +667,16 @@ export function TourPlayer({
                     <Popup>{t.youAreHere}</Popup>
                   </Marker>
                   {position.accuracy ? (
-                    <Circle center={[position.lat, position.lng]} radius={position.accuracy} />
+                    <Circle
+                      center={[position.lat, position.lng]}
+                      radius={position.accuracy}
+                      pathOptions={{
+                        color: '#26443e',
+                        fillColor: '#26443e',
+                        fillOpacity: 0.08,
+                        opacity: 0.18,
+                      }}
+                    />
                   ) : null}
                 </>
               ) : null}
@@ -637,6 +695,12 @@ export function TourPlayer({
                   <Circle
                     center={[Number(currentStop.lat), Number(currentStop.lng)]}
                     radius={Number(currentStop.trigger_radius_meters ?? 35)}
+                    pathOptions={{
+                      color: '#b97858',
+                      fillColor: '#b97858',
+                      fillOpacity: 0.08,
+                      opacity: 0.3,
+                    }}
                   />
                 </>
               ) : null}
@@ -645,67 +709,64 @@ export function TourPlayer({
                 <Polyline
                   positions={routeLine}
                   pathOptions={{
-                    color: '#2563eb',
+                    color: '#26443e',
                     weight: 5,
-                    opacity: 0.85,
+                    opacity: 0.8,
                   }}
                 />
               ) : null}
             </MapContainer>
           </div>
-        </div>
-      </section>
 
-      <section className="rounded-[1.5rem] border border-app bg-app-card p-3 shadow-card">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <div className="rounded-xl bg-[#f8f4eb] p-2.5">
-            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-app-muted">
-              <LocateFixed className="h-3.5 w-3.5 text-app-accent" />
-              {t.you}
+          <div className="mt-4 rounded-[1.35rem] border border-app bg-white/80 p-4">
+            <div className="flex items-start gap-3">
+              <Volume2 className="mt-0.5 h-5 w-5 text-app-accent" />
+              <div>
+                <p className="text-sm font-semibold text-app-accent">
+                  Luister veilig onderweg
+                </p>
+                <p className="mt-1 text-sm leading-6 text-app-muted">
+                  Gebruik bij voorkeur één oortje of open-ear audio, houd aandacht voor verkeer
+                  en omgeving, en pauzeer of spoel later terug als een fragment even niet veilig
+                  uitkomt.
+                </p>
+              </div>
             </div>
-            <p className="mt-1 text-xs font-medium text-app-accent">
-              {gpsAllowed ? t.locationActive : t.locationOff}
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-[#f8f4eb] p-2.5">
-            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-app-muted">
-              <Route className="h-3.5 w-3.5 text-app-accent" />
-              {t.direction}
-            </div>
-            <p className="mt-1 text-xs font-medium text-app-accent">
-              {t.shortestWalkingRoute}
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-[#f8f4eb] p-2.5">
-            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-app-muted">
-              <Compass className="h-3.5 w-3.5 text-app-accent" />
-              {t.distance}
-            </div>
-            <p className="mt-1 text-xs font-medium text-app-accent">
-              {distanceToStop !== null ? formatDistance(distanceToStop) : '--'}
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-[#f8f4eb] p-2.5">
-            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-app-muted">
-              <Navigation className="h-3.5 w-3.5 text-app-accent" />
-              {t.time}
-            </div>
-            <p className="mt-1 text-xs font-medium text-app-accent">
-              {timeToStopSeconds !== null ? estimateWalkingTime(timeToStopSeconds) : '--'}
-            </p>
           </div>
         </div>
       </section>
 
-      <section className="rounded-[1.5rem] border border-app bg-app-card p-3 shadow-card">
+      <section className="rounded-[1.75rem] border border-app bg-app-card p-3 shadow-card">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <InfoCard
+            icon={<LocateFixed className="h-3.5 w-3.5 text-app-accent" />}
+            label={t.you}
+            value={gpsAllowed ? t.locationActive : t.locationOff}
+          />
+          <InfoCard
+            icon={<Route className="h-3.5 w-3.5 text-app-accent" />}
+            label={t.direction}
+            value={t.shortestWalkingRoute}
+          />
+          <InfoCard
+            icon={<Compass className="h-3.5 w-3.5 text-app-accent" />}
+            label={t.distance}
+            value={distanceToStop !== null ? formatDistance(distanceToStop) : '--'}
+          />
+          <InfoCard
+            icon={<Navigation className="h-3.5 w-3.5 text-app-accent" />}
+            label={t.time}
+            value={timeToStopSeconds !== null ? estimateWalkingTime(timeToStopSeconds) : '--'}
+          />
+        </div>
+      </section>
+
+      <section className="rounded-[1.75rem] border border-app bg-app-card p-4 shadow-card">
         <div className="grid grid-cols-3 items-center gap-3">
           <button
             onClick={previousStop}
             disabled={currentIndex === 0}
-            className="inline-flex items-center justify-center rounded-xl border border-app px-3 py-2.5 text-sm font-medium text-app-accent disabled:opacity-40"
+            className="inline-flex items-center justify-center rounded-2xl border border-app bg-white px-3 py-3 text-sm font-semibold text-app-accent transition hover:bg-app-soft disabled:opacity-40"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t.previous}
@@ -713,7 +774,8 @@ export function TourPlayer({
 
           <button
             onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())}
-            className="inline-flex h-12 w-12 items-center justify-center justify-self-center rounded-full bg-app-accent text-white shadow-soft"
+            className="inline-flex h-14 w-14 items-center justify-center justify-self-center rounded-full bg-app-accent text-white shadow-soft transition hover:opacity-95"
+            aria-label={playing ? t.pauseAudio : t.playAudio}
           >
             {playing ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5" />}
           </button>
@@ -721,17 +783,17 @@ export function TourPlayer({
           <button
             onClick={nextStop}
             disabled={currentIndex === stops.length - 1}
-            className="inline-flex items-center justify-center rounded-xl border border-app px-3 py-2.5 text-sm font-medium text-app-accent disabled:opacity-40"
+            className="inline-flex items-center justify-center rounded-2xl border border-app bg-white px-3 py-3 text-sm font-semibold text-app-accent transition hover:bg-app-soft disabled:opacity-40"
           >
             {t.next}
             <ArrowRight className="ml-2 h-4 w-4" />
           </button>
         </div>
 
-        <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
           <button
             onClick={requestLocationAgain}
-            className="inline-flex items-center justify-center rounded-xl border border-app bg-white px-4 py-2.5 text-sm font-medium text-app-accent"
+            className="inline-flex items-center justify-center rounded-2xl border border-app bg-white px-4 py-3 text-sm font-semibold text-app-accent transition hover:bg-app-soft"
           >
             <LocateFixed className="mr-2 h-4 w-4" />
             {t.enableLocation}
@@ -739,15 +801,15 @@ export function TourPlayer({
 
           <button
             onClick={openWalkingRoute}
-            className="inline-flex items-center justify-center rounded-xl bg-app-accent px-4 py-2.5 text-sm font-medium text-white"
+            className="inline-flex items-center justify-center rounded-2xl bg-app-accent px-4 py-3 text-sm font-semibold text-white shadow-card transition hover:opacity-95"
           >
-            <Navigation className="mr-2 h-4 w-4" />
+            <MapPinned className="mr-2 h-4 w-4" />
             {t.openWalkingRoute}
           </button>
 
           <button
             onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())}
-            className="inline-flex items-center justify-center rounded-xl border border-app bg-white px-4 py-2.5 text-sm font-medium text-app-accent"
+            className="inline-flex items-center justify-center rounded-2xl border border-app bg-white px-4 py-3 text-sm font-semibold text-app-accent transition hover:bg-app-soft"
           >
             <Volume2 className="mr-2 h-4 w-4" />
             {playing ? t.pauseAudio : t.playAudio}
@@ -756,19 +818,19 @@ export function TourPlayer({
       </section>
 
       {error ? (
-        <div className="rounded-2xl border border-[#e5d3a4] bg-[#fff7df] p-4 text-sm text-[#7c5b16]">
+        <div className="rounded-[1.5rem] border border-[#e5d3a4] bg-[#fff7df] p-4 text-sm leading-6 text-[#7c5b16] shadow-card">
           {error}
         </div>
       ) : null}
 
-      <section className="rounded-[1.5rem] border border-app bg-app-card p-3 shadow-card">
+      <section className="rounded-[1.75rem] border border-app bg-app-card p-4 shadow-card">
         <button
           onClick={() => setShowStops((prev) => !prev)}
-          className="flex w-full items-center justify-between"
+          className="flex w-full items-center justify-between gap-3"
         >
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-app-accent" />
-            <h2 className="font-semibold text-app-accent">{t.allStops}</h2>
+            <h2 className="text-base font-semibold text-app-accent">{t.allStops}</h2>
           </div>
           {showStops ? (
             <ChevronUp className="h-5 w-5 text-app-accent" />
@@ -778,7 +840,7 @@ export function TourPlayer({
         </button>
 
         {showStops ? (
-          <div className="mt-3 space-y-2">
+          <div className="mt-4 space-y-2">
             {stops.map((stop, index) => {
               const stopTitle = getStopTitle(stop, language) ?? stop.title
               const stopDescription = getStopShortDescription(stop, language)
@@ -787,18 +849,18 @@ export function TourPlayer({
                 <button
                   key={stop.id}
                   onClick={() => goToStop(index)}
-                  className={`block w-full rounded-xl p-3 text-left text-sm transition ${
+                  className={`block w-full rounded-[1.25rem] border p-4 text-left transition ${
                     currentIndex === index
-                      ? 'bg-app-accent text-white'
-                      : 'bg-white text-app shadow-card'
+                      ? 'border-transparent bg-app-accent text-white shadow-card'
+                      : 'border-app bg-white text-app shadow-card hover:bg-app-soft'
                   }`}
                 >
-                  <div className="font-medium">
+                  <div className="font-semibold">
                     {index + 1}. {stopTitle}
                   </div>
                   {stopDescription ? (
                     <div
-                      className={`mt-1 text-xs ${
+                      className={`mt-2 text-sm leading-6 ${
                         currentIndex === index ? 'text-white/80' : 'text-app-muted'
                       }`}
                     >
@@ -811,6 +873,16 @@ export function TourPlayer({
           </div>
         ) : null}
       </section>
+
+      {permissionState === 'denied' ? (
+        <section className="rounded-[1.5rem] border border-app bg-white p-4 shadow-card">
+          <p className="text-sm font-semibold text-app-accent">Locatie staat uit</p>
+          <p className="mt-1 text-sm leading-6 text-app-muted">
+            Je kunt de tour nog steeds volgen, maar automatische audio en live routebegeleiding
+            werken beter als locatie is toegestaan.
+          </p>
+        </section>
+      ) : null}
     </div>
   )
 }
