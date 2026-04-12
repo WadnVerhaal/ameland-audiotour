@@ -10,7 +10,6 @@ type MarketingTour = {
   title: string
   badge: string
   duration: string
-  image: string
   points: string[]
   cta: string
   featured: boolean
@@ -48,7 +47,6 @@ const websiteTours: Record<AppLanguage, MarketingTour[]> = {
       title: 'Historische Dorpswandeling',
       badge: 'Binnenkort',
       duration: '45–60 min',
-      image: '/images/tour-fietsen.jpg',
       points: [
         'Verhalen over dorp en geschiedenis',
         'Zelfstandig en eenvoudig te volgen',
@@ -62,7 +60,6 @@ const websiteTours: Record<AppLanguage, MarketingTour[]> = {
       title: 'Maak kennis met Hollum',
       badge: 'Meest gekozen',
       duration: '90 min',
-      image: '/images/tour-duinen.jpg',
       points: [
         'Een rustige wandeling langs bijzondere plekken',
         'Live kaart en audio precies op de juiste locatie',
@@ -76,7 +73,6 @@ const websiteTours: Record<AppLanguage, MarketingTour[]> = {
       title: 'Fietsroute door Duin & Dorp',
       badge: 'Binnenkort',
       duration: '60–90 min',
-      image: '/images/tour-dorp.jpg',
       points: [
         'Route door landschap en dorp',
         'Luisteren op bijzondere plekken',
@@ -92,7 +88,6 @@ const websiteTours: Record<AppLanguage, MarketingTour[]> = {
       title: 'Historic Village Walk',
       badge: 'Coming soon',
       duration: '45–60 min',
-      image: '/images/tour-fietsen.jpg',
       points: [
         'Stories about the village and its history',
         'Easy to follow on your own',
@@ -106,7 +101,6 @@ const websiteTours: Record<AppLanguage, MarketingTour[]> = {
       title: 'Meet Hollum',
       badge: 'Most popular',
       duration: '90 min',
-      image: '/images/tour-duinen.jpg',
       points: [
         'A relaxed walk past special places',
         'Live map and audio at exactly the right location',
@@ -120,7 +114,6 @@ const websiteTours: Record<AppLanguage, MarketingTour[]> = {
       title: 'Cycling Route through Dunes & Village',
       badge: 'Coming soon',
       duration: '60–90 min',
-      image: '/images/tour-dorp.jpg',
       points: [
         'Route through landscape and village',
         'Listen at special locations',
@@ -136,7 +129,6 @@ const websiteTours: Record<AppLanguage, MarketingTour[]> = {
       title: 'Historischer Dorfrundgang',
       badge: 'Bald verfügbar',
       duration: '45–60 Min.',
-      image: '/images/tour-fietsen.jpg',
       points: [
         'Geschichten über das Dorf und seine Geschichte',
         'Selbstständig und einfach zu folgen',
@@ -150,7 +142,6 @@ const websiteTours: Record<AppLanguage, MarketingTour[]> = {
       title: 'Hollum kennenlernen',
       badge: 'Am beliebtesten',
       duration: '90 Min.',
-      image: '/images/tour-duinen.jpg',
       points: [
         'Ein ruhiger Spaziergang entlang besonderer Orte',
         'Live-Karte und Audio genau am richtigen Ort',
@@ -164,7 +155,6 @@ const websiteTours: Record<AppLanguage, MarketingTour[]> = {
       title: 'Fahrradroute durch Dünen & Dorf',
       badge: 'Bald verfügbar',
       duration: '60–90 Min.',
-      image: '/images/tour-dorp.jpg',
       points: [
         'Route durch Landschaft und Dorf',
         'An besonderen Orten zuhören',
@@ -226,17 +216,51 @@ function getIntro(language: AppLanguage) {
   return 'Kies de route die past bij jouw dag op Ameland. Tours die al beschikbaar zijn kun je direct starten. De andere zie je hier alvast als voorproefje.'
 }
 
+function getWebsiteTourImage(tourTitle: string, language: AppLanguage) {
+  const title = normalize(tourTitle)
+
+  if (
+    title.includes('maak kennis met hollum') ||
+    title.includes('meet hollum') ||
+    title.includes('hollum kennenlernen')
+  ) {
+    return '/images/tour-duinen.jpg'
+  }
+
+  if (
+    title.includes('historische dorpswandeling') ||
+    title.includes('historic village walk') ||
+    title.includes('historischer dorfrundgang')
+  ) {
+    return '/images/tour-fietsen.jpg'
+  }
+
+  if (
+    title.includes('fietsroute door duin dorp') ||
+    title.includes('cycling route through dunes village') ||
+    title.includes('fahrradroute durch dunen dorf')
+  ) {
+    return '/images/tour-dorp.jpg'
+  }
+
+  return '/images/tour-duinen.jpg'
+}
+
 function TourRow({
   tour,
   actionHref,
   isOrderable,
   buttonLabel,
+  language,
 }: {
   tour: MarketingTour
   actionHref?: string
   isOrderable: boolean
   buttonLabel: string
+  language: AppLanguage
 }) {
+  const imageUrl = getWebsiteTourImage(tour.title, language)
+
   return (
     <div
       className={`grid gap-5 px-5 py-5 md:px-6 ${
@@ -244,7 +268,7 @@ function TourRow({
       } md:grid-cols-[220px_1fr_auto] md:items-center`}
     >
       <div className="relative h-52 overflow-hidden rounded-[1.5rem]">
-        <img src={tour.image} alt={tour.title} className="h-full w-full object-cover" />
+        <img src={imageUrl} alt={tour.title} className="h-full w-full object-cover" />
 
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,48,56,0.02)_0%,rgba(8,48,56,0.08)_46%,rgba(8,48,56,0.35)_100%)]" />
 
@@ -382,6 +406,7 @@ export default async function ToursPage() {
                       : undefined
                   }
                   buttonLabel={marketingTour.cta}
+                  language={safeLanguage}
                 />
               )
             })}
