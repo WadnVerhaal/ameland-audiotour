@@ -87,8 +87,8 @@ function StarRating({
             onClick={() => onChange(star)}
             className={`rounded-full p-2 transition ${
               active
-                ? 'bg-app-soft text-[#a56a4d]'
-                : 'bg-white text-[#b8afa1] hover:bg-[#f3ecdd]'
+                ? 'bg-app-soft text-[#3c73ad]'
+                : 'bg-white text-[#9bb2c9] hover:bg-[#eef5ff]'
             }`}
             aria-label={`Geef ${star} ster${star > 1 ? 'ren' : ''}`}
           >
@@ -174,13 +174,13 @@ export default function TourCompletionScreen({
     <section className="mx-auto w-full max-w-2xl px-4 pb-24 pt-6">
       <div className="overflow-hidden rounded-[2rem] border border-app bg-app-card shadow-soft">
         <div className="relative overflow-hidden border-b border-app px-5 pb-6 pt-6">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(233,223,191,0.75),transparent_38%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(220,236,255,0.95),transparent_38%)]" />
           <div className="relative">
-            <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#edf5ef] text-app-accent">
+            <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#e8f2ff] text-app-accent">
               <CheckCircle2 className="h-8 w-8" />
             </div>
 
-            <div className="inline-flex items-center gap-2 rounded-full bg-app-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a5c37]">
+            <div className="inline-flex items-center gap-2 rounded-full bg-app-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#285788]">
               <Waves className="h-3.5 w-3.5" />
               Tour voltooid
             </div>
@@ -221,8 +221,8 @@ export default function TourCompletionScreen({
         </div>
 
         <div className="px-5 pb-5">
-          <div className="rounded-[1.5rem] border border-[#eadfbe] bg-[#fbf6e8] p-4">
-            <div className="mb-2 flex items-center gap-2 text-[#8a6a2e]">
+          <div className="rounded-[1.5rem] border border-[#d7e7fb] bg-[#eef6ff] p-4">
+            <div className="mb-2 flex items-center gap-2 text-[#285788]">
               <Gift className="h-5 w-5" />
               <h2 className="text-sm font-semibold">{bonus.title}</h2>
             </div>
@@ -250,7 +250,7 @@ export default function TourCompletionScreen({
                       value={feedbackText}
                       onChange={(e) => setFeedbackText(e.target.value)}
                       rows={4}
-                      className="w-full rounded-2xl border border-app bg-white px-4 py-3 text-sm text-app outline-none transition focus:border-[#9f9076]"
+                      className="w-full rounded-2xl border border-app bg-white px-4 py-3 text-sm text-app outline-none transition focus:border-[#7da5d0]"
                       placeholder={
                         rating >= 4
                           ? 'Bijvoorbeeld: de sfeer, de verhalen, de plekken of de route.'
@@ -266,7 +266,7 @@ export default function TourCompletionScreen({
                     <input
                       value={favoritePart}
                       onChange={(e) => setFavoritePart(e.target.value)}
-                      className="w-full rounded-2xl border border-app bg-white px-4 py-3 text-sm text-app outline-none transition focus:border-[#9f9076]"
+                      className="w-full rounded-2xl border border-app bg-white px-4 py-3 text-sm text-app outline-none transition focus:border-[#7da5d0]"
                       placeholder="Bijvoorbeeld: een specifieke stop, het audioverhaal of het landschap."
                     />
                   </div>
@@ -312,7 +312,7 @@ export default function TourCompletionScreen({
               )}
             </>
           ) : (
-            <div className="rounded-2xl border border-[#d9eadf] bg-[#edf7f0] p-4 text-sm text-[#2f5a49]">
+            <div className="rounded-2xl border border-[#d9e8f8] bg-[#edf6ff] p-4 text-sm text-[#1f4f82]">
               Dank je wel. Je beoordeling is opgeslagen.
             </div>
           )}
@@ -380,7 +380,7 @@ export default function TourCompletionScreen({
               <button
                 type="button"
                 onClick={onViewNextTour}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-app-accent transition hover:bg-[#f7f3ea]"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-app-accent transition hover:bg-[#eef4fb]"
               >
                 Bekijk volgende tour
                 <ArrowRight className="h-4 w-4" />

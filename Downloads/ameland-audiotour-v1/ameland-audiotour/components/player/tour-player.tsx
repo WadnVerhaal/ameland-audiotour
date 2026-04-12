@@ -73,9 +73,9 @@ const userIcon = new L.DivIcon({
       width:18px;
       height:18px;
       border-radius:9999px;
-      background:#26443e;
+      background:#1f4f82;
       border:3px solid #ffffff;
-      box-shadow:0 0 0 4px rgba(38,68,62,.16);
+      box-shadow:0 0 0 4px rgba(31,79,130,.18);
     "></div>
   `,
   iconSize: [18, 18],
@@ -89,9 +89,9 @@ const stopIcon = new L.DivIcon({
       width:20px;
       height:20px;
       border-radius:9999px;
-      background:#b97858;
+      background:#5f8fc7;
       border:3px solid #ffffff;
-      box-shadow:0 0 0 4px rgba(185,120,88,.16);
+      box-shadow:0 0 0 4px rgba(95,143,199,.18);
     "></div>
   `,
   iconSize: [20, 20],
@@ -613,11 +613,11 @@ export function TourPlayer({
       />
 
       <section className="relative overflow-hidden rounded-[2rem] border border-app bg-app-card shadow-soft">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(233,223,191,0.8),transparent_35%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(220,236,255,0.95),transparent_35%)]" />
         <div className="relative p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="inline-flex items-center gap-2 rounded-full bg-app-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6a5c37]">
+              <div className="inline-flex items-center gap-2 rounded-full bg-app-soft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#285788]">
                 <Waves className="h-3.5 w-3.5" />
                 {t.tourActive}
               </div>
@@ -633,7 +633,7 @@ export function TourPlayer({
 
             <div
               className={`shrink-0 rounded-2xl px-3 py-2 text-right ${
-                hasArrived ? 'bg-[#edf5ef] text-[#2f5a49]' : 'bg-white text-app-accent'
+                hasArrived ? 'bg-[#e8f2ff] text-[#1f4f82]' : 'bg-white text-app-accent'
               }`}
             >
               <div className="text-[11px] uppercase tracking-[0.16em] text-app-muted">
@@ -671,8 +671,8 @@ export function TourPlayer({
                       center={[position.lat, position.lng]}
                       radius={position.accuracy}
                       pathOptions={{
-                        color: '#26443e',
-                        fillColor: '#26443e',
+                        color: '#1f4f82',
+                        fillColor: '#1f4f82',
                         fillOpacity: 0.08,
                         opacity: 0.18,
                       }}
@@ -696,10 +696,10 @@ export function TourPlayer({
                     center={[Number(currentStop.lat), Number(currentStop.lng)]}
                     radius={Number(currentStop.trigger_radius_meters ?? 35)}
                     pathOptions={{
-                      color: '#b97858',
-                      fillColor: '#b97858',
-                      fillOpacity: 0.08,
-                      opacity: 0.3,
+                      color: '#5f8fc7',
+                      fillColor: '#5f8fc7',
+                      fillOpacity: 0.1,
+                      opacity: 0.35,
                     }}
                   />
                 </>
@@ -709,9 +709,9 @@ export function TourPlayer({
                 <Polyline
                   positions={routeLine}
                   pathOptions={{
-                    color: '#26443e',
+                    color: '#1f4f82',
                     weight: 5,
-                    opacity: 0.8,
+                    opacity: 0.85,
                   }}
                 />
               ) : null}
@@ -818,7 +818,7 @@ export function TourPlayer({
       </section>
 
       {error ? (
-        <div className="rounded-[1.5rem] border border-[#e5d3a4] bg-[#fff7df] p-4 text-sm leading-6 text-[#7c5b16] shadow-card">
+        <div className="rounded-[1.5rem] border border-[#cfe1f4] bg-[#edf6ff] p-4 text-sm leading-6 text-[#285788] shadow-card">
           {error}
         </div>
       ) : null}

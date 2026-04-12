@@ -3,15 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f7f3ea;
-  --card: #f8f4eb;
-  --card-strong: #f4efe4;
-  --foreground: #29453f;
-  --muted: #5e6b66;
-  --border: #ddd5c7;
-  --accent: #26443e;
-  --accent-soft: #e9dfbf;
-  --badge: #b97858;
+  --bg: #eef4fb;
+  --card: #f7fbff;
+  --card-strong: #edf5ff;
+  --foreground: #17324d;
+  --muted: #58708a;
+  --border: #d7e4f2;
+  --accent: #1f4f82;
+  --accent-soft: #dcecff;
+  --badge: #5f8fc7;
 }
 
 html {
@@ -77,10 +77,10 @@ select {
   }
 
   .shadow-soft {
-    box-shadow: 0 12px 30px rgba(62, 53, 34, 0.08);
+    box-shadow: 0 14px 34px rgba(23, 50, 77, 0.10);
   }
 
   .shadow-card {
-    box-shadow: 0 10px 24px rgba(62, 53, 34, 0.06);
+    box-shadow: 0 10px 24px rgba(23, 50, 77, 0.08);
   }
 }
