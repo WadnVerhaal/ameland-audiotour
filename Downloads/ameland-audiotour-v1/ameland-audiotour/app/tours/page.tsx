@@ -1,51 +1,84 @@
-﻿import { getAllTours } from '@/lib/data/tours'
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import { ArrowLeft, Check, MapPinned } from 'lucide-react'
-import {
-  translations,
-  getTourTitle,
-  type AppLanguage,
-} from '@/lib/app-language'
+import { getActiveTours } from '@/lib/data/tours'
+import { translations as appTranslations } from '@/lib/app-language'
 import { getServerLanguage } from '@/lib/app-language-server'
-import type { Tour } from '@/types/tour'
+import { getTranslation, type Locale } from '@/lib/i18n'
 
-function getAppCta(language: AppLanguage) {
-  if (language === 'de') return 'Jetzt buchen'
-  if (language === 'en') return 'Order now'
-  return 'Nu bestellen'
+type MarketingTour = {
+  title: string
+  badge: string
+  duration: string
+  image: string
+  points: string[]
+  cta: string
+  featured: boolean
+  available: boolean
 }
 
-function getUpcomingBadge(language: AppLanguage) {
-  if (language === 'de') return 'Bald verfügbar'
-  if (language === 'en') return 'Coming soon'
-  return 'Binnenkort'
+type ActiveTourRecord = {
+  id: string
+  slug: string
+  title: string
+  title_en: string | null
+  title_de: string | null
+  subtitle: string | null
+  subtitle_en: string | null
+  subtitle_de: string | null
+  description: string
+  description_en: string | null
+  description_de: string | null
+  language: string
+  duration_minutes: number
+  distance_km: number
+  mode: string
+  price_cents: number
+  hero_image_url: string | null
+  start_lat: number | null
+  start_lng: number | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
 }
 
-function getUpcomingButton(language: AppLanguage) {
-  if (language === 'de') return 'Bald verfügbar'
-  if (language === 'en') return 'Coming soon'
-  return 'Binnenkort'
+function isLocale(value: string): value is Locale {
+  return value === 'nl' || value === 'en' || value === 'de'
 }
 
-function getModeLabel(mode: string | null | undefined, language: AppLanguage) {
-  const value = (mode ?? '').toLowerCase()
-
-  if (value.includes('fiets') || value.includes('bike') || value.includes('cycle')) {
-    return language === 'de'
-      ? 'Fahrradtour'
-      : language === 'en'
-        ? 'Bike tour'
-        : 'Fietstour'
-  }
-
-  return language === 'de'
-    ? 'Wandeltour'
-    : language === 'en'
-      ? 'Walking tour'
-      : 'Wandeltour'
+function normalize(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
 }
 
-function getIntro(language: AppLanguage) {
+function getDbTitleForLanguage(tour: ActiveTourRecord, locale: Locale) {
+  if (locale === 'en' && tour.title_en) return tour.title_en
+  if (locale === 'de' && tour.title_de) return tour.title_de
+  return tour.title
+}
+
+function findMatchingActiveTour(
+  marketingTour: MarketingTour,
+  activeTours: ActiveTourRecord[],
+  locale: Locale
+) {
+  const marketingTitle = normalize(marketingTour.title)
+
+  const exact = activeTours.find((tour) => normalize(getDbTitleForLanguage(tour, locale)) === marketingTitle)
+  if (exact) return exact
+
+  const hollum = marketingTitle.includes('hollum')
+    ? activeTours.find((tour) => normalize(getDbTitleForLanguage(tour, locale)).includes('hollum'))
+    : null
+  if (hollum) return hollum
+
+  return activeTours[0] ?? null
+}
+
+function getIntro(language: Locale) {
   if (language === 'de') {
     return 'Wähle die Route, die zu deinem Tag auf Ameland passt. Bereits verfügbare Touren kannst du direkt starten. Die anderen siehst du hier schon als Vorschau.'
   }
@@ -57,156 +90,33 @@ function getIntro(language: AppLanguage) {
   return 'Kies de route die past bij jouw dag op Ameland. Tours die al beschikbaar zijn kun je direct starten. De andere zie je hier alvast als voorproefje.'
 }
 
-function getTourPoints(tour: Tour, language: AppLanguage) {
-  const slug = tour.slug?.toLowerCase() ?? ''
-
-  if (slug.includes('hollum')) {
-    if (language === 'de') {
-      return [
-        'Ein ruhiger Spaziergang entlang besonderer Orte',
-        'Live-Karte und Audio genau am richtigen Ort',
-        'Perfekt als erster Eindruck von Hollum',
-      ]
-    }
-
-    if (language === 'en') {
-      return [
-        'A relaxed walk past special places',
-        'Live map and audio at exactly the right location',
-        'Perfect as a first introduction to Hollum',
-      ]
-    }
-
-    return [
-      'Een rustige wandeling langs bijzondere plekken',
-      'Live kaart en audio precies op de juiste locatie',
-      'Perfect als eerste kennismaking met Hollum',
-    ]
-  }
-
-  if (slug.includes('histor')) {
-    if (language === 'de') {
-      return [
-        'Geschichten über das Dorf und seine Geschichte',
-        'Selbstständig und einfach zu folgen',
-        'Ideal als erste Einführung',
-      ]
-    }
-
-    if (language === 'en') {
-      return [
-        'Stories about the village and its history',
-        'Easy to follow on your own',
-        'Ideal as a first introduction',
-      ]
-    }
-
-    return [
-      'Verhalen over dorp en geschiedenis',
-      'Zelfstandig en eenvoudig te volgen',
-      'Ideaal als eerste kennismaking',
-    ]
-  }
-
-  if (slug.includes('duin') || slug.includes('dorp') || slug.includes('fiets')) {
-    if (language === 'de') {
-      return [
-        'Route durch Landschaft und Dorf',
-        'An besonderen Orten zuhören',
-        'Ein vollständiges Inselerlebnis',
-      ]
-    }
-
-    if (language === 'en') {
-      return [
-        'Route through landscape and village',
-        'Listen at special locations',
-        'A complete island experience',
-      ]
-    }
-
-    return [
-      'Route door landschap en dorp',
-      'Luisteren op bijzondere plekken',
-      'Een complete eilandbeleving',
-    ]
-  }
-
-  return []
-}
-
-function getDurationLabel(tour: Tour, language: AppLanguage) {
-  const minutes = Number(tour.duration_minutes || 0)
-
-  if (minutes <= 0) return '--'
-
-  if (minutes >= 85 && minutes <= 95) {
-    return language === 'de' ? '90 Min.' : '90 min'
-  }
-
-  if (minutes >= 55 && minutes <= 95) {
-    return language === 'de' ? '60–90 Min.' : '60–90 min'
-  }
-
-  if (minutes >= 40 && minutes <= 65) {
-    return language === 'de' ? '45–60 Min.' : '45–60 min'
-  }
-
-  return language === 'de' ? `${minutes} Min.` : `${minutes} min`
-}
-
-function getWebsiteTourImage(tour: Tour) {
-  const slug = tour.slug?.toLowerCase() ?? ''
-  const title = tour.title?.toLowerCase() ?? ''
-
-  if (slug.includes('hollum') || title.includes('hollum')) {
-    return '/images/tour-duinen.jpg'
-  }
-
-  if (slug.includes('histor') || title.includes('histor')) {
-    return '/images/tour-fietsen.jpg'
-  }
-
-  if (
-    slug.includes('duin') ||
-    slug.includes('dorp') ||
-    slug.includes('fiets') ||
-    title.includes('duin') ||
-    title.includes('dorp') ||
-    title.includes('fiets')
-  ) {
-    return '/images/tour-dorp.jpg'
-  }
-
-  return tour.hero_image_url || '/images/tour-duinen.jpg'
+function getComingSoonButton(language: Locale) {
+  if (language === 'de') return 'Bald verfügbar'
+  if (language === 'en') return 'Coming soon'
+  return 'Binnenkort'
 }
 
 function TourRow({
   tour,
-  language,
+  actionHref,
+  isOrderable,
+  buttonLabel,
 }: {
-  tour: Tour
-  language: AppLanguage
+  tour: MarketingTour
+  actionHref?: string
+  isOrderable: boolean
+  buttonLabel: string
 }) {
-  const active = tour.is_active
-  const title = getTourTitle(tour, language)
-  const points = getTourPoints(tour, language)
-  const duration = getDurationLabel(tour, language)
-  const appCta = getAppCta(language)
-  const upcomingLabel = getUpcomingBadge(language)
-  const modeLabel = getModeLabel(tour.mode, language)
-  const imageUrl = getWebsiteTourImage(tour)
-
   return (
     <div
       className={`grid gap-5 px-5 py-5 md:px-6 ${
-        active ? '' : 'bg-[#fbfdfd]'
+        tour.available ? '' : 'bg-[#fbfdfd]'
       } md:grid-cols-[220px_1fr_auto] md:items-center`}
     >
       <div className="relative h-52 overflow-hidden rounded-[1.5rem]">
         <img
-          src={imageUrl}
-          alt={title}
+          src={tour.image}
+          alt={tour.title}
           className="h-full w-full object-cover"
         />
 
@@ -215,10 +125,14 @@ function TourRow({
         <div className="absolute left-4 top-4 flex flex-wrap gap-2">
           <span
             className={`rounded-full px-3 py-1 text-xs font-semibold ${
-              active ? 'bg-white/92 text-[#355f65]' : 'bg-[#aeb8bb]/95 text-white'
+              tour.available
+                ? tour.featured
+                  ? 'bg-[#ef7f63] text-white'
+                  : 'bg-white/92 text-[#355f65]'
+                : 'bg-[#aeb8bb]/95 text-white'
             }`}
           >
-            {active ? modeLabel : upcomingLabel}
+            {tour.badge}
           </span>
         </div>
       </div>
@@ -227,34 +141,34 @@ function TourRow({
         <div className="flex flex-wrap items-center gap-3">
           <h2
             className={`text-2xl font-semibold tracking-tight md:text-3xl ${
-              active ? 'text-[#143a43]' : 'text-[#73858a]'
+              tour.available ? 'text-[#143a43]' : 'text-[#73858a]'
             }`}
           >
-            {title}
+            {tour.title}
           </h2>
 
           <span
             className={`rounded-full px-3 py-1 text-sm font-medium ${
-              active
+              tour.available
                 ? 'bg-[#eef8f8] text-[#4c7177]'
                 : 'bg-[#f2f6f6] text-[#87979b]'
             }`}
           >
-            {duration}
+            {tour.duration}
           </span>
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          {points.map((point) => (
+          {tour.points.map((point) => (
             <div
               key={point}
               className={`flex items-start gap-3 text-sm ${
-                active ? 'text-[#526f75]' : 'text-[#87979b]'
+                tour.available ? 'text-[#526f75]' : 'text-[#87979b]'
               }`}
             >
               <Check
                 className={`mt-0.5 h-4 w-4 shrink-0 ${
-                  active ? 'text-[#1694a3]' : 'text-[#bcc9cc]'
+                  tour.available ? 'text-[#1694a3]' : 'text-[#bcc9cc]'
                 }`}
               />
               <span>{point}</span>
@@ -264,16 +178,16 @@ function TourRow({
       </div>
 
       <div className="flex items-center md:justify-end">
-        {active ? (
+        {isOrderable && actionHref ? (
           <Link
-            href={`/checkout/${tour.slug}`}
+            href={actionHref}
             className="inline-flex min-w-[180px] items-center justify-center rounded-2xl bg-[#0f4b58] px-5 py-3.5 font-semibold text-white transition hover:opacity-90"
           >
-            {appCta}
+            {buttonLabel}
           </Link>
         ) : (
           <span className="inline-flex min-w-[180px] items-center justify-center rounded-2xl border border-[#dce8e9] bg-[#f8fbfb] px-5 py-3.5 font-semibold text-[#8a9a9e]">
-            {getUpcomingButton(language)}
+            {buttonLabel}
           </span>
         )}
       </div>
@@ -282,13 +196,17 @@ function TourRow({
 }
 
 export default async function ToursPage() {
-  const tours = await getAllTours()
+  const activeTours = (await getActiveTours()) as ActiveTourRecord[]
   const language = await getServerLanguage()
-  const t = translations[language]
+  const appT = appTranslations[language]
+  const locale: Locale = isLocale(language) ? language : 'nl'
+  const websiteT = getTranslation(locale)
 
-  const activeTours = tours.filter((tour) => tour.is_active)
-  const upcomingTours = tours.filter((tour) => !tour.is_active)
-  const orderedTours = [...activeTours, ...upcomingTours]
+  const marketingTours = websiteT.tours
+  const orderedTours = [
+    ...marketingTours.filter((tour) => tour.available),
+    ...marketingTours.filter((tour) => !tour.available),
+  ]
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-5 md:px-6">
@@ -299,34 +217,52 @@ export default async function ToursPage() {
             className="inline-flex items-center text-sm font-medium text-[#5b757b] transition hover:text-[#0f4b58]"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            {t.back}
+            {appT.back}
           </Link>
 
           <div className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#eef8f8] px-3 py-1 text-xs font-semibold text-[#4f8a8e]">
             <MapPinned className="h-3.5 w-3.5" />
-            {t.availableRoutes}
+            {appT.availableRoutes}
           </div>
         </div>
 
         <h1 className="mt-6 text-3xl font-semibold text-[#143a43] md:text-4xl">
-          {t.chooseTour}
+          {appT.chooseTour}
         </h1>
 
         <p className="mt-3 max-w-3xl text-sm leading-7 text-[#5b757b] md:text-base">
-          {getIntro(language)}
+          {getIntro(locale)}
         </p>
       </section>
 
       <section className="mt-5 overflow-hidden rounded-[2.4rem] border border-[#dbecef] bg-white shadow-[0_24px_70px_rgba(15,75,88,0.08)]">
         {orderedTours.length === 0 ? (
           <div className="px-5 py-6 text-sm text-[#5b757b]">
-            {t.noToursAvailable}
+            {appT.noToursAvailable}
           </div>
         ) : (
           <div className="divide-y divide-[#e7f1f2]">
-            {orderedTours.map((tour) => (
-              <TourRow key={tour.id} tour={tour} language={language} />
-            ))}
+            {orderedTours.map((marketingTour) => {
+              const matchedActiveTour = marketingTour.available
+                ? findMatchingActiveTour(marketingTour, activeTours, locale)
+                : null
+
+              return (
+                <TourRow
+                  key={`${marketingTour.title}-${marketingTour.duration}`}
+                  tour={marketingTour}
+                  isOrderable={Boolean(marketingTour.available && matchedActiveTour)}
+                  actionHref={
+                    marketingTour.available && matchedActiveTour
+                      ? `/checkout/${matchedActiveTour.slug}`
+                      : undefined
+                  }
+                  buttonLabel={
+                    marketingTour.available ? marketingTour.cta : getComingSoonButton(locale)
+                  }
+                />
+              )
+            })}
           </div>
         )}
       </section>
