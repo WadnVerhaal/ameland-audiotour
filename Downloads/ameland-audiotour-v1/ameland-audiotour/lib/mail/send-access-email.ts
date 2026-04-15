@@ -4,9 +4,16 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendAccessEmail(input: { to: string; tourTitle: string; accessUrl: string }) {
   const from = process.env.MAIL_FROM;
+
+  console.log('sendAccessEmail called');
+  console.log('MAIL_FROM aanwezig:', !!from);
+  console.log('RESEND_API_KEY aanwezig:', !!process.env.RESEND_API_KEY);
+  console.log('To:', input.to);
+  console.log('Access URL:', input.accessUrl);
+
   if (!from) throw new Error('Missing MAIL_FROM');
 
-  await resend.emails.send({
+  const result = await resend.emails.send({
     from,
     to: input.to,
     subject: `Je tour staat klaar: ${input.tourTitle}`,
@@ -23,4 +30,8 @@ export async function sendAccessEmail(input: { to: string; tourTitle: string; ac
       </div>
     `,
   });
+
+  console.log('Resend result:', JSON.stringify(result));
+
+  return result;
 }
