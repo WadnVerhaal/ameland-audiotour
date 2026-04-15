@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ShieldAlert, RefreshCw, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { ShieldAlert, RefreshCw, ArrowRight, CheckCircle2, Compass, Waves } from 'lucide-react'
 
 type Language = 'nl' | 'en' | 'de'
 
@@ -16,11 +16,11 @@ export function ExpiredAccessCard({ language, variant = 'full' }: Props) {
       text:
         'Je toegang was 48 uur geldig na aankoop. Die periode is voorbij, waardoor deze link niet meer bruikbaar is.',
       subtext:
-        'Geen zorgen — je kunt de tour opnieuw aanschaffen en direct weer verder op pad.',
+        'Geen zorgen — je kunt de tour opnieuw aanschaffen en direct weer verder op pad op Ameland.',
       primary: 'Bekijk tours',
       secondary: 'Terug naar homepage',
       point1: '48 uur toegang vanaf aankoop',
-      point2: 'Na afloop vervalt de persoonlijke link automatisch',
+      point2: 'Je persoonlijke link vervalt daarna automatisch',
       point3: 'Na een nieuwe aankoop ontvang je direct weer een geldige link',
       compactTitle: 'Deze tour is niet meer beschikbaar via deze link',
       compactText:
@@ -28,6 +28,8 @@ export function ExpiredAccessCard({ language, variant = 'full' }: Props) {
       compactSubtext:
         'Je kunt de tour opnieuw aanschaffen om direct weer toegang te krijgen.',
       compactPrimary: 'Nieuwe tour kopen',
+      labelTop: 'Wad’n Verhaal',
+      softLine: 'Opnieuw luisteren? Dat kan meteen met een nieuwe toegang.',
     },
     en: {
       badge: 'Access expired',
@@ -35,7 +37,7 @@ export function ExpiredAccessCard({ language, variant = 'full' }: Props) {
       text:
         'Your access was valid for 48 hours after purchase. That period has ended, so this link can no longer be used.',
       subtext:
-        'No worries — you can purchase the tour again and continue right away.',
+        'No worries — you can purchase the tour again and continue exploring Ameland right away.',
       primary: 'View tours',
       secondary: 'Back to homepage',
       point1: '48 hours of access after purchase',
@@ -47,6 +49,8 @@ export function ExpiredAccessCard({ language, variant = 'full' }: Props) {
       compactSubtext:
         'You can purchase the tour again to get access immediately.',
       compactPrimary: 'Buy a new tour',
+      labelTop: "Wad'n Verhaal",
+      softLine: 'Want to listen again? A new purchase gives instant access.',
     },
     de: {
       badge: 'Zugang abgelaufen',
@@ -54,7 +58,7 @@ export function ExpiredAccessCard({ language, variant = 'full' }: Props) {
       text:
         'Dein Zugang war nach dem Kauf 48 Stunden gültig. Dieser Zeitraum ist vorbei, daher kann dieser Link nicht mehr verwendet werden.',
       subtext:
-        'Kein Problem — du kannst die Tour erneut kaufen und direkt weitermachen.',
+        'Kein Problem — du kannst die Tour erneut kaufen und Ameland direkt weiter entdecken.',
       primary: 'Touren ansehen',
       secondary: 'Zur Startseite',
       point1: '48 Stunden Zugang ab Kauf',
@@ -66,6 +70,8 @@ export function ExpiredAccessCard({ language, variant = 'full' }: Props) {
       compactSubtext:
         'Du kannst die Tour erneut kaufen, um sofort wieder Zugang zu erhalten.',
       compactPrimary: 'Neue Tour kaufen',
+      labelTop: "Wad'n Verhaal",
+      softLine: 'Erneut hören? Mit einem neuen Kauf hast du sofort wieder Zugang.',
     },
   } as const
 
@@ -79,24 +85,35 @@ export function ExpiredAccessCard({ language, variant = 'full' }: Props) {
   return (
     <main className="mx-auto max-w-md px-4 py-5">
       <section className="overflow-hidden rounded-[2rem] border border-app bg-app-card shadow-soft">
-        <div className="relative overflow-hidden px-6 pb-8 pt-8">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(38,68,62,0.10),transparent_45%),radial-gradient(circle_at_bottom_left,rgba(191,161,74,0.12),transparent_40%)]" />
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(38,68,62,0.16),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(191,161,74,0.16),transparent_38%)]" />
 
-          <div className="relative">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#f4ead6] px-3 py-1 text-xs font-semibold text-[#7a5f1e]">
-              <ShieldAlert className="h-4 w-4" />
-              {t.badge}
+          <div className="relative border-b border-app/60 px-6 pb-6 pt-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3 py-1 text-xs font-semibold text-app-accent shadow-card">
+                <Compass className="h-4 w-4" />
+                {t.labelTop}
+              </div>
+
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#f4ead6] px-3 py-1 text-xs font-semibold text-[#7a5f1e]">
+                <ShieldAlert className="h-4 w-4" />
+                {t.badge}
+              </div>
             </div>
 
-            <div className="mt-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#fff7eb] text-[#a06a00] shadow-card">
-              <RefreshCw className="h-8 w-8" />
+            <div className="mt-6 flex items-center gap-4">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.4rem] bg-[#fff7eb] text-[#a06a00] shadow-card">
+                <RefreshCw className="h-8 w-8" />
+              </div>
+
+              <div className="min-w-0">
+                <h1 className="text-3xl font-bold leading-tight text-app-accent">
+                  {title}
+                </h1>
+              </div>
             </div>
 
-            <h1 className="mt-5 text-3xl font-bold leading-tight text-app-accent">
-              {title}
-            </h1>
-
-            <p className="mt-4 text-sm leading-7 text-app-muted">
+            <p className="mt-5 text-sm leading-7 text-app-muted">
               {text}
             </p>
 
@@ -104,8 +121,15 @@ export function ExpiredAccessCard({ language, variant = 'full' }: Props) {
               {subtext}
             </p>
 
-            {variant === 'full' ? (
-              <div className="mt-6 rounded-[1.5rem] bg-white p-5 shadow-card">
+            <div className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-white/90 px-4 py-3 text-sm text-app-muted shadow-card">
+              <Waves className="h-4 w-4 text-app-accent" />
+              <span>{t.softLine}</span>
+            </div>
+          </div>
+
+          {variant === 'full' ? (
+            <div className="relative px-6 py-6">
+              <div className="rounded-[1.5rem] bg-white p-5 shadow-card">
                 <div className="space-y-4 text-sm text-app-muted">
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-app-accent" />
@@ -121,9 +145,11 @@ export function ExpiredAccessCard({ language, variant = 'full' }: Props) {
                   </div>
                 </div>
               </div>
-            ) : null}
+            </div>
+          ) : null}
 
-            <div className="mt-6 space-y-3">
+          <div className="relative px-6 pb-6">
+            <div className="space-y-3">
               <Link
                 href="/tours"
                 className="inline-flex w-full items-center justify-center rounded-2xl bg-app-accent px-4 py-4 text-sm font-semibold text-white shadow-card transition hover:opacity-95"
