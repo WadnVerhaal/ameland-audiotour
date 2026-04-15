@@ -5,6 +5,7 @@ import { startCheckout } from './actions'
 import { formatEuroFromCents } from '@/lib/utils/money'
 import { translations, getTourTitle } from '@/lib/app-language'
 import { getServerLanguage } from '@/lib/app-language-server'
+import { CheckoutSubmitButton } from '@/components/checkout/checkout-submit-button'
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -21,6 +22,13 @@ export default async function CheckoutPage({ params }: Props) {
   const language = await getServerLanguage()
   const t = translations[language]
   const tourTitle = getTourTitle(tour, language)
+
+  const loadingLabel =
+    language === 'en'
+      ? 'Loading payment...'
+      : language === 'de'
+        ? 'Zahlung wird geladen...'
+        : 'Betaling wordt geladen...'
 
   return (
     <main className="mx-auto max-w-md px-4 py-5">
@@ -88,9 +96,10 @@ export default async function CheckoutPage({ params }: Props) {
             </div>
           </div>
 
-          <button className="inline-flex w-full items-center justify-center rounded-2xl bg-app-accent px-4 py-4 text-sm font-semibold text-white shadow-card transition hover:opacity-95">
-            {t.completeOrder}
-          </button>
+          <CheckoutSubmitButton
+            idleLabel={t.completeOrder}
+            loadingLabel={loadingLabel}
+          />
         </form>
       </section>
     </main>
