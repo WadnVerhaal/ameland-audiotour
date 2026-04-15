@@ -1,11 +1,7 @@
 'use client'
 
-import 'leaflet/dist/leaflet.css'
-
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties } from 'react'
-import L from 'leaflet'
-import { Circle, MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from 'react-leaflet'
+import type { ReactNode } from 'react'
 import {
   Pause,
   Play,
@@ -33,6 +29,7 @@ import {
 } from '@/lib/app-language'
 import { distanceInMeters } from '@/lib/utils/geo'
 import TourCompletionContainer from '@/components/tour/tour-completion-container'
+import { PremiumTourMap } from '@/components/maps/premium-tour-map'
 
 function getStopAudioUrl(stop: TourStop, language: string) {
   if (language === 'en') {
@@ -67,53 +64,14 @@ type RoutePoint = [number, number]
 type GeoPermissionState = 'unknown' | 'granted' | 'prompt' | 'denied'
 
 const BRAND = {
-  pageBg: '#f4fbfb',
-  panelBg: '#ffffff',
-  panelSoft: '#f7ffff',
   border: '#dbecef',
   borderStrong: '#cfe3e5',
-  heading: '#0d3d48',
-  body: '#143a43',
-  muted: '#5b757b',
   accent: '#0f4b58',
   accentAlt: '#12879a',
   coral: '#ef7f63',
-  successSoft: '#eef8f8',
   shadow: '0 24px 70px rgba(15,75,88,0.08)',
   shadowStrong: '0 34px 90px rgba(15,75,88,0.14)',
 }
-
-const userIcon = new L.DivIcon({
-  className: '',
-  html: `
-    <div style="
-      width:18px;
-      height:18px;
-      border-radius:9999px;
-      background:#0f4b58;
-      border:3px solid #ffffff;
-      box-shadow:0 0 0 4px rgba(15,75,88,.16);
-    "></div>
-  `,
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
-})
-
-const stopIcon = new L.DivIcon({
-  className: '',
-  html: `
-    <div style="
-      width:20px;
-      height:20px;
-      border-radius:9999px;
-      background:#ef7f63;
-      border:3px solid #ffffff;
-      box-shadow:0 0 0 4px rgba(239,127,99,.16);
-    "></div>
-  `,
-  iconSize: [20, 20],
-  iconAnchor: [10, 10],
-})
 
 function formatDistance(meters: number) {
   const roundedMeters = Math.round(meters)
@@ -176,46 +134,12 @@ async function snapToWalkingNetwork(lat: number, lng: number, signal?: AbortSign
   }
 }
 
-function RecenterMap({
-  position,
-  stop,
-}: {
-  position: Position | null
-  stop: TourStop | null
-}) {
-  const map = useMap()
-
-  useEffect(() => {
-    if (!position && !stop) return
-
-    if (position && stop?.lat && stop?.lng) {
-      const bounds = L.latLngBounds(
-        [position.lat, position.lng],
-        [Number(stop.lat), Number(stop.lng)]
-      )
-      map.fitBounds(bounds, { padding: [28, 28], animate: true, maxZoom: 17 })
-      return
-    }
-
-    if (position) {
-      map.setView([position.lat, position.lng], 16, { animate: true })
-      return
-    }
-
-    if (stop?.lat && stop?.lng) {
-      map.setView([Number(stop.lat), Number(stop.lng)], 16, { animate: true })
-    }
-  }, [position, stop, map])
-
-  return null
-}
-
 function InfoCard({
   icon,
   label,
   value,
 }: {
-  icon: React.ReactNode
+  icon: ReactNode
   label: string
   value: string
 }) {
@@ -421,7 +345,6 @@ export function TourPlayer({
 
   function pauseCurrentStop() {
     if (!audioRef.current) return
-
     audioRef.current.pause()
     setPlaying(false)
   }
@@ -495,13 +418,7 @@ export function TourPlayer({
       : null
 
   useEffect(() => {
-    if (!position || !currentStop?.lat || !currentStop?.lng) {
-      setRouteLine([])
-      setConnectorLine([])
-      setRouteDistance(null)
-      setRouteDurationSeconds(null)
-      return
-    }
+    if (!position || !currentStop?.lat || !currentStop?.lng) return
 
     const currentAudioUrl = getStopAudioUrl(currentStop, language)
     if (!currentAudioUrl || playing) return
@@ -591,12 +508,6 @@ export function TourPlayer({
           stopLng
         )
 
-        const connectorSegments: RoutePoint[] = []
-
-        if (startConnectorDistance > 8) {
-          connectorSegments.push([startLat, startLng], [snappedStart.lat, snappedStart.lng])
-        }
-
         if (stopConnectorDistance > 8) {
           setConnectorLine([
             [snappedStop.lat, snappedStop.lng],
@@ -607,7 +518,13 @@ export function TourPlayer({
         }
 
         const nextDistance =
-          (route.distance ?? distanceInMeters(snappedStart.lat, snappedStart.lng, snappedStop.lat, snappedStop.lng)) +
+          (route.distance ??
+            distanceInMeters(
+              snappedStart.lat,
+              snappedStart.lng,
+              snappedStop.lat,
+              snappedStop.lng
+            )) +
           startConnectorDistance +
           stopConnectorDistance
 
@@ -672,18 +589,7 @@ export function TourPlayer({
     setCurrentIndex((prev) => Math.min(prev + 1, stops.length - 1))
   }
 
-  const mapCenter: [number, number] = position
-    ? [position.lat, position.lng]
-    : currentStop?.lat && currentStop?.lng
-      ? [Number(currentStop.lat), Number(currentStop.lng)]
-      : [53.4396, 5.77]
-
   const progress = stops.length > 0 ? ((currentIndex + 1) / stops.length) * 100 : 0
-
-  const mapStyle: CSSProperties = {
-    height: '340px',
-    width: '100%',
-  }
 
   if (showCompletionScreen) {
     return (
@@ -766,81 +672,15 @@ export function TourPlayer({
               boxShadow: '0 12px 35px rgba(18,75,84,0.08)',
             }}
           >
-            <MapContainer center={mapCenter} zoom={16} style={mapStyle} scrollWheelZoom>
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-
-              <RecenterMap position={position} stop={currentStop} />
-
-              {position ? (
-                <>
-                  <Marker position={[position.lat, position.lng]} icon={userIcon}>
-                    <Popup>{t.youAreHere}</Popup>
-                  </Marker>
-                  {position.accuracy ? (
-                    <Circle
-                      center={[position.lat, position.lng]}
-                      radius={position.accuracy}
-                      pathOptions={{
-                        color: BRAND.accent,
-                        fillColor: BRAND.accent,
-                        fillOpacity: 0.08,
-                        opacity: 0.18,
-                      }}
-                    />
-                  ) : null}
-                </>
-              ) : null}
-
-              {currentStop?.lat && currentStop?.lng ? (
-                <>
-                  <Marker
-                    position={[Number(currentStop.lat), Number(currentStop.lng)]}
-                    icon={stopIcon}
-                  >
-                    <Popup>
-                      <div className="font-medium">{currentStopTitle}</div>
-                      <div className="text-sm text-slate-500">{t.nextStop}</div>
-                    </Popup>
-                  </Marker>
-                  <Circle
-                    center={[Number(currentStop.lat), Number(currentStop.lng)]}
-                    radius={Number(currentStop.trigger_radius_meters ?? 35)}
-                    pathOptions={{
-                      color: BRAND.coral,
-                      fillColor: BRAND.coral,
-                      fillOpacity: 0.1,
-                      opacity: 0.28,
-                    }}
-                  />
-                </>
-              ) : null}
-
-              {routeLine.length > 1 ? (
-                <Polyline
-                  positions={routeLine}
-                  pathOptions={{
-                    color: BRAND.accentAlt,
-                    weight: 5,
-                    opacity: 0.9,
-                  }}
-                />
-              ) : null}
-
-              {connectorLine.length > 1 ? (
-                <Polyline
-                  positions={connectorLine}
-                  pathOptions={{
-                    color: BRAND.coral,
-                    weight: 4,
-                    opacity: 0.8,
-                    dashArray: '6 10',
-                  }}
-                />
-              ) : null}
-            </MapContainer>
+            <PremiumTourMap
+              position={position}
+              stop={currentStop}
+              stopTitle={currentStopTitle}
+              routeLine={routeLine}
+              connectorLine={connectorLine}
+              userLabel={t.youAreHere}
+              nextStopLabel={t.nextStop}
+            />
           </div>
 
           <div
@@ -1015,9 +855,10 @@ export function TourPlayer({
                   style={{
                     background: currentIndex === index ? BRAND.accent : '#ffffff',
                     borderColor: currentIndex === index ? BRAND.accent : BRAND.borderStrong,
-                    boxShadow: currentIndex === index
-                      ? '0 16px 38px rgba(15,75,88,0.16)'
-                      : '0 10px 28px rgba(18,75,84,0.05)',
+                    boxShadow:
+                      currentIndex === index
+                        ? '0 16px 38px rgba(15,75,88,0.16)'
+                        : '0 10px 28px rgba(18,75,84,0.05)',
                   }}
                 >
                   <div className="font-semibold">
