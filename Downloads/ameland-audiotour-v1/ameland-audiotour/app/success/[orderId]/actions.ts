@@ -32,13 +32,11 @@ export async function getSuccessState(orderId: string): Promise<{ status: OrderS
   const { data: tour } = await supabase.from('tours').select('title').eq('id', order.tour_id).single();
   const accessUrl = `${process.env.NEXT_PUBLIC_APP_URL}/access/${token}`;
 
-  if (!existingToken) {
-    await sendAccessEmail({
-      to: order.email,
-      tourTitle: tour?.title ?? 'Ameland Audiotour',
-      accessUrl,
-    });
-  }
+ await sendAccessEmail({
+  to: order.email,
+  tourTitle: tour?.title ?? 'Ameland Audiotour',
+  accessUrl,
+});
 
   return { status: 'paid', accessUrl };
 }
