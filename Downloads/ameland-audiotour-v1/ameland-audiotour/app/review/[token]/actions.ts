@@ -31,6 +31,4 @@ export async function submitReview(token: string, formData: FormData) {
   if (error) {
     throw new Error('Het opslaan van je review is mislukt.');
   }
-
-  return { success: true };
 }
