@@ -79,10 +79,10 @@ export async function POST(req: NextRequest) {
       const { error: insertError } = await supabase
         .from('access_tokens')
         .insert({
-          order_id: orderId,
-          token,
-          expires_at: null,
-        })
+  order_id: orderId,
+  token,
+  expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+})
 
       if (insertError) {
         console.error('Webhook token insert failed:', insertError)

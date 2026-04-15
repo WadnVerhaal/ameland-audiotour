@@ -1,6 +1,20 @@
 import { createServerSupabase } from '@/lib/supabase/server';
 
-export async function getTourByAccessToken(token: string) {
+export type AccessLookupResult =
+  | {
+      status: 'ok';
+      order: any;
+      tour: any;
+      stops: any[];
+    }
+  | {
+      status: 'expired';
+    }
+  | {
+      status: 'invalid';
+    };
+
+export async function getTourByAccessToken(token: string): Promise<AccessLookupResult> {
   const supabase = createServerSupabase();
 
   const { data: tokenRow, error: tokenError } = await supabase
@@ -9,8 +23,13 @@ export async function getTourByAccessToken(token: string) {
     .eq('token', token)
     .single();
 
-  if (tokenError || !tokenRow) return null;
-  if (tokenRow.expires_at && new Date(tokenRow.expires_at) < new Date()) return null;
+  if (tokenError || !tokenRow) {
+    return { status: 'invalid' };
+  }
+
+  if (tokenRow.expires_at && new Date(tokenRow.expires_at) < new Date()) {
+    return { status: 'expired' };
+  }
 
   const { data: order, error: orderError } = await supabase
     .from('orders')
@@ -18,7 +37,9 @@ export async function getTourByAccessToken(token: string) {
     .eq('id', tokenRow.order_id)
     .single();
 
-  if (orderError || !order || order.payment_status !== 'paid') return null;
+  if (orderError || !order || order.payment_status !== 'paid') {
+    return { status: 'invalid' };
+  }
 
   const { data: tour } = await supabase
     .from('tours')
@@ -38,7 +59,12 @@ export async function getTourByAccessToken(token: string) {
     .update({ last_opened_at: new Date().toISOString() })
     .eq('id', tokenRow.id);
 
-  return { order, tour, stops: stops ?? [] };
+  return {
+    status: 'ok',
+    order,
+    tour,
+    stops: stops ?? [],
+  };
 }
 
 export async function getAccessTokenByOrderId(orderId: string) {
