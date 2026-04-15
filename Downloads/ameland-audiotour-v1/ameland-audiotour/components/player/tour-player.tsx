@@ -147,6 +147,35 @@ function normalizeWalkingDuration(
   return Math.max(Math.round(apiDurationSeconds), baseline)
 }
 
+async function snapToWalkingNetwork(lat: number, lng: number, signal?: AbortSignal) {
+  const url =
+    `https://router.project-osrm.org/nearest/v1/foot/` +
+    `${lng},${lat}?number=1`
+
+  const response = await fetch(url, {
+    method: 'GET',
+    signal,
+    cache: 'no-store',
+  })
+
+  if (!response.ok) {
+    throw new Error(`Nearest request failed: ${response.status}`)
+  }
+
+  const data = await response.json()
+  const waypoint = data?.waypoints?.[0]
+  const location = waypoint?.location
+
+  if (!location || !Array.isArray(location) || location.length < 2) {
+    throw new Error('No snapped point found')
+  }
+
+  return {
+    lat: Number(location[1]),
+    lng: Number(location[0]),
+  }
+}
+
 function RecenterMap({
   position,
   stop,
@@ -233,6 +262,7 @@ export function TourPlayer({
   const [showStops, setShowStops] = useState(false)
   const [permissionState, setPermissionState] = useState<GeoPermissionState>('unknown')
   const [routeLine, setRouteLine] = useState<RoutePoint[]>([])
+  const [connectorLine, setConnectorLine] = useState<RoutePoint[]>([])
   const [routeDistance, setRouteDistance] = useState<number | null>(null)
   const [routeDurationSeconds, setRouteDurationSeconds] = useState<number | null>(null)
   const [showCompletionScreen, setShowCompletionScreen] = useState(false)
@@ -465,11 +495,16 @@ export function TourPlayer({
       : null
 
   useEffect(() => {
-    const currentAudioUrl = currentStop ? getStopAudioUrl(currentStop, language) : null
-
-    if (!position || !currentStop?.lat || !currentStop?.lng || !currentAudioUrl || playing) {
+    if (!position || !currentStop?.lat || !currentStop?.lng) {
+      setRouteLine([])
+      setConnectorLine([])
+      setRouteDistance(null)
+      setRouteDurationSeconds(null)
       return
     }
+
+    const currentAudioUrl = getStopAudioUrl(currentStop, language)
+    if (!currentAudioUrl || playing) return
 
     const triggerRadius = Number(currentStop.trigger_radius_meters ?? 35)
     const distance = distanceInMeters(
@@ -488,6 +523,7 @@ export function TourPlayer({
   useEffect(() => {
     if (!position || !currentStop?.lat || !currentStop?.lng) {
       setRouteLine([])
+      setConnectorLine([])
       setRouteDistance(null)
       setRouteDurationSeconds(null)
       return
@@ -510,10 +546,15 @@ export function TourPlayer({
 
     async function loadWalkingRoute() {
       try {
+        const [snappedStart, snappedStop] = await Promise.all([
+          snapToWalkingNetwork(startLat, startLng, controller.signal),
+          snapToWalkingNetwork(stopLat, stopLng, controller.signal),
+        ])
+
         const url =
           `https://router.project-osrm.org/route/v1/foot/` +
-          `${startLng},${startLat};${stopLng},${stopLat}` +
-          `?overview=full&geometries=geojson&alternatives=false`
+          `${snappedStart.lng},${snappedStart.lat};${snappedStop.lng},${snappedStop.lat}` +
+          `?overview=full&geometries=geojson&alternatives=false&steps=false`
 
         const response = await fetch(url, {
           method: 'GET',
@@ -536,8 +577,39 @@ export function TourPlayer({
           ([lng, lat]: [number, number]) => [lat, lng]
         )
 
+        const startConnectorDistance = distanceInMeters(
+          startLat,
+          startLng,
+          snappedStart.lat,
+          snappedStart.lng
+        )
+
+        const stopConnectorDistance = distanceInMeters(
+          snappedStop.lat,
+          snappedStop.lng,
+          stopLat,
+          stopLng
+        )
+
+        const connectorSegments: RoutePoint[] = []
+
+        if (startConnectorDistance > 8) {
+          connectorSegments.push([startLat, startLng], [snappedStart.lat, snappedStart.lng])
+        }
+
+        if (stopConnectorDistance > 8) {
+          setConnectorLine([
+            [snappedStop.lat, snappedStop.lng],
+            [stopLat, stopLng],
+          ])
+        } else {
+          setConnectorLine([])
+        }
+
         const nextDistance =
-          route.distance ?? distanceInMeters(startLat, startLng, stopLat, stopLng)
+          (route.distance ?? distanceInMeters(snappedStart.lat, snappedStart.lng, snappedStop.lat, snappedStop.lng)) +
+          startConnectorDistance +
+          stopConnectorDistance
 
         setRouteLine(coordinates)
         setRouteDistance(nextDistance)
@@ -549,6 +621,7 @@ export function TourPlayer({
           [startLat, startLng],
           [stopLat, stopLng],
         ])
+        setConnectorLine([])
         setRouteDistance(straightDistance)
         setRouteDurationSeconds(estimateWalkingSecondsFromMeters(straightDistance))
       } finally {
@@ -752,6 +825,18 @@ export function TourPlayer({
                     color: BRAND.accentAlt,
                     weight: 5,
                     opacity: 0.9,
+                  }}
+                />
+              ) : null}
+
+              {connectorLine.length > 1 ? (
+                <Polyline
+                  positions={connectorLine}
+                  pathOptions={{
+                    color: BRAND.coral,
+                    weight: 4,
+                    opacity: 0.8,
+                    dashArray: '6 10',
                   }}
                 />
               ) : null}
