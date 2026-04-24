@@ -71,6 +71,23 @@ function findMatchingActiveTour(
   return activeTours[0] ?? null
 }
 
+
+function getSafeTourImage(tour: MarketingTour) {
+  const candidate = tour.image_url
+  const key = `${(tour as MarketingTour & { slug?: string }).slug ?? ''} ${tour.title ?? ''}`.toLowerCase()
+
+  if (candidate && candidate.startsWith('/images/')) {
+    return candidate
+  }
+
+  if (key.includes('fiets')) return '/images/tour-fietsen.jpg'
+  if (key.includes('duin')) return '/images/tour-duinen.jpg'
+  if (key.includes('dorp')) return '/images/tour-dorp.jpg'
+  if (key.includes('hollum')) return '/images/tour-dorp.jpg'
+
+  return '/images/tour-duinen.jpg'
+}
+
 function getIntro(language: AppLanguage) {
   if (language === 'de') {
     return 'Wähle die Route, die zu deinem Tag auf Ameland passt. Bereits verfügbare Touren kannst du direkt starten. Die anderen siehst du hier schon als Vorschau.'
@@ -101,7 +118,7 @@ function TourRow({
       } md:grid-cols-[220px_1fr_auto] md:items-center`}
     >
       <div className="relative h-52 overflow-hidden rounded-[1.5rem]">
-        <img src={tour.image_url} alt={tour.title} className="h-full w-full object-cover" />
+        <img src={getSafeTourImage(tour)} alt={tour.title} className="h-full w-full object-cover" />
 
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,48,56,0.02)_0%,rgba(8,48,56,0.08)_46%,rgba(8,48,56,0.35)_100%)]" />
 

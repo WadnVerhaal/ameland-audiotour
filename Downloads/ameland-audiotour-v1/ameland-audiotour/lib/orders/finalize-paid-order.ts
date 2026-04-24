@@ -46,6 +46,9 @@ export async function finalizePaidOrder({
     return { ok: false, emailSent: false, error: 'Order update failed' }
   }
 
+  let token: string | undefined
+  let createdNewToken = false
+
   const { data: existingToken, error: tokenReadError } = await supabase
     .from('access_tokens')
     .select('id, token')
@@ -57,25 +60,47 @@ export async function finalizePaidOrder({
     return { ok: false, emailSent: false, error: 'Token lookup failed' }
   }
 
-  let token = existingToken?.token as string | undefined
-  let createdNewToken = false
+  token = existingToken?.token as string | undefined
 
   if (!token) {
-    token = crypto.randomUUID()
-    createdNewToken = true
+    const newToken = crypto.randomUUID()
 
-    const { error: insertError } = await supabase
+    const { data: insertedToken, error: insertError } = await supabase
       .from('access_tokens')
       .insert({
         order_id: cleanOrderId,
-        token,
+        token: newToken,
         expires_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
       })
+      .select('token')
+      .single()
 
     if (insertError) {
-      console.error(`[${source}] Access token insert failed:`, insertError)
-      return { ok: false, emailSent: false, error: 'Token creation failed' }
+      if (insertError.code === '23505') {
+        console.log(`[${source}] Access token already created by another request, reading existing token`)
+
+        const { data: retryToken, error: retryReadError } = await supabase
+          .from('access_tokens')
+          .select('token')
+          .eq('order_id', cleanOrderId)
+          .maybeSingle()
+
+        if (retryReadError || !retryToken?.token) {
+          console.error(`[${source}] Access token retry lookup failed:`, retryReadError)
+          return { ok: false, emailSent: false, error: 'Token retry lookup failed' }
+        }
+
+        token = retryToken.token
+      } else {
+        console.error(`[${source}] Access token insert failed:`, insertError)
+        return { ok: false, emailSent: false, error: 'Token creation failed' }
+      }
+    } else {
+      token = insertedToken?.token || newToken
+      createdNewToken = true
     }
+  } else {
+    console.log(`[${source}] Existing access token found, attempting to send access email again`)
   }
 
   const appUrl = (
@@ -83,10 +108,6 @@ export async function finalizePaidOrder({
   ).replace(/\/$/, '')
 
   const accessUrl = `${appUrl}/access/${token}`
-
-  if (!createdNewToken) {
-    return { ok: true, token, accessUrl, emailSent: false }
-  }
 
   const { data: order, error: orderReadError } = await supabase
     .from('orders')
@@ -120,6 +141,12 @@ export async function finalizePaidOrder({
       to: order.email,
       tourTitle: tour?.title ?? 'Ameland Audiotour',
       accessUrl,
+    })
+
+    console.log(`[${source}] Access email sent`, {
+      orderId: cleanOrderId,
+      email: order.email,
+      createdNewToken,
     })
 
     return { ok: true, token, accessUrl, emailSent: true }

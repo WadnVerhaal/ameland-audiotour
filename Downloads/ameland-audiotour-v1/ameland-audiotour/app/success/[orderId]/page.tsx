@@ -74,6 +74,20 @@ export default async function SuccessPage({ params }: PageProps) {
         }
       }
 
+      if (orderStatus === 'paid') {
+        const finalizeResult = await finalizePaidOrder({
+          orderId: cleanOrderId,
+          paymentReference,
+          source: 'success-page',
+        })
+
+        if (finalizeResult.ok) {
+          token = finalizeResult.token
+        } else {
+          paymentCheckError = finalizeResult.error
+        }
+      }
+
       if (!token) {
         const { data: existingToken, error: tokenError } = await supabase
           .from('access_tokens')
