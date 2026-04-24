@@ -16,8 +16,6 @@ import {
 } from 'lucide-react';
 import { TourStop } from '@/types/tour';
 import { distanceInMeters } from '@/lib/utils/geo';
-import { PreTourAudioCheck } from '@/components/player/pre-tour-audio-check';
-import { createHeadsetPartnerStop } from '@/lib/player/create-headset-partner-stop';
 
 type Props = {
   token: string;
@@ -196,23 +194,13 @@ export function TourPlayer({
   const routeLineRef = useRef<any>(null);
   const lastRouteKeyRef = useRef<string | null>(null);
 
-  const [hasChosenAudioSetup, setHasChosenAudioSetup] = useState(false);
-  const [includeHeadsetPartner, setIncludeHeadsetPartner] = useState(false);
-
   const orderedStops = useMemo(() => {
-    const sortedStops = [...stops].sort((a, b) => {
+    return [...stops].sort((a, b) => {
       const indexA = stops.indexOf(a);
       const indexB = stops.indexOf(b);
       return getStopOrder(a, indexA) - getStopOrder(b, indexB);
     });
-
-    if (!includeHeadsetPartner) return sortedStops;
-
-    return [
-      createHeadsetPartnerStop() as unknown as TourStop,
-      ...sortedStops,
-    ];
-  }, [includeHeadsetPartner, stops]);
+  }, [stops]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [gpsAllowed, setGpsAllowed] = useState(false);
@@ -226,7 +214,6 @@ export function TourPlayer({
   const [duration, setDuration] = useState(0);
 
   const currentStop = orderedStops[currentIndex];
-  const isPartnerStop = readField(currentStop, 'type') === 'partner';
   const nextStop = orderedStops[currentIndex + 1] ?? null;
   const previousStop = orderedStops[currentIndex - 1] ?? null;
   const isLastStop = currentIndex >= orderedStops.length - 1;
@@ -651,25 +638,6 @@ export function TourPlayer({
 
   const audioProgress = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
 
-  if (!hasChosenAudioSetup) {
-    return (
-      <div className="mx-auto w-full max-w-5xl px-4 py-5">
-        <PreTourAudioCheck
-          onStartWithoutPartner={() => {
-            setIncludeHeadsetPartner(false);
-            setHasChosenAudioSetup(true);
-            setCurrentIndex(0);
-          }}
-          onStartWithPartner={() => {
-            setIncludeHeadsetPartner(true);
-            setHasChosenAudioSetup(true);
-            setCurrentIndex(0);
-          }}
-        />
-      </div>
-    );
-  }
-
   return (
     <main className="premium-tour-page min-h-screen px-3 py-3 text-[#123c2f] sm:px-5 sm:py-5">
       <audio
@@ -705,7 +673,7 @@ export function TourPlayer({
               </span>
 
               <span className="inline-flex items-center rounded-full bg-[#f6f3ea] px-2.5 py-1 text-[10px] font-semibold text-[#123c2f]">
-                {isPartnerStop ? 'Voor vertrek' : `Stop ${currentIndex + 1} / ${includeHeadsetPartner ? orderedStops.length - 1 : orderedStops.length}`}
+                Stop {currentIndex + 1}/{orderedStops.length}
               </span>
 
               <span className="inline-flex items-center rounded-full bg-[#f6f3ea] px-2.5 py-1 text-[10px] font-semibold text-[#123c2f]">

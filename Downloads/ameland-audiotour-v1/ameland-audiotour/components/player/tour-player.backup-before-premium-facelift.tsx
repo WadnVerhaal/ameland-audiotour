@@ -16,8 +16,6 @@ import {
 } from 'lucide-react';
 import { TourStop } from '@/types/tour';
 import { distanceInMeters } from '@/lib/utils/geo';
-import { PreTourAudioCheck } from '@/components/player/pre-tour-audio-check';
-import { createHeadsetPartnerStop } from '@/lib/player/create-headset-partner-stop';
 
 type Props = {
   token: string;
@@ -146,6 +144,7 @@ async function fetchWalkingRoute(points: [number, number][]) {
     return {
       points,
       routed: false,
+      provider: 'none',
     };
   }
 
@@ -164,17 +163,20 @@ async function fetchWalkingRoute(points: [number, number][]) {
       return {
         points,
         routed: false,
+        provider: 'fallback',
       };
     }
 
     return {
       points: data.points as [number, number][],
       routed: Boolean(data?.routed),
+      provider: String(data?.provider ?? 'walking'),
     };
   } catch {
     return {
       points,
       routed: false,
+      provider: 'fallback',
     };
   }
 }
@@ -192,27 +194,16 @@ export function TourPlayer({
   const userMarkerRef = useRef<any>(null);
   const accuracyCircleRef = useRef<any>(null);
   const targetMarkerRef = useRef<any>(null);
-  const routeGlowLineRef = useRef<any>(null);
   const routeLineRef = useRef<any>(null);
   const lastRouteKeyRef = useRef<string | null>(null);
 
-  const [hasChosenAudioSetup, setHasChosenAudioSetup] = useState(false);
-  const [includeHeadsetPartner, setIncludeHeadsetPartner] = useState(false);
-
   const orderedStops = useMemo(() => {
-    const sortedStops = [...stops].sort((a, b) => {
+    return [...stops].sort((a, b) => {
       const indexA = stops.indexOf(a);
       const indexB = stops.indexOf(b);
       return getStopOrder(a, indexA) - getStopOrder(b, indexB);
     });
-
-    if (!includeHeadsetPartner) return sortedStops;
-
-    return [
-      createHeadsetPartnerStop() as unknown as TourStop,
-      ...sortedStops,
-    ];
-  }, [includeHeadsetPartner, stops]);
+  }, [stops]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [gpsAllowed, setGpsAllowed] = useState(false);
@@ -226,7 +217,6 @@ export function TourPlayer({
   const [duration, setDuration] = useState(0);
 
   const currentStop = orderedStops[currentIndex];
-  const isPartnerStop = readField(currentStop, 'type') === 'partner';
   const nextStop = orderedStops[currentIndex + 1] ?? null;
   const previousStop = orderedStops[currentIndex - 1] ?? null;
   const isLastStop = currentIndex >= orderedStops.length - 1;
@@ -408,8 +398,8 @@ export function TourPlayer({
         attributionControl: true,
       }).setView(center, 16);
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
         maxZoom: 19,
       }).addTo(map);
 
@@ -436,11 +426,6 @@ export function TourPlayer({
       const L = (leaflet as any).default ?? leaflet;
       const map = mapRef.current;
 
-      if (routeGlowLineRef.current) {
-        routeGlowLineRef.current.remove();
-        routeGlowLineRef.current = null;
-      }
-
       if (routeLineRef.current) {
         routeLineRef.current.remove();
         routeLineRef.current = null;
@@ -463,21 +448,11 @@ export function TourPlayer({
           : ([startPoint, endPoint].filter(Boolean) as [number, number][]);
 
       if (lineToDraw.length > 1) {
-        if (routeRouted) {
-          routeGlowLineRef.current = L.polyline(lineToDraw, {
-            color: '#d8efe5',
-            weight: 11,
-            opacity: 0.95,
-            lineCap: 'round',
-            lineJoin: 'round',
-          }).addTo(map);
-        }
-
         routeLineRef.current = L.polyline(lineToDraw, {
-          color: routeRouted ? '#0a7a57' : '#b59b6a',
+          color: routeRouted ? '#0f5a43' : '#8a7c61',
           weight: routeRouted ? 6 : 4,
-          opacity: routeRouted ? 1 : 0.78,
-          dashArray: routeRouted ? undefined : '6 8',
+          opacity: routeRouted ? 0.92 : 0.65,
+          dashArray: routeRouted ? undefined : '8 8',
           lineCap: 'round',
           lineJoin: 'round',
         }).addTo(map);
@@ -489,26 +464,26 @@ export function TourPlayer({
             className: '',
             html: `
               <div style="
-                min-width: 84px;
-                height: 30px;
-                padding: 0 10px;
+                min-width: 86px;
+                height: 32px;
+                padding: 0 11px;
                 border-radius: 999px;
-                background: #0b3b2d;
+                background: #123c2f;
                 color: white;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 font-weight: 800;
-                font-size: 11px;
+                font-size: 12px;
                 border: 2px solid white;
-                box-shadow: 0 10px 24px rgba(11,59,45,.22);
+                box-shadow: 0 8px 18px rgba(0,0,0,.13);
                 white-space: nowrap;
               ">
                 Bestemming
               </div>
             `,
-            iconSize: [84, 30],
-            iconAnchor: [42, 15],
+            iconSize: [86, 32],
+            iconAnchor: [43, 16],
           }),
         }).addTo(map);
       }
@@ -651,27 +626,8 @@ export function TourPlayer({
 
   const audioProgress = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
 
-  if (!hasChosenAudioSetup) {
-    return (
-      <div className="mx-auto w-full max-w-5xl px-4 py-5">
-        <PreTourAudioCheck
-          onStartWithoutPartner={() => {
-            setIncludeHeadsetPartner(false);
-            setHasChosenAudioSetup(true);
-            setCurrentIndex(0);
-          }}
-          onStartWithPartner={() => {
-            setIncludeHeadsetPartner(true);
-            setHasChosenAudioSetup(true);
-            setCurrentIndex(0);
-          }}
-        />
-      </div>
-    );
-  }
-
   return (
-    <main className="premium-tour-page min-h-screen px-3 py-3 text-[#123c2f] sm:px-5 sm:py-5">
+    <main className="min-h-screen bg-[#edf4f1] px-3 py-3 text-[#123c2f] sm:px-5 sm:py-5">
       <audio
         ref={audioRef}
         onLoadedMetadata={() => {
@@ -696,19 +652,19 @@ export function TourPlayer({
       />
 
       <section className="mx-auto max-w-5xl">
-        <div className="premium-tour-shell overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-2xl">
+        <div className="overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-2xl">
           <div className="px-5 py-5 sm:px-6">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#123c2f] px-2.5 py-1 text-[10px] font-black uppercase tracking-[.12em] text-white">
-                <Compass className="h-3 w-3" />
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#123c2f] px-3 py-1.5 text-xs font-black uppercase tracking-[.14em] text-white">
+                <Compass className="h-3.5 w-3.5" />
                 Je volgt nu
               </span>
 
-              <span className="inline-flex items-center rounded-full bg-[#f6f3ea] px-2.5 py-1 text-[10px] font-semibold text-[#123c2f]">
-                {isPartnerStop ? 'Voor vertrek' : `Stop ${currentIndex + 1} / ${includeHeadsetPartner ? orderedStops.length - 1 : orderedStops.length}`}
+              <span className="inline-flex items-center rounded-full bg-[#f6f3ea] px-3 py-1.5 text-xs font-bold text-[#123c2f]">
+                Stop {currentIndex + 1} / {orderedStops.length}
               </span>
 
-              <span className="inline-flex items-center rounded-full bg-[#f6f3ea] px-2.5 py-1 text-[10px] font-semibold text-[#123c2f]">
+              <span className="inline-flex items-center rounded-full bg-[#f6f3ea] px-3 py-1.5 text-xs font-bold text-[#123c2f]">
                 {locationStatus === 'ready' && gpsAllowed
                   ? 'GPS actief'
                   : locationStatus === 'loading'
@@ -721,38 +677,42 @@ export function TourPlayer({
               {tourTitle}
             </h1>
 
-            <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/20">
+            <p className="mt-2 text-sm leading-6 text-stone-600">
+              {isLastStop
+                ? 'Je bent aangekomen bij de laatste stop van deze tour.'
+                : `Navigeer naar ${getStopTitle(destinationStop, 'de volgende stop')} en luister verder op locatie.`}
+            </p>
+
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-stone-200">
               <div
-                className="h-full rounded-full bg-[#d6bd7a] transition-all"
+                className="h-full rounded-full bg-[#123c2f] transition-all"
                 style={{ width: `${progressPercentage}%` }}
               />
             </div>
           </div>
 
-          <div className="border-y border-black/10 bg-[#f8fbf9] px-5 py-3.5 sm:px-6">
-            <div className="flex flex-col gap-3">
+          <div className="border-y border-black/10 bg-[#f8fbf9] px-5 py-4 sm:px-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[.16em] text-stone-400">
+                <p className="text-xs font-black uppercase tracking-[.14em] text-stone-400">
                   Navigatie
                 </p>
-                <h2 className="mt-1 line-clamp-1 text-lg font-semibold text-[#123c2f] sm:text-xl">
+                <h2 className="mt-1 line-clamp-2 text-2xl font-black text-[#123c2f] sm:text-3xl">
                   {getStopTitle(destinationStop, 'Volgende stop')}
                 </h2>
-                <p className="mt-1 hidden text-xs leading-5 text-stone-500 sm:block">
+                <p className="mt-1 line-clamp-2 text-sm leading-6 text-stone-600">
                   {getStopDescription(destinationStop)}
                 </p>
               </div>
 
-              <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <div className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold text-[#123c2f] ring-1 ring-black/5">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="rounded-full bg-white px-3 py-2 text-xs font-black text-[#123c2f] ring-1 ring-black/5">
                   {formatDistance(distanceToDestination)}
                 </div>
-
-                <div className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold text-[#123c2f] ring-1 ring-black/5">
+                <div className="rounded-full bg-white px-3 py-2 text-xs font-black text-[#123c2f] ring-1 ring-black/5">
                   {estimateWalkingTime(distanceToDestination)}
                 </div>
-
-                <div className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold text-[#123c2f] ring-1 ring-black/5">
+                <div className="rounded-full bg-white px-3 py-2 text-xs font-black text-[#123c2f] ring-1 ring-black/5">
                   {routeRouted ? 'Wandelroute' : 'Route'}
                 </div>
 
@@ -760,7 +720,7 @@ export function TourPlayer({
                   type="button"
                   onClick={goToPreviousStop}
                   disabled={!previousStop}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#123c2f] ring-1 ring-black/5 transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#123c2f] ring-1 ring-black/5 transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-40"
                   aria-label="Vorige stop"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -770,7 +730,7 @@ export function TourPlayer({
                   type="button"
                   onClick={goToNextStop}
                   disabled={isLastStop}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#123c2f] text-white transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#123c2f] text-white transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-40"
                   aria-label="Volgende stop"
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -779,7 +739,7 @@ export function TourPlayer({
                 <button
                   type="button"
                   onClick={focusOnUser}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#123c2f] ring-1 ring-black/5 transition hover:scale-[1.03]"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#123c2f] ring-1 ring-black/5 transition hover:scale-[1.03]"
                   aria-label="Mijn locatie"
                 >
                   <LocateFixed className="h-4 w-4" />
@@ -806,28 +766,28 @@ export function TourPlayer({
             )}
 
             <div className="pointer-events-none absolute left-4 top-4 z-[500]">
-              <div className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/86 px-2.5 py-1 text-[10px] font-semibold text-[#123c2f] shadow-sm backdrop-blur">
-                <Navigation className="h-3 w-3" />
+              <div className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/86 px-3 py-1.5 text-[10px] font-black uppercase tracking-[.14em] text-[#123c2f] shadow-sm backdrop-blur">
+                <Navigation className="h-3.5 w-3.5" />
                 {routeRouted ? 'Wandelroute' : 'Route'}
               </div>
             </div>
 
             <div className="pointer-events-none absolute bottom-4 left-1/2 z-[500] -translate-x-1/2">
-              <div className="pointer-events-auto rounded-full border border-white/70 bg-white/86 px-3 py-1.5 text-[10px] font-semibold text-[#123c2f] shadow-sm backdrop-blur">
+              <div className="pointer-events-auto rounded-full border border-white/70 bg-white/86 px-3 py-1.5 text-[11px] font-black text-[#123c2f] shadow-sm backdrop-blur">
                 {getStopTitle(destinationStop, 'Volgende stop')}
               </div>
             </div>
           </div>
 
           <div className="px-5 py-5 sm:px-6">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <span className="inline-flex items-center rounded-full bg-[#123c2f] px-2.5 py-1 text-[10px] font-black uppercase tracking-[.12em] text-white">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-full bg-[#123c2f] px-3 py-1.5 text-xs font-black uppercase tracking-[.14em] text-white">
                 Audio
               </span>
-              <span className="inline-flex items-center rounded-full bg-[#f6f3ea] px-2.5 py-1 text-[10px] font-semibold text-[#123c2f]">
+              <span className="inline-flex items-center rounded-full bg-[#f6f3ea] px-3 py-1.5 text-xs font-bold text-[#123c2f]">
                 {getStopTitle(currentStop, `Stop ${currentIndex + 1}`)}
               </span>
-              <span className="inline-flex items-center rounded-full bg-[#f6f3ea] px-2.5 py-1 text-[10px] font-semibold text-[#123c2f]">
+              <span className="inline-flex items-center rounded-full bg-[#f6f3ea] px-3 py-1.5 text-xs font-bold text-[#123c2f]">
                 {formatDistance(distanceToCurrentStop)}
               </span>
             </div>
@@ -847,24 +807,22 @@ export function TourPlayer({
                 <span>{formatAudioTime(duration)}</span>
               </div>
 
-              <div className="h-1.5 overflow-hidden rounded-full bg-stone-200">
+              <div className="h-2 overflow-hidden rounded-full bg-stone-200">
                 <div
-                  className="h-full rounded-full bg-[#0a7a57] transition-all"
+                  className="h-full rounded-full bg-[#123c2f] transition-all"
                   style={{ width: `${audioProgress}%` }}
                 />
               </div>
 
-              <div className="mt-6 flex items-center justify-center gap-5 sm:gap-6">
+              <div className="mt-6 flex items-center justify-center gap-4 sm:gap-5">
                 <button
                   type="button"
                   onClick={() => seekAudio(-15)}
                   className="relative inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#f6f3ea] text-[#123c2f] shadow-sm transition hover:scale-[1.03]"
                   aria-label="15 seconden terugspoelen"
                 >
-                  <RotateCcw className="h-5 w-5 -translate-y-1" />
-                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[9px] font-semibold tracking-[.08em]">
-                    15s
-                  </span>
+                  <RotateCcw className="h-5 w-5" />
+                  <span className="absolute bottom-1.5 text-[9px] font-black">15</span>
                 </button>
 
                 <button
@@ -882,10 +840,8 @@ export function TourPlayer({
                   className="relative inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#f6f3ea] text-[#123c2f] shadow-sm transition hover:scale-[1.03]"
                   aria-label="15 seconden vooruitspoelen"
                 >
-                  <RotateCw className="h-5 w-5 -translate-y-1" />
-                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[9px] font-semibold tracking-[.08em]">
-                    15s
-                  </span>
+                  <RotateCw className="h-5 w-5" />
+                  <span className="absolute bottom-1.5 text-[9px] font-black">15</span>
                 </button>
               </div>
             </div>

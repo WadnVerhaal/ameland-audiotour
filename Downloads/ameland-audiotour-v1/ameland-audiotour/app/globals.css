@@ -123,4 +123,117 @@ select {
     box-shadow: 0 16px 38px rgba(15, 75, 88, 0.2);
   }
 }
-@import "leaflet/dist/leaflet.css";
+
+/* Premium facelift voor de audiotour player */
+.premium-tour-page {
+  background:
+    radial-gradient(circle at 16% 0%, rgba(255, 248, 226, 0.95) 0%, rgba(255, 248, 226, 0) 32%),
+    radial-gradient(circle at 100% 18%, rgba(11, 59, 45, 0.18) 0%, rgba(11, 59, 45, 0) 32%),
+    linear-gradient(135deg, #e9f3ef 0%, #f7f1e7 52%, #d7c59a 140%);
+}
+
+.premium-tour-shell {
+  position: relative;
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  background: rgba(255, 255, 255, 0.86) !important;
+  box-shadow:
+    0 36px 90px rgba(11, 59, 45, 0.20),
+    0 12px 30px rgba(11, 59, 45, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78) !important;
+  backdrop-filter: blur(18px);
+}
+
+.premium-tour-shell::before {
+  content: "";
+  display: block;
+  height: 4px;
+  background: linear-gradient(90deg, #0b3b2d 0%, #d6bd7a 48%, #0b3b2d 100%);
+}
+
+.premium-tour-shell > div:first-child {
+  background:
+    radial-gradient(circle at top left, rgba(214, 189, 122, 0.26), transparent 34%),
+    linear-gradient(135deg, #092a22 0%, #0b3b2d 58%, #123c2f 100%);
+  color: white;
+}
+
+.premium-tour-shell > div:first-child h1,
+.premium-tour-shell > div:first-child p {
+  color: white !important;
+}
+
+.premium-tour-shell > div:first-child p {
+  opacity: 0.76;
+}
+
+.premium-tour-shell > div:first-child span:not(:first-child) {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.premium-tour-shell > div:first-child span:first-child {
+  background: rgba(255, 255, 255, 0.96) !important;
+  color: #0b3b2d !important;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
+}
+
+.premium-tour-shell > div:nth-child(2) {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.78), rgba(250,246,236,0.96));
+}
+
+.premium-tour-shell button {
+  box-shadow: 0 10px 22px rgba(11, 59, 45, 0.08);
+}
+
+.premium-tour-shell button:active {
+  transform: scale(0.97);
+}
+
+.premium-tour-shell .leaflet-container {
+  font-family: inherit;
+  background: #eef1ec;
+  filter: saturate(0.86) contrast(1.04) brightness(1.02);
+}
+
+.premium-tour-shell .leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 12px 26px rgba(11, 59, 45, 0.14) !important;
+}
+
+.premium-tour-shell .leaflet-control-zoom a {
+  width: 34px !important;
+  height: 34px !important;
+  line-height: 34px !important;
+  border: none !important;
+  color: #0b3b2d !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(12px);
+}
+
+.premium-tour-shell .leaflet-control-attribution {
+  border-radius: 999px 0 0 0;
+  background: rgba(255, 255, 255, 0.76) !important;
+  color: rgba(11, 59, 45, 0.58) !important;
+  font-size: 10px !important;
+  backdrop-filter: blur(10px);
+}
+
+.premium-tour-shell .leaflet-marker-icon {
+  transition: transform 180ms ease;
+}
+
+.premium-tour-shell .leaflet-marker-icon:hover {
+  transform: scale(1.04);
+}
+
+@media (max-width: 640px) {
+  .premium-tour-shell {
+    border-radius: 1.55rem !important;
+  }
+
+  .premium-tour-shell::before {
+    height: 3px;
+  }
+}
