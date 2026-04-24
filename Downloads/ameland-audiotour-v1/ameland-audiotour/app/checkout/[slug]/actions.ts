@@ -8,7 +8,9 @@ import { getTourBySlug } from '@/lib/data/tours';
 import { validateEmail } from '@/lib/utils/text';
 
 export async function startCheckout(slug: string, formData: FormData) {
-  const email = validateEmail(String(formData.get('email') || ''));
+  const rawEmail = String(formData.get('email') || '');
+  const email = validateEmail(rawEmail);
+
   const tour = await getTourBySlug(slug);
   if (!tour || !tour.is_active) throw new Error('Tour niet gevonden');
 
@@ -18,7 +20,12 @@ export async function startCheckout(slug: string, formData: FormData) {
 
   let partnerId: string | null = null;
   if (ref) {
-    const { data: partner } = await supabase.from('partners').select('id').eq('qr_slug', ref).maybeSingle();
+    const { data: partner } = await supabase
+      .from('partners')
+      .select('id')
+      .eq('qr_slug', ref)
+      .maybeSingle();
+
     partnerId = partner?.id ?? null;
   }
 
@@ -37,23 +44,40 @@ export async function startCheckout(slug: string, formData: FormData) {
 
   if (error || !order) throw new Error('Kon bestelling niet aanmaken');
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!appUrl) throw new Error('Missing NEXT_PUBLIC_APP_URL');
+  const appUrl = (
+    process.env.NEXT_PUBLIC_APP_URL || 'https://app.amelandaudiotours.nl'
+  ).replace(/\/$/, '');
+
+  const webhookBaseUrl = (
+    process.env.MOLLIE_WEBHOOK_BASE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    'https://app.amelandaudiotours.nl'
+  ).replace(/\/$/, '');
+
+  const redirectUrl = `${appUrl}/success/${order.id}`;
+  const webhookUrl = `${webhookBaseUrl}/api/mollie/webhook`;
+
+  console.log('CHECKOUT redirectUrl:', redirectUrl);
+  console.log('CHECKOUT webhookUrl:', webhookUrl);
 
   const payment = await createPayment({
     amountCents: tour.price_cents,
     description: tour.title,
-    redirectUrl: `${appUrl}/success/${order.id}`,
-    webhookUrl: `${appUrl}/api/mollie/webhook`,
+    redirectUrl,
+    webhookUrl,
     metadata: { orderId: order.id, tourId: tour.id },
   });
 
-  await supabase.from('orders').update({ payment_reference: payment.id }).eq('id', order.id);
+  await supabase
+    .from('orders')
+    .update({ payment_reference: payment.id })
+    .eq('id', order.id);
+
   const checkoutUrl = payment.getCheckoutUrl();
 
-if (!checkoutUrl) {
-  throw new Error('Geen checkout URL ontvangen van Mollie');
-}
+  if (!checkoutUrl) {
+    throw new Error('Geen checkout URL ontvangen van Mollie');
+  }
 
-redirect(checkoutUrl);
+  redirect(checkoutUrl);
 }

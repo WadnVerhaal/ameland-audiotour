@@ -5,3 +5,13 @@ node_modules
 .vercel
 coverage
 .DS_Store
+
+# Migration cleanup artifacts
+amelandaudiotours-domain-audit.txt
+amelandaudiotours-remaining-old-references.txt
+cleanup-amelandaudiotours.sh
+_backup_before_amelandaudiotours_cleanup_*
+.backup-final-domain-fix-*
+.env.local.backup-*
+fix-final-domains-mollie.sh
+fix-mollie-flow.sh

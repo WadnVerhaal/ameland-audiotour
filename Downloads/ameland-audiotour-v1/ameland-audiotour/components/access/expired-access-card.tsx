@@ -49,7 +49,7 @@ export function ExpiredAccessCard({ language, variant = 'full' }: Props) {
       compactSubtext:
         'You can purchase the tour again to get access immediately.',
       compactPrimary: 'Buy a new tour',
-      labelTop: "Wad'n Verhaal",
+      labelTop: "Ameland Audiotours",
       softLine: 'Want to listen again? A new purchase gives instant access.',
     },
     de: {
@@ -70,7 +70,7 @@ export function ExpiredAccessCard({ language, variant = 'full' }: Props) {
       compactSubtext:
         'Du kannst die Tour erneut kaufen, um sofort wieder Zugang zu erhalten.',
       compactPrimary: 'Neue Tour kaufen',
-      labelTop: "Wad'n Verhaal",
+      labelTop: "Ameland Audiotours",
       softLine: 'Erneut hören? Mit einem neuen Kauf hast du sofort wieder Zugang.',
     },
   } as const

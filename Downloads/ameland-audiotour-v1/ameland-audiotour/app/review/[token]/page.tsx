@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import { submitReview } from './actions';
 
 export default async function ReviewPage({ params }: { params: Promise<{ token: string }> }) {

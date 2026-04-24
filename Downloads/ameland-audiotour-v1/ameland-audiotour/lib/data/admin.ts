@@ -1,9 +1,9 @@
-import { createServerSupabase } from '@/lib/supabase/server';
+import { createAdminSupabase } from '@/lib/supabase/admin';
 import { parseEuroInputToCents } from '@/lib/utils/money';
 import { requireNonEmpty, slugify } from '@/lib/utils/text';
 
 export async function getAllToursAdmin() {
-  const supabase = createServerSupabase();
+  const supabase = createAdminSupabase();
   const { data, error } = await supabase
     .from('tours')
     .select('*')
@@ -13,14 +13,14 @@ export async function getAllToursAdmin() {
 }
 
 export async function getTourAdmin(id: string) {
-  const supabase = createServerSupabase();
+  const supabase = createAdminSupabase();
   const { data, error } = await supabase.from('tours').select('*').eq('id', id).single();
   if (error) throw error;
   return data;
 }
 
 export async function getStopsAdmin(tourId: string) {
-  const supabase = createServerSupabase();
+  const supabase = createAdminSupabase();
   const { data, error } = await supabase
     .from('tour_stops')
     .select('*')
@@ -31,7 +31,7 @@ export async function getStopsAdmin(tourId: string) {
 }
 
 export async function getOrdersAdmin() {
-  const supabase = createServerSupabase();
+  const supabase = createAdminSupabase();
   const { data, error } = await supabase
     .from('orders')
     .select('*, tours(title), partners(name)')
@@ -41,7 +41,7 @@ export async function getOrdersAdmin() {
 }
 
 export async function getReviewsAdmin() {
-  const supabase = createServerSupabase();
+  const supabase = createAdminSupabase();
   const { data, error } = await supabase
     .from('reviews')
     .select('*, tours(title)')
@@ -51,7 +51,7 @@ export async function getReviewsAdmin() {
 }
 
 export async function getPartnersAdmin() {
-  const supabase = createServerSupabase();
+  const supabase = createAdminSupabase();
   const { data, error } = await supabase
     .from('partners')
     .select('*')
@@ -61,7 +61,7 @@ export async function getPartnersAdmin() {
 }
 
 export async function createTourAdmin(formData: FormData) {
-  const supabase = createServerSupabase();
+  const supabase = createAdminSupabase();
   const title = requireNonEmpty(formData.get('title'), 'Titel');
   const slugInput = String(formData.get('slug') ?? '').trim();
   const slug = slugInput || slugify(title);
@@ -91,7 +91,7 @@ export async function createTourAdmin(formData: FormData) {
 }
 
 export async function updateTourAdmin(id: string, formData: FormData) {
-  const supabase = createServerSupabase();
+  const supabase = createAdminSupabase();
   const title = requireNonEmpty(formData.get('title'), 'Titel');
   const slugInput = String(formData.get('slug') ?? '').trim();
   const slug = slugInput || slugify(title);
@@ -124,7 +124,7 @@ export async function updateTourAdmin(id: string, formData: FormData) {
 }
 
 export async function createStopAdmin(tourId: string, formData: FormData) {
-  const supabase = createServerSupabase();
+  const supabase = createAdminSupabase();
 
   const title = requireNonEmpty(formData.get('title'), 'Titel stop');
   const titleEn = String(formData.get('title_en') ?? '').trim() || null;

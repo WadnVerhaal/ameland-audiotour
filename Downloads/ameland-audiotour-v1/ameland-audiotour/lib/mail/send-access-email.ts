@@ -1,8 +1,22 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+type SendAccessEmailInput = {
+  to: string;
+  tourTitle: string;
+  accessUrl: string;
+};
 
-export async function sendAccessEmail(input: { to: string; tourTitle: string; accessUrl: string }) {
+function getResendClient() {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('Missing RESEND_API_KEY');
+  }
+
+  return new Resend(apiKey);
+}
+
+export async function sendAccessEmail(input: SendAccessEmailInput) {
   const from = process.env.MAIL_FROM;
 
   console.log('sendAccessEmail called');
@@ -11,7 +25,11 @@ export async function sendAccessEmail(input: { to: string; tourTitle: string; ac
   console.log('To:', input.to);
   console.log('Access URL:', input.accessUrl);
 
-  if (!from) throw new Error('Missing MAIL_FROM');
+  if (!from) {
+    throw new Error('Missing MAIL_FROM');
+  }
+
+  const resend = getResendClient();
 
   const result = await resend.emails.send({
     from,
@@ -21,7 +39,14 @@ export async function sendAccessEmail(input: { to: string; tourTitle: string; ac
       <div style="font-family:Arial,sans-serif;line-height:1.5">
         <h2>Je tour staat klaar</h2>
         <p>Bedankt voor je aankoop van <strong>${input.tourTitle}</strong>.</p>
-        <p><a href="${input.accessUrl}" style="display:inline-block;padding:12px 18px;background:#111;color:#fff;text-decoration:none;border-radius:10px;">Open mijn tour</a></p>
+        <p>
+          <a
+            href="${input.accessUrl}"
+            style="display:inline-block;padding:12px 18px;background:#111;color:#fff;text-decoration:none;border-radius:10px;"
+          >
+            Open mijn tour
+          </a>
+        </p>
         <ol>
           <li>Open de link op je telefoon</li>
           <li>Sta locatie toe</li>

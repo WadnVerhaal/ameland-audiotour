@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { CheckCircle2, Headphones, Play, Clock3, MapPin } from 'lucide-react'

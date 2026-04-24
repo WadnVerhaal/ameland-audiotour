@@ -2,8 +2,8 @@ import { Tour, TourStop } from '@/types/tour'
 
 export type AppLanguage = 'nl' | 'en' | 'de'
 
-export const APP_LANGUAGE_COOKIE = 'wadnverhaal-language'
-export const APP_LANGUAGE_STORAGE_KEY = 'wadnverhaal-language'
+export const APP_LANGUAGE_COOKIE = 'amelandaudiotours-language'
+export const APP_LANGUAGE_STORAGE_KEY = 'amelandaudiotours-language'
 
 export function isAppLanguage(value: string | null | undefined): value is AppLanguage {
   return value === 'nl' || value === 'en' || value === 'de'
@@ -11,7 +11,7 @@ export function isAppLanguage(value: string | null | undefined): value is AppLan
 
 export const translations = {
   nl: {
-    appName: "Wad'n Verhaal",
+    appName: "Ameland Audiotours",
 
     chooseLanguage: 'Kies taal',
     chooseLanguageText:
@@ -205,7 +205,7 @@ export const translations = {
   },
 
   en: {
-    appName: "Wad'n Verhaal",
+    appName: "Ameland Audiotours",
 
     chooseLanguage: 'Choose language',
     chooseLanguageText:
@@ -399,7 +399,7 @@ export const translations = {
   },
 
   de: {
-    appName: "Wad'n Verhaal",
+    appName: "Ameland Audiotours",
 
     chooseLanguage: 'Sprache wählen',
     chooseLanguageText:
