@@ -13,6 +13,13 @@ type PageProps = {
   searchParams: Promise<{ lang?: string | string[]; sent?: string | string[] }>
 }
 
+type ReviewAccessResult = {
+  status?: string
+  used_at?: string | null
+  tour?: Record<string, unknown> | null
+  review?: { rating?: number | null; review_text?: string | null } | null
+}
+
 const copy = {
   nl: {
     eyebrow: 'Ameland Audiotours',
@@ -121,13 +128,19 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
   if (sent) return <MessageCard title={t.sentTitle} text={t.sentText} language={language} />
 
   const supabase = createServerSupabase()
-  const { data: reviewToken } = await supabase
-    .from('review_tokens')
-    .select('order_id, expires_at, used_at')
-    .eq('token', token)
-    .maybeSingle()
+  const { data, error } = await supabase.rpc('resolve_review_access', {
+    p_token: token,
+  })
 
-  if (!reviewToken || new Date(reviewToken.expires_at).getTime() < Date.now()) {
+  if (error) {
+    console.error('[review-page] Secure resolver failed', {
+      code: error.code || null,
+      message: error.message,
+    })
+  }
+
+  const resolved = (data || null) as ReviewAccessResult | null
+  if (!resolved || resolved.status !== 'ok') {
     return (
       <main className="min-h-[100dvh] bg-slate-950 px-4 py-8 text-white">
         <section className="mx-auto flex min-h-[82dvh] max-w-xl items-center justify-center">
@@ -147,30 +160,8 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
     )
   }
 
-  const { data: order } = await supabase
-    .from('orders')
-    .select('id, tour_id, payment_status')
-    .eq('id', reviewToken.order_id)
-    .maybeSingle()
-
-  if (!order || order.payment_status !== 'paid') {
-    return <MessageCard title={t.invalidTitle} text={t.invalidText} language={language} />
-  }
-
-  const [{ data: tour }, { data: existingReview }] = await Promise.all([
-    supabase
-      .from('tours')
-      .select('title, title_nl, title_en, title_de')
-      .eq('id', order.tour_id)
-      .maybeSingle(),
-    supabase
-      .from('reviews')
-      .select('rating, review_text')
-      .eq('order_id', order.id)
-      .maybeSingle(),
-  ])
-
-  const tourTitle = localizedTitle(tour as Record<string, unknown> | null, language)
+  const existingReview = resolved.review || null
+  const tourTitle = localizedTitle(resolved.tour || null, language)
 
   return (
     <main className="min-h-[100dvh] bg-slate-950 px-4 py-6 text-white">
@@ -188,7 +179,7 @@ export default async function ReviewPage({ params, searchParams }: PageProps) {
           </header>
 
           <form action={submitReview.bind(null, token, language)} className="space-y-6 p-5 sm:p-7">
-            {reviewToken.used_at || existingReview ? (
+            {resolved.used_at || existingReview ? (
               <p className="rounded-2xl border border-emerald-300/20 bg-emerald-300/10 p-4 text-sm leading-6 text-emerald-100">
                 {t.already}
               </p>

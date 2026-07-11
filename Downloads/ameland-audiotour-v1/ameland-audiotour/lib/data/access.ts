@@ -16,59 +16,54 @@ export type AccessLookupResult =
       status: 'invalid'
     }
 
+type ResolvedTourAccess = {
+  status?: string
+  access_token_id?: string
+  expires_at?: string | null
+  order?: any
+  tour?: any
+  stops?: any[]
+}
+
 export async function getTourByAccessToken(token: string): Promise<AccessLookupResult> {
   const cleanToken = String(token || '').trim()
   if (!cleanToken) return { status: 'invalid' }
 
   const supabase = createServerSupabase()
-  const { data: tokenRow, error: tokenError } = await supabase
-    .from('access_tokens')
-    .select('id, order_id, token, expires_at')
-    .eq('token', cleanToken)
-    .maybeSingle()
+  const { data, error } = await supabase.rpc('resolve_tour_access', {
+    p_token: cleanToken,
+  })
 
-  if (tokenError || !tokenRow) return { status: 'invalid' }
-  if (tokenRow.expires_at && new Date(tokenRow.expires_at).getTime() < Date.now()) {
-    return { status: 'expired' }
-  }
-
-  const { data: order, error: orderError } = await supabase
-    .from('orders')
-    .select('id, tour_id, payment_status, email')
-    .eq('id', tokenRow.order_id)
-    .maybeSingle()
-
-  if (orderError || !order || order.payment_status !== 'paid') {
+  if (error || !data) {
+    if (error) {
+      console.error('[tour-access] Secure resolver failed', {
+        code: error.code || null,
+        message: error.message,
+      })
+    }
     return { status: 'invalid' }
   }
 
-  const [{ data: tour, error: tourError }, { data: stops, error: stopsError }] =
-    await Promise.all([
-      supabase.from('tours').select('*').eq('id', order.tour_id).maybeSingle(),
-      supabase
-        .from('tour_stops')
-        .select('*')
-        .eq('tour_id', order.tour_id)
-        .eq('is_active', true)
-        .order('order_index', { ascending: true }),
-    ])
-
-  if (tourError || !tour || stopsError || !stops?.length) {
+  const resolved = data as ResolvedTourAccess
+  if (resolved.status === 'expired') return { status: 'expired' }
+  if (
+    resolved.status !== 'ok' ||
+    !resolved.order ||
+    !resolved.tour ||
+    !Array.isArray(resolved.stops) ||
+    resolved.stops.length === 0 ||
+    !resolved.access_token_id
+  ) {
     return { status: 'invalid' }
   }
-
-  await supabase
-    .from('access_tokens')
-    .update({ last_opened_at: new Date().toISOString() })
-    .eq('id', tokenRow.id)
 
   return {
     status: 'ok',
-    order,
-    tour,
-    stops,
-    expiresAt: tokenRow.expires_at,
-    accessTokenId: tokenRow.id,
+    order: resolved.order,
+    tour: resolved.tour,
+    stops: resolved.stops,
+    expiresAt: resolved.expires_at ?? null,
+    accessTokenId: resolved.access_token_id,
   }
 }
 
@@ -86,6 +81,8 @@ export async function getAccessTokenByOrderId(orderId: string) {
     .from('access_tokens')
     .select('token, expires_at')
     .eq('order_id', orderId)
+    .order('created_at', { ascending: false })
+    .limit(1)
     .maybeSingle()
 
   if (tokenError || !tokenRow) return null
