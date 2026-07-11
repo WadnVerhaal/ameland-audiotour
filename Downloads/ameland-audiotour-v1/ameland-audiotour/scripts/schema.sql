@@ -112,3 +112,32 @@ add column if not exists title_en text,
 add column if not exists title_de text,
 add column if not exists short_description_en text,
 add column if not exists short_description_de text;
+
+create table if not exists support_requests (
+  id uuid primary key default gen_random_uuid(),
+  category text not null check (category in ('payment', 'access', 'location', 'audio', 'route', 'other')),
+  summary text not null,
+  locale text not null default 'nl' check (locale in ('nl', 'en', 'de')),
+  page_context text,
+  customer_email text,
+  order_id text,
+  status text not null default 'open' check (status in ('open', 'in_progress', 'resolved')),
+  created_at timestamptz not null default now(),
+  resolved_at timestamptz
+);
+
+create table if not exists support_rate_limits (
+  id uuid primary key default gen_random_uuid(),
+  ip_hash text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_support_requests_status_created
+  on support_requests(status, created_at desc);
+create index if not exists idx_support_rate_limits_ip_created
+  on support_rate_limits(ip_hash, created_at desc);
+
+alter table support_requests enable row level security;
+alter table support_rate_limits enable row level security;
+revoke all on support_requests from anon, authenticated;
+revoke all on support_rate_limits from anon, authenticated;

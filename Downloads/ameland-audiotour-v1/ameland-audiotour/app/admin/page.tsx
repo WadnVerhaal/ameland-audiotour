@@ -9,6 +9,7 @@ const links = [
   { href: '/admin/marketing-tours', label: 'Marketing tours beheren' },
   { href: '/admin/orders', label: 'Orders' },
   { href: '/admin/reviews', label: 'Reviews' },
+  { href: '/admin/support', label: 'De Jutter support' },
   { href: '/admin/partners', label: 'Partners' },
 ]
 
@@ -23,7 +24,7 @@ export default function AdminPage() {
             </p>
             <h1 className="mt-2 text-3xl font-semibold text-[#143a43]">Dashboard</h1>
             <p className="mt-3 text-sm leading-7 text-[#5b757b]">
-              Beheer hier je audiotours, marketing tours, orders en reviews.
+              Beheer hier je audiotours, marketing tours, orders, reviews en supportverzoeken.
             </p>
           </div>
 
