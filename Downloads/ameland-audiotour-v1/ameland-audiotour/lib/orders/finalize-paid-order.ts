@@ -107,7 +107,7 @@ export async function finalizePaidOrder({
     process.env.NEXT_PUBLIC_APP_URL || 'https://app.amelandaudiotours.nl'
   ).replace(/\/$/, '')
 
-  const accessUrl = `${appUrl}/access/${token}`
+  const accessUrl = `${appUrl}/player/${token}`
 
   const { data: order, error: orderReadError } = await supabase
     .from('orders')

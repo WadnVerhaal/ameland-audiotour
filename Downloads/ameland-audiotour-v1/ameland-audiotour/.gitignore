@@ -15,3 +15,23 @@ _backup_before_amelandaudiotours_cleanup_*
 .env.local.backup-*
 fix-final-domains-mollie.sh
 fix-mollie-flow.sh
+
+# Local secrets and Vercel state
+.env
+.env.*
+!.env.example
+.vercel/
+
+# Generated files
+.next/
+node_modules/
+*.tsbuildinfo
+.DS_Store
+
+# Local backups and repair scripts
+.backups/
+**/*.backup*
+**/*backup-before*
+*.sh
+app/api/_diagnostics/
+app/api/dev/

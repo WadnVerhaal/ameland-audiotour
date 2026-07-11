@@ -1,166 +1,168 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server'
 
-type LatLngPoint = [number, number];
-
-function isValidPoint(point: unknown): point is LatLngPoint {
-  return (
-    Array.isArray(point) &&
-    point.length === 2 &&
-    typeof point[0] === 'number' &&
-    typeof point[1] === 'number' &&
-    Number.isFinite(point[0]) &&
-    Number.isFinite(point[1])
-  );
+type LatLng = {
+  lat: number
+  lng: number
 }
 
-function routeResponse(points: LatLngPoint[], provider: string, routed: boolean) {
-  return NextResponse.json(
-    {
-      provider,
-      routed,
-      points,
-    },
-    {
-      headers: {
-        'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800',
-      },
-    }
-  );
+function asNumber(value: string | null) {
+  if (!value) return null
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
 }
 
-async function routeWithOpenRouteService(points: LatLngPoint[]) {
-  const apiKey = process.env.OPENROUTESERVICE_API_KEY;
-  if (!apiKey) return null;
+function getCoordinates(req: Request) {
+  const { searchParams } = new URL(req.url)
 
-  const coordinates = points.map(([lat, lng]) => [lng, lat]);
+  let startLat =
+    asNumber(searchParams.get('startLat')) ??
+    asNumber(searchParams.get('fromLat')) ??
+    asNumber(searchParams.get('lat1'))
 
-  const response = await fetch(
-    'https://api.openrouteservice.org/v2/directions/foot-walking/geojson',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: apiKey,
-        'Content-Type': 'application/json',
-        Accept: 'application/json, application/geo+json',
-      },
-      body: JSON.stringify({
-        coordinates,
-        preference: 'recommended',
-        instructions: false,
-        elevation: false,
-      }),
-      next: {
-        revalidate: 86400,
-      },
+  let startLng =
+    asNumber(searchParams.get('startLng')) ??
+    asNumber(searchParams.get('fromLng')) ??
+    asNumber(searchParams.get('lng1'))
+
+  let endLat =
+    asNumber(searchParams.get('endLat')) ??
+    asNumber(searchParams.get('toLat')) ??
+    asNumber(searchParams.get('lat2'))
+
+  let endLng =
+    asNumber(searchParams.get('endLng')) ??
+    asNumber(searchParams.get('toLng')) ??
+    asNumber(searchParams.get('lng2'))
+
+  const from = searchParams.get('from')
+  const to = searchParams.get('to')
+
+  if ((startLat === null || startLng === null) && from) {
+    const [lat, lng] = from.split(',').map(Number)
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      startLat = lat
+      startLng = lng
     }
-  );
-
-  if (!response.ok) return null;
-
-  const data = await response.json();
-  const routeCoordinates = data?.features?.[0]?.geometry?.coordinates;
-
-  if (!Array.isArray(routeCoordinates) || routeCoordinates.length < 2) return null;
-
-  return routeCoordinates
-    .map((coordinate: unknown) => {
-      if (
-        Array.isArray(coordinate) &&
-        coordinate.length >= 2 &&
-        typeof coordinate[0] === 'number' &&
-        typeof coordinate[1] === 'number'
-      ) {
-        return [coordinate[1], coordinate[0]] as LatLngPoint;
-      }
-
-      return null;
-    })
-    .filter(Boolean) as LatLngPoint[];
-}
-
-async function routeWithOsrmFoot(points: LatLngPoint[]) {
-  if (points.length < 2) return null;
-
-  const routeCoords: LatLngPoint[] = [];
-
-  for (let i = 0; i < points.length - 1; i++) {
-    const start = points[i];
-    const end = points[i + 1];
-
-    const coordinates = `${start[1]},${start[0]};${end[1]},${end[0]}`;
-    const url = `https://router.project-osrm.org/route/v1/foot/${coordinates}?overview=full&geometries=geojson`;
-
-    const response = await fetch(url, {
-      next: {
-        revalidate: 86400,
-      },
-    });
-
-    if (!response.ok) return null;
-
-    const data = await response.json();
-    const geometry = data?.routes?.[0]?.geometry?.coordinates;
-
-    if (!Array.isArray(geometry) || geometry.length < 2) return null;
-
-    const segment = geometry
-      .map((coord: unknown) => {
-        if (
-          Array.isArray(coord) &&
-          coord.length >= 2 &&
-          typeof coord[0] === 'number' &&
-          typeof coord[1] === 'number'
-        ) {
-          return [coord[1], coord[0]] as LatLngPoint;
-        }
-
-        return null;
-      })
-      .filter(Boolean) as LatLngPoint[];
-
-    if (routeCoords.length > 0) {
-      segment.shift();
-    }
-
-    routeCoords.push(...segment);
   }
 
-  return routeCoords.length >= 2 ? routeCoords : null;
+  if ((endLat === null || endLng === null) && to) {
+    const [lat, lng] = to.split(',').map(Number)
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      endLat = lat
+      endLng = lng
+    }
+  }
+
+  if (
+    startLat === null ||
+    startLng === null ||
+    endLat === null ||
+    endLng === null
+  ) {
+    return null
+  }
+
+  return {
+    start: { lat: startLat, lng: startLng },
+    end: { lat: endLat, lng: endLng },
+  }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const points = body?.points;
+function normalizeGeoJsonCoordinates(value: unknown): Array<[number, number]> {
+  if (!Array.isArray(value)) return []
 
-    if (!Array.isArray(points) || points.length < 2 || !points.every(isValidPoint)) {
-      return NextResponse.json(
-        {
-          error: 'Invalid points. Expected [[lat,lng],[lat,lng],...].',
-        },
-        { status: 400 }
-      );
+  return value
+    .map((point) => {
+      if (!Array.isArray(point) || point.length < 2) return null
+
+      const lng = Number(point[0])
+      const lat = Number(point[1])
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+
+      return [lat, lng] as [number, number]
+    })
+    .filter((point): point is [number, number] => Array.isArray(point))
+}
+
+async function tryRoute(url: string) {
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/json',
+      'User-Agent': 'AmelandAudiotours/1.0',
+    },
+    cache: 'no-store',
+  })
+
+  if (!response.ok) {
+    return null
+  }
+
+  const data = await response.json()
+  const route = data?.routes?.[0]
+  const coordinates = normalizeGeoJsonCoordinates(route?.geometry?.coordinates)
+
+  if (coordinates.length < 2) {
+    return null
+  }
+
+  return {
+    coordinates,
+    distanceMeters: typeof route.distance === 'number' ? route.distance : null,
+    durationSeconds: typeof route.duration === 'number' ? route.duration : null,
+  }
+}
+
+async function getWalkingRoute(start: LatLng, end: LatLng) {
+  const lngLat = `${start.lng},${start.lat};${end.lng},${end.lat}`
+
+  const urls = [
+    `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${lngLat}?overview=full&geometries=geojson&steps=false`,
+    `https://routing.openstreetmap.de/routed-foot/route/v1/walking/${lngLat}?overview=full&geometries=geojson&steps=false`,
+    `https://router.project-osrm.org/route/v1/foot/${lngLat}?overview=full&geometries=geojson&steps=false`,
+    `https://router.project-osrm.org/route/v1/walking/${lngLat}?overview=full&geometries=geojson&steps=false`,
+  ]
+
+  for (const url of urls) {
+    try {
+      const result = await tryRoute(url)
+      if (result) return result
+    } catch {
+      // probeer volgende router
     }
+  }
 
-    const openRouteServiceRoute = await routeWithOpenRouteService(points);
+  return null
+}
 
-    if (openRouteServiceRoute && openRouteServiceRoute.length >= 2) {
-      return routeResponse(openRouteServiceRoute, 'openrouteservice-foot-walking', true);
-    }
+export async function GET(req: Request) {
+  const coordinates = getCoordinates(req)
 
-    const osrmRoute = await routeWithOsrmFoot(points);
+  if (!coordinates) {
+    return NextResponse.json(
+      { ok: false, error: 'Missing coordinates' },
+      { status: 400 }
+    )
+  }
 
-    if (osrmRoute && osrmRoute.length >= 2) {
-      return routeResponse(osrmRoute, 'osrm-foot', true);
-    }
+  const route = await getWalkingRoute(coordinates.start, coordinates.end)
 
-    return routeResponse(points, 'fallback-straight-line', false);
-  } catch {
+  if (!route) {
     return NextResponse.json(
       {
-        error: 'Could not calculate walking route.',
+        ok: false,
+        error: 'No walking route found',
+        coordinates: [],
       },
-      { status: 500 }
-    );
+      { status: 404 }
+    )
   }
+
+  return NextResponse.json({
+    ok: true,
+    mode: 'walking',
+    coordinates: route.coordinates,
+    distanceMeters: route.distanceMeters,
+    durationSeconds: route.durationSeconds,
+  })
 }

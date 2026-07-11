@@ -1,268 +1,381 @@
+import Link from 'next/link'
+import {
+  asNumber,
+  asText,
+  getAvailableTours,
+  getTourSlug,
+  upcomingTours,
+} from '@/lib/tour-catalog'
+
 export const dynamic = 'force-dynamic'
-export const revalidate = 0
 
-﻿import Link from 'next/link'
-import { ArrowLeft, Check, MapPinned } from 'lucide-react'
-import { getActiveTours, getMarketingTours, type MarketingTour } from '@/lib/data/tours'
-import { translations as appTranslations } from '@/lib/app-language'
-import { getServerLanguage } from '@/lib/app-language-server'
+type Lang = 'nl' | 'de' | 'en'
 
-type AppLanguage = 'nl' | 'en' | 'de'
-
-type ActiveTourRecord = {
-  id: string
-  slug: string
-  title: string
-  title_en: string | null
-  title_de: string | null
-  subtitle: string | null
-  subtitle_en: string | null
-  subtitle_de: string | null
-  description: string
-  description_en: string | null
-  description_de: string | null
-  language: string
-  duration_minutes: number
-  distance_km: number
-  mode: string
-  price_cents: number
-  hero_image_url: string | null
-  start_lat: number | null
-  start_lng: number | null
-  is_active: boolean
-  created_at: string
-  updated_at: string
+function getLang(searchParams?: { lang?: string }): Lang {
+  return searchParams?.lang === 'de' || searchParams?.lang === 'en' ? searchParams.lang : 'nl'
 }
 
-function normalize(value: string) {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
+function durationLabel(tour: Record<string, any>) {
+  const minutes = asNumber(tour.duration_minutes)
+  if (minutes) return `${minutes} min`
+  return asText(tour.duration, '90 min')
 }
 
-function getDbTitleForLanguage(tour: ActiveTourRecord, language: AppLanguage) {
-  if (language === 'en' && tour.title_en) return tour.title_en
-  if (language === 'de' && tour.title_de) return tour.title_de
-  return tour.title
+function distanceLabel(tour: Record<string, any>) {
+  const km = asNumber(tour.distance_km)
+  if (km) return `± ${String(km).replace('.', ',')} km`
+  return asText(tour.distance, '± 3 km')
 }
 
-function findMatchingActiveTour(
-  marketingTour: MarketingTour,
-  activeTours: ActiveTourRecord[],
-  language: AppLanguage
-) {
-  const marketingTitle = normalize(marketingTour.title)
+const copy = {
+  nl: {
+    back: '← Terug naar begin',
+    eyebrow: 'Tours',
+    title: 'Kies de tour die bij jouw dag past',
+    intro: 'Beschikbare tours kun je direct starten. De andere routes komen binnenkort online.',
+    available: 'Nu beschikbaar',
+    availablePill: 'Beschikbaar',
+    comingSoon: 'Binnenkort',
+    emptyTitle: 'Nog geen actieve tour gevonden',
+    emptyText: 'Zet in Supabase minimaal één tour actief met een slug. Dan verschijnt hij hier automatisch.',
+    fallbackSubtitle: 'Een rustige audiotour langs bijzondere plekken op Ameland.',
+    footer: '© Ameland Audiotours',
+  },
+  de: {
+    back: '← Zurück zum Start',
+    eyebrow: 'Touren',
+    title: 'Wähle die Tour, die zu deinem Tag passt',
+    intro: 'Verfügbare Touren kannst du direkt starten. Weitere Routen kommen bald online.',
+    available: 'Jetzt verfügbar',
+    availablePill: 'Verfügbar',
+    comingSoon: 'Bald verfügbar',
+    emptyTitle: 'Noch keine aktive Tour gefunden',
+    emptyText: 'Aktiviere in Supabase mindestens eine Tour mit einem Slug. Dann erscheint sie hier automatisch.',
+    fallbackSubtitle: 'Eine ruhige Audiotour entlang besonderer Orte auf Ameland.',
+    footer: '© Ameland Audiotours',
+  },
+  en: {
+    back: '← Back to start',
+    eyebrow: 'Tours',
+    title: 'Choose the tour that fits your day',
+    intro: 'Available tours can be started right away. More routes are coming soon.',
+    available: 'Available now',
+    availablePill: 'Available',
+    comingSoon: 'Coming soon',
+    emptyTitle: 'No active tour found yet',
+    emptyText: 'Activate at least one tour with a slug in Supabase. It will appear here automatically.',
+    fallbackSubtitle: 'A calm audio tour along special places on Ameland.',
+    footer: '© Ameland Audiotours',
+  },
+} satisfies Record<Lang, Record<string, string>>
 
-  const exact = activeTours.find(
-    (tour) => normalize(getDbTitleForLanguage(tour, language)) === marketingTitle
-  )
-  if (exact) return exact
-
-  if (marketingTitle.includes('hollum')) {
-    const hollum = activeTours.find((tour) =>
-      normalize(getDbTitleForLanguage(tour, language)).includes('hollum')
-    )
-    if (hollum) return hollum
-  }
-
-  return activeTours[0] ?? null
-}
-
-
-function getSafeTourImage(tour: MarketingTour) {
-  const candidate = tour.image_url
-  const key = `${(tour as MarketingTour & { slug?: string }).slug ?? ''} ${tour.title ?? ''}`.toLowerCase()
-
-  if (candidate && candidate.startsWith('/images/')) {
-    return candidate
-  }
-
-  if (key.includes('fiets')) return '/images/tour-fietsen.jpg'
-  if (key.includes('duin')) return '/images/tour-duinen.jpg'
-  if (key.includes('dorp')) return '/images/tour-dorp.jpg'
-  if (key.includes('hollum')) return '/images/tour-dorp.jpg'
-
-  return '/images/tour-duinen.jpg'
-}
-
-function getIntro(language: AppLanguage) {
-  if (language === 'de') {
-    return 'Wähle die Route, die zu deinem Tag auf Ameland passt. Bereits verfügbare Touren kannst du direkt starten. Die anderen siehst du hier schon als Vorschau.'
-  }
-
-  if (language === 'en') {
-    return 'Choose the route that fits your day on Ameland. Tours that are already available can be started right away. The others are shown here as a preview.'
-  }
-
-  return 'Kies de route die past bij jouw dag op Ameland. Tours die al beschikbaar zijn kun je direct starten. De andere zie je hier alvast als voorproefje.'
-}
-
-function TourRow({
-  tour,
-  actionHref,
-  isOrderable,
-  buttonLabel,
+export default async function ToursPage({
+  searchParams,
 }: {
-  tour: MarketingTour
-  actionHref?: string
-  isOrderable: boolean
-  buttonLabel: string
+  searchParams?: Promise<{ lang?: string }>
 }) {
+  const resolvedSearchParams = await searchParams
+  const lang = getLang(resolvedSearchParams)
+  const t = copy[lang]
+  const availableTours = await getAvailableTours()
+
   return (
-    <div
-      className={`grid gap-5 px-5 py-5 md:px-6 ${
-        tour.available ? '' : 'bg-[#fbfdfd]'
-      } md:grid-cols-[220px_1fr_auto] md:items-center`}
+    <main
+      style={{
+        minHeight: '100svh',
+        background:
+          'radial-gradient(circle at 18% 0%, rgba(231,241,225,0.95) 0, transparent 36%), linear-gradient(180deg,#f4efe4 0%,#eee6d9 100%)',
+        color: '#20372f',
+        padding: '14px 14px 92px',
+        fontFamily:
+          'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      }}
     >
-      <div className="relative h-52 overflow-hidden rounded-[1.5rem]">
-        <img src={getSafeTourImage(tour)} alt={tour.title} className="h-full w-full object-cover" />
-
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,48,56,0.02)_0%,rgba(8,48,56,0.08)_46%,rgba(8,48,56,0.35)_100%)]" />
-
-        <div className="absolute left-4 top-4 flex flex-wrap gap-2">
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-              tour.available
-                ? tour.featured
-                  ? 'bg-[#ef7f63] text-white'
-                  : 'bg-white/92 text-[#355f65]'
-                : 'bg-[#aeb8bb]/95 text-white'
-            }`}
+      <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
+        <section
+          style={{
+            overflow: 'hidden',
+            borderRadius: 38,
+            background: '#fffdf8',
+            border: '1px solid #ddd4c4',
+            boxShadow: '0 28px 80px rgba(31,39,32,0.13)',
+          }}
+        >
+          <div
+            style={{
+              padding: '30px 24px 24px',
+              background:
+                'radial-gradient(circle at 88% 0%, #e9f2e4 0, transparent 36%), linear-gradient(180deg,#ffffff 0%,#fbf6ec 100%)',
+            }}
           >
-            {tour.badge}
-          </span>
-        </div>
-      </div>
-
-      <div>
-        <div className="flex flex-wrap items-center gap-3">
-          <h2
-            className={`text-2xl font-semibold tracking-tight md:text-3xl ${
-              tour.available ? 'text-[#143a43]' : 'text-[#73858a]'
-            }`}
-          >
-            {tour.title}
-          </h2>
-
-          <span
-            className={`rounded-full px-3 py-1 text-sm font-medium ${
-              tour.available
-                ? 'bg-[#eef8f8] text-[#4c7177]'
-                : 'bg-[#f2f6f6] text-[#87979b]'
-            }`}
-          >
-            {tour.duration_label}
-          </span>
-        </div>
-
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          {tour.points.map((point) => (
-            <div
-              key={point}
-              className={`flex items-start gap-3 text-sm ${
-                tour.available ? 'text-[#526f75]' : 'text-[#87979b]'
-              }`}
+            <Link
+              href={`/?lang=${lang}`}
+              style={{
+                display: 'inline-flex',
+                color: '#657064',
+                textDecoration: 'none',
+                fontSize: 14,
+                fontWeight: 850,
+                marginBottom: 18,
+              }}
             >
-              <Check
-                className={`mt-0.5 h-4 w-4 shrink-0 ${
-                  tour.available ? 'text-[#1694a3]' : 'text-[#bcc9cc]'
-                }`}
-              />
-              <span>{point}</span>
+              {t.back}
+            </Link>
+
+            <p
+              style={{
+                margin: 0,
+                color: '#7a8875',
+                fontSize: 11,
+                fontWeight: 950,
+                letterSpacing: '0.23em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {t.eyebrow}
+            </p>
+
+            <h1
+              style={{
+                margin: '10px 0 0',
+                color: '#20372f',
+                fontSize: 'clamp(40px, 10vw, 54px)',
+                lineHeight: 0.92,
+                letterSpacing: '-0.065em',
+                fontWeight: 950,
+              }}
+            >
+              {t.title}
+            </h1>
+
+            <p
+              style={{
+                margin: '16px 0 0',
+                maxWidth: 380,
+                color: '#626b61',
+                fontSize: 17,
+                lineHeight: 1.45,
+                fontWeight: 520,
+              }}
+            >
+              {t.intro}
+            </p>
+          </div>
+
+          <div style={{ padding: '18px 18px 8px', background: '#fffdf8' }}>
+            <p
+              style={{
+                margin: '0 0 12px',
+                color: '#7a8875',
+                fontSize: 11,
+                fontWeight: 950,
+                letterSpacing: '0.22em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {t.available}
+            </p>
+
+            <div style={{ display: 'grid', gap: 13 }}>
+              {availableTours.length > 0 ? (
+                availableTours.map((tour: Record<string, any>, index: number) => {
+                  const slug = getTourSlug(tour)
+                  const title = asText(tour.title, index === 0 ? 'Maak kennis met Hollum' : 'Audiotour Ameland')
+                  const subtitle =
+                    asText(tour.subtitle) ||
+                    asText(tour.short_description) ||
+                    asText(tour.description, t.fallbackSubtitle)
+
+                  return (
+                    <Link
+                      key={slug}
+                      href={`/checkout/${slug}?lang=${lang}`}
+                      style={{
+                        display: 'block',
+                        borderRadius: 28,
+                        border: '1px solid #e3dccf',
+                        background: '#fbf8f1',
+                        padding: 18,
+                        color: '#20372f',
+                        textDecoration: 'none',
+                        boxShadow: '0 12px 28px rgba(31,39,32,0.05)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 11 }}>
+                        <span
+                          style={{
+                            borderRadius: 999,
+                            background: '#e9f2e5',
+                            color: '#557257',
+                            padding: '6px 10px',
+                            fontSize: 11,
+                            lineHeight: 1,
+                            fontWeight: 950,
+                          }}
+                        >
+                          {t.availablePill}
+                        </span>
+
+                        <span style={{ color: '#7a7f74', fontSize: 12, fontWeight: 850 }}>{durationLabel(tour)}</span>
+                        <span style={{ color: '#7a7f74', fontSize: 12, fontWeight: 850 }}>{distanceLabel(tour)}</span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14 }}>
+                        <div style={{ minWidth: 0 }}>
+                          <h2
+                            style={{
+                              margin: 0,
+                              color: '#20372f',
+                              fontSize: 22,
+                              lineHeight: 1.1,
+                              letterSpacing: '-0.035em',
+                              fontWeight: 950,
+                            }}
+                          >
+                            {title}
+                          </h2>
+
+                          <p
+                            style={{
+                              margin: '8px 0 0',
+                              color: '#626b61',
+                              fontSize: 14,
+                              lineHeight: 1.45,
+                              fontWeight: 650,
+                            }}
+                          >
+                            {subtitle}
+                          </p>
+                        </div>
+
+                        <span
+                          style={{
+                            flexShrink: 0,
+                            width: 42,
+                            height: 42,
+                            borderRadius: 999,
+                            background: '#fffdf8',
+                            color: '#c96643',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 24,
+                            fontWeight: 300,
+                          }}
+                        >
+                          →
+                        </span>
+                      </div>
+                    </Link>
+                  )
+                })
+              ) : (
+                <div
+                  style={{
+                    borderRadius: 28,
+                    border: '1px solid #e3dccf',
+                    background: '#fbf8f1',
+                    padding: 18,
+                  }}
+                >
+                  <p style={{ margin: 0, color: '#20372f', fontSize: 18, fontWeight: 950 }}>
+                    {t.emptyTitle}
+                  </p>
+                  <p style={{ margin: '8px 0 0', color: '#626b61', fontSize: 14, lineHeight: 1.45, fontWeight: 650 }}>
+                    {t.emptyText}
+                  </p>
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex items-center md:justify-end">
-        {isOrderable && actionHref ? (
-          <Link
-            href={actionHref}
-            className="inline-flex min-w-[180px] items-center justify-center rounded-2xl bg-[#0f4b58] px-5 py-3.5 font-semibold text-white transition hover:opacity-90"
-          >
-            {buttonLabel}
-          </Link>
-        ) : (
-          <span className="inline-flex min-w-[180px] items-center justify-center rounded-2xl border border-[#dce8e9] bg-[#f8fbfb] px-5 py-3.5 font-semibold text-[#8a9a9e]">
-            {buttonLabel}
-          </span>
-        )}
-      </div>
-    </div>
-  )
-}
-
-export default async function ToursPage() {
-  const activeTours = (await getActiveTours()) as ActiveTourRecord[]
-  const language = await getServerLanguage()
-  const safeLanguage: AppLanguage =
-    language === 'en' || language === 'de' ? language : 'nl'
-  const t = appTranslations[safeLanguage]
-
-  const marketingTours = await getMarketingTours(safeLanguage)
-
-  const orderedTours = [
-    ...marketingTours.filter((tour) => tour.available),
-    ...marketingTours.filter((tour) => !tour.available),
-  ]
-
-  return (
-    <main className="mx-auto max-w-6xl px-4 py-5 md:px-6">
-      <section className="rounded-[2rem] border border-[#dbecef] bg-white p-5 shadow-[0_24px_70px_rgba(15,75,88,0.08)]">
-        <div className="flex items-center justify-between gap-3">
-          <Link
-            href="/"
-            className="inline-flex items-center text-sm font-medium text-[#5b757b] transition hover:text-[#0f4b58]"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t.back}
-          </Link>
-
-          <div className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#eef8f8] px-3 py-1 text-xs font-semibold text-[#4f8a8e]">
-            <MapPinned className="h-3.5 w-3.5" />
-            {t.availableRoutes}
           </div>
-        </div>
 
-        <h1 className="mt-6 text-3xl font-semibold text-[#143a43] md:text-4xl">
-          {t.chooseTour}
-        </h1>
+          <div style={{ padding: '18px 18px 22px', background: '#fffdf8' }}>
+            <p
+              style={{
+                margin: '0 0 12px',
+                color: '#7a8875',
+                fontSize: 11,
+                fontWeight: 950,
+                letterSpacing: '0.22em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {t.comingSoon}
+            </p>
 
-        <p className="mt-3 max-w-3xl text-sm leading-7 text-[#5b757b] md:text-base">
-          {getIntro(safeLanguage)}
+            <div style={{ display: 'grid', gap: 13 }}>
+              {upcomingTours.map((tour) => (
+                <div
+                  key={tour.title}
+                  style={{
+                    borderRadius: 28,
+                    border: '1px solid #eee6d8',
+                    background: '#f7f2e8',
+                    padding: 18,
+                    opacity: 0.92,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 11 }}>
+                    <span
+                      style={{
+                        borderRadius: 999,
+                        background: '#efe6d8',
+                        color: '#8a6f54',
+                        padding: '6px 10px',
+                        fontSize: 11,
+                        lineHeight: 1,
+                        fontWeight: 950,
+                      }}
+                    >
+                      {t.comingSoon}
+                    </span>
+
+                    <span style={{ color: '#7a7f74', fontSize: 12, fontWeight: 850 }}>{tour.duration}</span>
+                    <span style={{ color: '#7a7f74', fontSize: 12, fontWeight: 850 }}>{tour.distance}</span>
+                  </div>
+
+                  <h2
+                    style={{
+                      margin: 0,
+                      color: '#20372f',
+                      fontSize: 22,
+                      lineHeight: 1.1,
+                      letterSpacing: '-0.035em',
+                      fontWeight: 950,
+                    }}
+                  >
+                    {tour.title}
+                  </h2>
+
+                  <p
+                    style={{
+                      margin: '8px 0 0',
+                      color: '#626b61',
+                      fontSize: 14,
+                      lineHeight: 1.45,
+                      fontWeight: 650,
+                    }}
+                  >
+                    {tour.subtitle}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <p
+          style={{
+            margin: '28px 0 0',
+            textAlign: 'center',
+            color: '#8a867d',
+            fontSize: 12,
+            fontWeight: 750,
+          }}
+        >
+          {t.footer}
         </p>
-      </section>
-
-      <section className="mt-5 overflow-hidden rounded-[2.4rem] border border-[#dbecef] bg-white shadow-[0_24px_70px_rgba(15,75,88,0.08)]">
-        {orderedTours.length === 0 ? (
-          <div className="px-5 py-6 text-sm text-[#5b757b]">{t.noToursAvailable}</div>
-        ) : (
-          <div className="divide-y divide-[#e7f1f2]">
-            {orderedTours.map((marketingTour) => {
-              const matchedActiveTour = marketingTour.available
-                ? findMatchingActiveTour(marketingTour, activeTours, safeLanguage)
-                : null
-
-              return (
-                <TourRow
-                  key={`${marketingTour.slug}-${safeLanguage}`}
-                  tour={marketingTour}
-                  isOrderable={Boolean(marketingTour.available && matchedActiveTour)}
-                  actionHref={
-                    marketingTour.available && matchedActiveTour
-                      ? `/checkout/${matchedActiveTour.slug}`
-                      : undefined
-                  }
-                  buttonLabel={marketingTour.cta}
-                />
-              )
-            })}
-          </div>
-        )}
-      </section>
+      </div>
     </main>
   )
 }

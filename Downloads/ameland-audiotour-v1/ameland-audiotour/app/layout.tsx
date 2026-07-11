@@ -1,30 +1,33 @@
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import 'leaflet/dist/leaflet.css';
-import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-})
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-})
+import AppLanguageBar from '@/components/i18n/AppLanguageBar'
+import AppAutoTranslator from '@/components/i18n/AppAutoTranslator'
 
 export const metadata: Metadata = {
-  title: "Ameland Audiotours",
-  description: 'Ontdek Ameland met verhalen in je oor.',
+  title: 'Ameland Audiotours',
+  description: 'Audiotours op Ameland',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <html lang="nl" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full bg-app text-app">{children}</body>
+    <html lang="nl">
+      <body>
+        <AppLanguageBar />
+        <AppAutoTranslator />
+        {children}
+      </body>
     </html>
   )
 }

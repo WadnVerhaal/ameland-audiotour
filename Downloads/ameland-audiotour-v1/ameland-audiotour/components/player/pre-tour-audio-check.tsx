@@ -1,94 +1,295 @@
 'use client'
 
-import { MapPin, Headphones, ShieldCheck, ArrowRight } from 'lucide-react'
-import { HEADSET_PARTNER } from '@/lib/player/headset-partner'
+type Lang = 'nl' | 'de' | 'en'
 
-type PreTourAudioCheckProps = {
-  onStartWithoutPartner: () => void
-  onStartWithPartner: () => void
+type Props = {
+  onContinue?: () => void
+  onShowPartner?: () => void
+  showPartnerButton?: boolean
+  onStartWithoutPartner?: () => void
+  onStartWithPartner?: () => void
 }
 
-export function PreTourAudioCheck({
+function getLang(): Lang {
+  if (typeof window === 'undefined') return 'nl'
+
+  const fromUrl = new URLSearchParams(window.location.search).get('lang')
+  const stored =
+    window.localStorage.getItem('ameland-audiotours-language') ||
+    window.localStorage.getItem('wadnverhaal-language')
+
+  if (fromUrl === 'de' || fromUrl === 'en' || fromUrl === 'nl') return fromUrl
+  if (stored === 'de' || stored === 'en' || stored === 'nl') return stored
+  return 'nl'
+}
+
+const copy = {
+  nl: {
+    eyebrow: 'Voor vertrek',
+    title: 'Klaar om te luisteren?',
+    text: 'Gebruik bij voorkeur één oortje of open-ear audio. Zo hoor je het verhaal én blijf je alert op je omgeving.',
+    tip: 'Tip onderweg',
+    noEarbuds: 'Geen oortjes bij je?',
+    partner: 'Voeg Warenhuis Engels toe als korte voorbereidingsstop.',
+    address: 'Zwanenplein 1, 9161 BS Hollum',
+    start: 'Start mijn tour →',
+    add: 'Voeg voorbereidingsstop toe',
+    safe: 'Pauzeren of terugspoelen kan altijd. Luister opnieuw op een rustig en veilig moment.',
+  },
+  de: {
+    eyebrow: 'Vor dem Start',
+    title: 'Bereit zum Zuhören?',
+    text: 'Nutze am besten einen Ohrhörer oder Open-Ear-Audio. So hörst du die Geschichte und bleibst aufmerksam.',
+    tip: 'Tipp unterwegs',
+    noEarbuds: 'Keine Ohrhörer dabei?',
+    partner: 'Füge Warenhuis Engels als kurzen Vorbereitungsstopp hinzu.',
+    address: 'Zwanenplein 1, 9161 BS Hollum',
+    start: 'Tour starten →',
+    add: 'Vorbereitungsstopp hinzufügen',
+    safe: 'Pausieren oder Zurückspulen ist jederzeit möglich. Höre später an einem sicheren Ort erneut.',
+  },
+  en: {
+    eyebrow: 'Before you start',
+    title: 'Ready to listen?',
+    text: 'Use one earbud or open-ear audio if possible. That way you hear the story and stay aware of your surroundings.',
+    tip: 'On-the-go tip',
+    noEarbuds: 'No earbuds with you?',
+    partner: 'Add Warenhuis Engels as a short preparation stop.',
+    address: 'Zwanenplein 1, 9161 BS Hollum',
+    start: 'Start my tour →',
+    add: 'Add preparation stop',
+    safe: 'You can pause or rewind anytime. Listen again later at a safe moment.',
+  },
+} satisfies Record<Lang, Record<string, string>>
+
+export default function PreTourAudioCheck({
+  onContinue,
+  onShowPartner,
+  showPartnerButton = true,
   onStartWithoutPartner,
   onStartWithPartner,
-}: PreTourAudioCheckProps) {
+}: Props) {
+  const lang = getLang()
+  const txt = copy[lang]
+  const handleStart = onContinue || onStartWithoutPartner
+  const handlePartner = onShowPartner || onStartWithPartner
+
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-stone-200/80 bg-gradient-to-br from-stone-950 via-stone-900 to-stone-800 p-1 shadow-2xl shadow-stone-950/20">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(245,222,179,0.22),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(120,113,108,0.22),transparent_38%)]" />
+    <main
+      style={{
+        minHeight: '100svh',
+        background:
+          'radial-gradient(circle at 18% 0%, rgba(229,239,224,0.95) 0, transparent 34%), linear-gradient(180deg,#f4efe4 0%,#eee6d9 100%)',
+        color: '#20372f',
+        padding: '14px 14px 92px',
+        fontFamily:
+          'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      }}
+    >
+      <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
+        <section
+          style={{
+            overflow: 'hidden',
+            borderRadius: 38,
+            background: '#fffdf8',
+            border: '1px solid #ddd4c4',
+            boxShadow: '0 28px 80px rgba(31,39,32,0.13)',
+          }}
+        >
+          <div
+            style={{
+              position: 'relative',
+              overflow: 'hidden',
+              padding: '32px 24px 26px',
+              background:
+                'radial-gradient(circle at 88% 0%, #e9f2e4 0, transparent 36%), linear-gradient(180deg,#ffffff 0%,#fbf6ec 100%)',
+            }}
+          >
+            <div style={{ position: 'relative' }}>
+              <div
+                style={{
+                  width: 54,
+                  height: 54,
+                  borderRadius: 20,
+                  background: '#0f5d67',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 25,
+                  marginBottom: 18,
+                  boxShadow: '0 14px 30px rgba(15,93,103,0.18)',
+                }}
+              >
+                ♫
+              </div>
 
-      <div className="relative rounded-[1.75rem] border border-white/10 bg-white/[0.06] p-5 text-white backdrop-blur">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15">
-            <Headphones className="h-6 w-6" />
+              <p
+                style={{
+                  margin: 0,
+                  color: '#7a8875',
+                  fontSize: 11,
+                  fontWeight: 950,
+                  letterSpacing: '0.22em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {txt.eyebrow}
+              </p>
+
+              <h1
+                style={{
+                  margin: '10px 0 0',
+                  maxWidth: 390,
+                  color: '#20372f',
+                  fontSize: 'clamp(38px, 9.8vw, 52px)',
+                  lineHeight: 0.94,
+                  letterSpacing: '-0.062em',
+                  fontWeight: 950,
+                }}
+              >
+                {txt.title}
+              </h1>
+
+              <p
+                style={{
+                  margin: '16px 0 0',
+                  maxWidth: 380,
+                  color: '#626b61',
+                  fontSize: 17,
+                  lineHeight: 1.45,
+                  fontWeight: 560,
+                }}
+              >
+                {txt.text}
+              </p>
+            </div>
           </div>
 
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-200/90">
-              Voor vertrek
-            </p>
+          <div style={{ padding: '22px', background: '#fffdf8' }}>
+            <div
+              style={{
+                borderRadius: 30,
+                background: '#f7f2e8',
+                border: '1px solid #eee6d8',
+                padding: 18,
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  color: '#7a8875',
+                  fontSize: 11,
+                  fontWeight: 950,
+                  letterSpacing: '0.20em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {txt.tip}
+              </p>
 
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-              Heb je geschikte audio bij je?
-            </h2>
+              <p
+                style={{
+                  margin: '10px 0 0',
+                  color: '#20372f',
+                  fontSize: 18,
+                  lineHeight: 1.28,
+                  fontWeight: 950,
+                  letterSpacing: '-0.025em',
+                }}
+              >
+                {txt.noEarbuds}
+              </p>
 
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-200">
-              Gebruik onderweg bij voorkeur één oortje of open-ear audio. Zo geniet je van het verhaal,
-              maar blijf je alert op verkeer, fietsers en je omgeving. Je kunt audio altijd pauzeren
-              of later terugspoelen op een veilig moment.
-            </p>
-          </div>
-        </div>
+              <p
+                style={{
+                  margin: '8px 0 0',
+                  color: '#626b61',
+                  fontSize: 14,
+                  lineHeight: 1.45,
+                  fontWeight: 650,
+                }}
+              >
+                {txt.partner}
+              </p>
 
-        <div className="mt-5 rounded-3xl border border-white/10 bg-white/[0.07] p-4">
-          <div className="flex gap-3">
-            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-amber-200/15 text-amber-100">
-              <MapPin className="h-5 w-5" />
+              <p
+                style={{
+                  margin: '12px 0 0',
+                  color: '#8a867d',
+                  fontSize: 13,
+                  lineHeight: 1.35,
+                  fontWeight: 750,
+                }}
+              >
+                {txt.address}
+              </p>
             </div>
 
-            <div>
-              <p className="text-sm font-semibold text-white">
-                Geen headset of oortjes bij je?
-              </p>
+            <button
+              type="button"
+              onClick={handleStart}
+              style={{
+                marginTop: 16,
+                width: '100%',
+                height: 58,
+                border: 0,
+                borderRadius: 21,
+                background: '#0f5d67',
+                color: '#fff',
+                fontSize: 16,
+                fontWeight: 950,
+                boxShadow: '0 15px 32px rgba(15,93,103,0.18)',
+              }}
+            >
+              {txt.start}
+            </button>
 
-              <p className="mt-1 text-sm leading-6 text-stone-300">
-                Dan nemen we {HEADSET_PARTNER.name} automatisch mee als korte voorbereidingsstop
-                vóór de eerste officiële stop van de tour.
-              </p>
+            {showPartnerButton && (
+              <button
+                type="button"
+                onClick={handlePartner}
+                style={{
+                  marginTop: 12,
+                  width: '100%',
+                  height: 54,
+                  borderRadius: 20,
+                  border: '1px solid #e2d9ca',
+                  background: 'rgba(255,255,255,0.86)',
+                  color: '#31473d',
+                  fontSize: 15,
+                  fontWeight: 950,
+                }}
+              >
+                {txt.add}
+              </button>
+            )}
 
-              <p className="mt-2 text-xs font-medium text-stone-400">
-                {HEADSET_PARTNER.address}
+            <div
+              style={{
+                marginTop: 16,
+                borderRadius: 24,
+                background: '#edf5ea',
+                padding: 16,
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  color: '#58695d',
+                  fontSize: 13,
+                  lineHeight: 1.45,
+                  fontWeight: 700,
+                }}
+              >
+                {txt.safe}
               </p>
             </div>
           </div>
-        </div>
-
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={onStartWithoutPartner}
-            className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-stone-950 shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:bg-stone-100"
-          >
-            Ik ben klaar om te starten
-            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={onStartWithPartner}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/15"
-          >
-            Toon partner op mijn route
-          </button>
-        </div>
-
-        <div className="mt-5 flex items-start gap-2 rounded-2xl bg-black/15 px-3 py-3 text-xs leading-5 text-stone-300 ring-1 ring-white/10">
-          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-amber-100" />
-          <span>
-            Veiligheid eerst: blijf aandacht houden voor verkeer en omgeving. Luister opnieuw door
-            te pauzeren of terug te spoelen wanneer je stilstaat.
-          </span>
-        </div>
+        </section>
       </div>
-    </section>
+    </main>
   )
 }
+
+export { PreTourAudioCheck }

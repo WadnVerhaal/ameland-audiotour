@@ -17,9 +17,15 @@ type RawStop = {
   id?: string | number
   title?: string
   title_nl?: string
+  title_en?: string
+  title_de?: string
   name?: string
   subtitle?: string
+  subtitle_en?: string
+  subtitle_de?: string
   description?: string
+  description_en?: string
+  description_de?: string
   latitude?: number | string
   longitude?: number | string
   lat?: number | string
@@ -33,14 +39,23 @@ export type NavigationTour = {
   id?: string | number
   title?: string
   title_nl?: string
+  title_en?: string
+  title_de?: string
   subtitle?: string
+  subtitle_en?: string
+  subtitle_de?: string
   description?: string
+  description_en?: string
+  description_de?: string
   stops?: RawStop[]
 }
+
+type AppLanguage = 'nl' | 'en' | 'de'
 
 type Props = {
   token: string
   tour: NavigationTour
+  language?: AppLanguage
 }
 
 type CleanStop = {
@@ -57,6 +72,83 @@ type UserPosition = {
   lng: number
   accuracy?: number
 }
+
+const navigationText = {
+  nl: {
+    unknown: 'Onbekend',
+    audioTourFallback: 'Audiotour Ameland',
+    locationUnsupported: 'Locatiebepaling wordt niet ondersteund door deze browser.',
+    locationFailed: 'We kunnen je locatie nog niet bepalen. Controleer of locatie-toegang aan staat.',
+    backToAudio: '{copy.backToAudio}',
+    yourRoute: '{copy.yourRoute}',
+    routeIntro:
+      '{copy.routeIntro}',
+    safeIntro:
+      '{copy.safeIntro}',
+    distance: 'Afstand',
+    loadingLocation: 'Locatie laden...',
+    blueDotInfo: '{copy.blueDotInfo}',
+    mapNeedsStops:
+      'Voeg coördinaten toe aan je tourstops {copy.mapNeedsStops}',
+    safeTitle: 'Veilig op pad',
+    safeText:
+      '{copy.safeText} ',
+    toAudioPlayer: '{copy.toAudioPlayer}',
+    destination: '${copy.destination}',
+    stop: 'Stop',
+    nearestStop: 'Dichtstbijzijnde stop',
+  },
+
+  en: {
+    unknown: 'Unknown',
+    audioTourFallback: 'Ameland audio tour',
+    locationUnsupported: 'Location services are not supported by this browser.',
+    locationFailed: 'We cannot determine your location yet. Check whether location access is enabled.',
+    backToAudio: 'Back to audio',
+    yourRoute: 'Your route',
+    routeIntro:
+      'Follow the route across the island, see where you are and which stop is closest.',
+    safeIntro:
+      'Preferably use one earbud or open-ear audio, so you can still hear traffic and your surroundings.',
+    distance: 'Distance',
+    loadingLocation: 'Loading location...',
+    blueDotInfo: 'Blue dot = your location. Numbered points = audio stops.',
+    mapNeedsStops:
+      'Add coordinates to your tour stops to fill the map automatically.',
+    safeTitle: 'Stay safe on the move',
+    safeText:
+      'Use one earbud or open-ear audio. Keep paying attention to traffic, cyclists and walkers. You can always pause audio fragments and listen again later safely.',
+    toAudioPlayer: 'To the audio player',
+    destination: 'Destination',
+    stop: 'Stop',
+    nearestStop: 'Nearest stop',
+  },
+
+  de: {
+    unknown: 'Unbekannt',
+    audioTourFallback: 'Ameland-Audiotour',
+    locationUnsupported: 'Standortbestimmung wird von diesem Browser nicht unterstützt.',
+    locationFailed: 'Wir können deinen Standort noch nicht bestimmen. Prüfe, ob der Standortzugriff aktiviert ist.',
+    backToAudio: 'Zurück zum Audio',
+    yourRoute: 'Deine Route',
+    routeIntro:
+      'Folge der Route über die Insel, sieh, wo du bist und welcher Stopp am nächsten liegt.',
+    safeIntro:
+      'Nutze am besten einen Ohrhörer oder Open-Ear-Audio, damit du Verkehr und Umgebung weiterhin gut hörst.',
+    distance: 'Entfernung',
+    loadingLocation: 'Standort wird geladen...',
+    blueDotInfo: 'Blauer Punkt = dein Standort. Nummerierte Punkte = Audiostopps.',
+    mapNeedsStops:
+      'Füge Koordinaten zu deinen Tourstopps hinzu, damit die Karte automatisch gefüllt wird.',
+    safeTitle: 'Sicher unterwegs',
+    safeText:
+      'Nutze einen Ohrhörer oder Open-Ear-Audio. Achte weiterhin auf Verkehr, Radfahrer und Fußgänger. Du kannst Audiofragmente jederzeit pausieren und später sicher erneut anhören.',
+    toAudioPlayer: 'Zum Audioplayer',
+    destination: 'Ziel',
+    stop: 'Stopp',
+    nearestStop: 'Nächster Stopp',
+  },
+} as const
 
 function toNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value
@@ -84,13 +176,13 @@ function distanceInMeters(a: { lat: number; lng: number }, b: { lat: number; lng
   return radius * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x))
 }
 
-function formatDistance(meters: number | null) {
-  if (meters === null) return 'Onbekend'
+function formatDistance(meters: number | null, language: AppLanguage) {
+  if (meters === null) return navigationText[language].unknown
   if (meters < 1000) return `${Math.round(meters)} m`
   return `${(meters / 1000).toFixed(1).replace('.', ',')} km`
 }
 
-function getCleanStops(tour: NavigationTour): CleanStop[] {
+function getCleanStops(tour: NavigationTour, language: AppLanguage): CleanStop[] {
   const rawStops = Array.isArray(tour?.stops) ? tour.stops : []
 
   return rawStops
@@ -102,8 +194,8 @@ function getCleanStops(tour: NavigationTour): CleanStop[] {
 
       return {
         id: String(stop.id ?? index),
-        title: stop.title_nl ?? stop.title ?? stop.name ?? `Stop ${index + 1}`,
-        subtitle: stop.subtitle ?? stop.description,
+        title: (language === 'en' ? stop.title_en : language === 'de' ? stop.title_de : stop.title_nl) ?? stop.title_nl ?? stop.title ?? stop.name ?? `${navigationText[language].stop} ${index + 1}`,
+        subtitle: (language === 'en' ? stop.subtitle_en ?? stop.description_en : language === 'de' ? stop.subtitle_de ?? stop.description_de : stop.subtitle) ?? stop.description,
         lat,
         lng,
         order: Number(stop.order ?? stop.sort_order ?? stop.sequence ?? index + 1),
@@ -113,7 +205,8 @@ function getCleanStops(tour: NavigationTour): CleanStop[] {
     .sort((a, b) => a!.order - b!.order) as CleanStop[]
 }
 
-export function PremiumNavigation({ token, tour }: Props) {
+export function PremiumNavigation({ token, tour, language = 'nl' }: Props) {
+  const copy = navigationText[language] ?? navigationText.nl
   const mapElementRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<any>(null)
   const userMarkerRef = useRef<any>(null)
@@ -124,7 +217,7 @@ export function PremiumNavigation({ token, tour }: Props) {
   const [locationError, setLocationError] = useState<string | null>(null)
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null)
 
-  const stops = useMemo(() => getCleanStops(tour), [tour])
+  const stops = useMemo(() => getCleanStops(tour, language), [tour, language])
   const selectedStop = useMemo(
     () => stops.find((stop) => stop.id === selectedStopId) ?? stops[0] ?? null,
     [selectedStopId, stops]
@@ -141,12 +234,12 @@ export function PremiumNavigation({ token, tour }: Props) {
       .sort((a, b) => a.distance - b.distance)[0]
   }, [userPosition, stops])
 
-  const tourTitle = tour?.title_nl ?? tour?.title ?? 'Audiotour Ameland'
+  const tourTitle = (language === 'en' ? tour?.title_en : language === 'de' ? tour?.title_de : tour?.title_nl) ?? tour?.title_nl ?? tour?.title ?? copy.audioTourFallback
 
   function requestLocation() {
     if (!navigator.geolocation) {
       setLocationStatus('error')
-      setLocationError('Locatiebepaling wordt niet ondersteund door deze browser.')
+      setLocationError(copy.locationUnsupported)
       return
     }
 
@@ -164,7 +257,7 @@ export function PremiumNavigation({ token, tour }: Props) {
       },
       () => {
         setLocationStatus('error')
-        setLocationError('We kunnen je locatie nog niet bepalen. Controleer of locatie-toegang aan staat.')
+        setLocationError(copy.locationFailed)
       },
       {
         enableHighAccuracy: true,
@@ -360,7 +453,7 @@ export function PremiumNavigation({ token, tour }: Props) {
               className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
             >
               <ArrowLeft className="h-4 w-4" />
-              Terug naar audio
+              {copy.backToAudio}
             </Link>
 
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[.18em] text-white/80">
@@ -371,13 +464,13 @@ export function PremiumNavigation({ token, tour }: Props) {
 
           <div className="grid gap-5 lg:grid-cols-[1.4fr_.8fr] lg:items-end">
             <div>
-              <p className="mb-2 text-sm font-semibold text-white/70">Je route</p>
+              <p className="mb-2 text-sm font-semibold text-white/70">{copy.yourRoute}</p>
               <h1 className="max-w-3xl text-3xl font-black tracking-tight sm:text-5xl">
                 {tourTitle}
               </h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-white/75">
-                Volg de route over het eiland, bekijk waar je bent en zie welke stop het dichtstbij is.
-                Gebruik bij voorkeur één oortje of open-ear audio, zodat je het verkeer en je omgeving goed blijft horen.
+                {copy.routeIntro}
+                {copy.safeIntro}
               </p>
             </div>
 
@@ -392,7 +485,7 @@ export function PremiumNavigation({ token, tour }: Props) {
                     {nearestStop?.stop.title ?? selectedStop?.title ?? 'Nog onbekend'}
                   </p>
                   <p className="mt-1 text-sm text-white/70">
-                    Afstand: {nearestStop ? formatDistance(nearestStop.distance) : 'Locatie laden...'}
+                    {copy.distance}: {nearestStop ? formatDistance(nearestStop.distance, language) : copy.loadingLocation}
                   </p>
                 </div>
               </div>
@@ -407,7 +500,7 @@ export function PremiumNavigation({ token, tour }: Props) {
             <div>
               <p className="text-sm font-bold text-[#123c2f]">Kaart</p>
               <p className="text-xs text-black/50">
-                Blauwe punt = jouw locatie. Genummerde punten = audiostops.
+                {copy.blueDotInfo}
               </p>
             </div>
 
@@ -430,7 +523,7 @@ export function PremiumNavigation({ token, tour }: Props) {
                 <h2 className="mt-4 text-xl font-black">Geen coördinaten gevonden</h2>
                 <p className="mt-2 max-w-md text-sm leading-6 text-black/60">
                   Deze tour heeft nog geen stops met latitude/longitude. Voeg coördinaten toe in Supabase
-                  om de kaart automatisch te vullen.
+                  {copy.mapNeedsStops}
                 </p>
               </div>
             </div>
@@ -456,7 +549,7 @@ export function PremiumNavigation({ token, tour }: Props) {
             <div className="mt-5 grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-[#f5efe3] p-4">
                 <p className="text-xs font-bold uppercase tracking-[.16em] text-black/40">Afstand</p>
-                <p className="mt-1 text-2xl font-black">{formatDistance(selectedDistance)}</p>
+                <p className="mt-1 text-2xl font-black">{formatDistance(selectedDistance, language)}</p>
               </div>
 
               <div className="rounded-2xl bg-[#f5efe3] p-4">
@@ -515,7 +608,7 @@ export function PremiumNavigation({ token, tour }: Props) {
                       <div className="min-w-0 flex-1">
                         <p className="font-black leading-5">{stop.title}</p>
                         <p className={`mt-1 text-xs ${active ? 'text-white/70' : 'text-black/50'}`}>
-                          {formatDistance(distance)}
+                          {formatDistance(distance, language)}
                         </p>
                       </div>
                     </div>
@@ -529,10 +622,10 @@ export function PremiumNavigation({ token, tour }: Props) {
             <div className="flex gap-3">
               <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-white/80" />
               <div>
-                <h2 className="font-black">Veilig op pad</h2>
+                <h2 className="font-black">{copy.safeTitle}</h2>
                 <p className="mt-2 text-sm leading-6 text-white/75">
-                  Gebruik één oortje of open-ear audio. Blijf letten op verkeer, fietsers en wandelaars.
-                  Je kunt audiofragmenten altijd pauzeren en later veilig terugluisteren.
+                  {copy.safeText}
+                  
                 </p>
               </div>
             </div>
@@ -542,7 +635,7 @@ export function PremiumNavigation({ token, tour }: Props) {
               className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 font-black text-[#123c2f] transition hover:scale-[1.01]"
             >
               <Volume2 className="h-4 w-4" />
-              Naar de audioplayer
+              {copy.toAudioPlayer}
             </Link>
           </div>
         </aside>

@@ -1,897 +1,825 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
-  Compass,
-  LocateFixed,
-  MapPinned,
-  Navigation,
-  Pause,
-  Play,
-  RotateCcw,
-  RotateCw,
-} from 'lucide-react';
-import { TourStop } from '@/types/tour';
-import { distanceInMeters } from '@/lib/utils/geo';
-import { PreTourAudioCheck } from '@/components/player/pre-tour-audio-check';
-import { createHeadsetPartnerStop } from '@/lib/player/create-headset-partner-stop';
+import dynamic from "next/dynamic";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+const PlayerMap = dynamic(
+  () => import("./player-map").then((mod) => mod.PlayerMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full min-h-[320px] items-center justify-center bg-slate-900 text-sm font-bold text-slate-300">
+        Kaart laden…
+      </div>
+    ),
+  }
+);
+
+export type PlayerLanguage = "nl" | "en" | "de";
+
+export type PlayerStop = {
+  id?: string | number | null;
+  title?: string | null;
+  title_nl?: string | null;
+  title_en?: string | null;
+  title_de?: string | null;
+  description?: string | null;
+  description_nl?: string | null;
+  description_en?: string | null;
+  description_de?: string | null;
+  audio_url?: string | null;
+  audio_url_nl?: string | null;
+  audio_url_en?: string | null;
+  audio_url_de?: string | null;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
+  lat?: string | number | null;
+  lng?: string | number | null;
+  order_index?: string | number | null;
+  trigger_radius_m?: string | number | null;
+  trigger_radius?: string | number | null;
+  radius_m?: string | number | null;
+  image_url?: string | null;
+  [key: string]: unknown;
+};
+
+export type PlayerTour = {
+  id?: string | number | null;
+  title?: string | null;
+  title_nl?: string | null;
+  title_en?: string | null;
+  title_de?: string | null;
+  description?: string | null;
+  description_nl?: string | null;
+  description_en?: string | null;
+  description_de?: string | null;
+  duration?: string | number | null;
+  duration_label?: string | null;
+  distance?: string | number | null;
+  [key: string]: unknown;
+};
 
 type Props = {
   token: string;
-  stops: TourStop[];
-  tourTitle?: string;
+  tour: PlayerTour;
+  stops: PlayerStop[];
+  initialLanguage: PlayerLanguage;
+  expiresAt: string | null;
 };
 
-type UserPosition = {
+type GeoPoint = {
   lat: number;
   lng: number;
-  accuracy?: number;
+  accuracy: number;
+  at: number;
 };
 
-type LocationStatus = 'loading' | 'ready' | 'error';
+const AUTO_PLAY_RADIUS_M = 10;
+const THANK_YOU_PATH = "/bedankt";
 
-function readField(stop: TourStop | undefined, field: string): unknown {
-  if (!stop) return undefined;
-  return (stop as unknown as Record<string, unknown>)[field];
+const LANGUAGES: Array<{ code: PlayerLanguage; label: string }> = [
+  { code: "nl", label: "NL" },
+  { code: "en", label: "EN" },
+  { code: "de", label: "DE" },
+];
+
+const COPY: Record<PlayerLanguage, Record<string, string>> = {
+  nl: {
+    brand: "Ameland Audiotours",
+    gpsActive: "GPS actief",
+    gpsWaiting: "GPS zoeken",
+    gpsDenied: "Locatie geweigerd",
+    gpsUnsupported: "GPS niet ondersteund",
+    currentStory: "Huidig verhaal",
+    distance: "Afstand",
+    progress: "Voortgang",
+    previous: "Vorige",
+    next: "Volgende",
+    openRoute: "Open looproute",
+    playAudio: "Start audio",
+    noAudio: "Voor deze stop is nog geen audio in deze taal beschikbaar.",
+    audioBlocked:
+      "Tik op afspelen. Je telefoon blokkeert soms automatisch starten van audio.",
+    arrived: "Je bent op de juiste plek",
+    walkToStop: "Loop naar dit punt",
+    stops: "Routepunten",
+    expires: "Toegang actief",
+    selected: "Geselecteerd",
+    completed: "Beluisterd",
+    metersAway: "afstand",
+    allStops: "Alle stops",
+    gpsRequest: "Locatie opnieuw vragen",
+  },
+  en: {
+    brand: "Ameland Audiotours",
+    gpsActive: "GPS active",
+    gpsWaiting: "Finding GPS",
+    gpsDenied: "Location denied",
+    gpsUnsupported: "GPS unsupported",
+    currentStory: "Current story",
+    distance: "Distance",
+    progress: "Progress",
+    previous: "Previous",
+    next: "Next",
+    openRoute: "Open walking route",
+    playAudio: "Start audio",
+    noAudio: "No audio is available for this stop in the selected language yet.",
+    audioBlocked:
+      "Tap play. Your phone may block audio from starting automatically.",
+    arrived: "You are at the right place",
+    walkToStop: "Walk to this point",
+    stops: "Route stops",
+    expires: "Access active",
+    selected: "Selected",
+    completed: "Played",
+    metersAway: "away",
+    allStops: "All stops",
+    gpsRequest: "Ask location again",
+  },
+  de: {
+    brand: "Ameland Audiotours",
+    gpsActive: "GPS aktiv",
+    gpsWaiting: "GPS wird gesucht",
+    gpsDenied: "Standort abgelehnt",
+    gpsUnsupported: "GPS nicht unterstützt",
+    currentStory: "Aktuelle Geschichte",
+    distance: "Entfernung",
+    progress: "Fortschritt",
+    previous: "Zurück",
+    next: "Weiter",
+    openRoute: "Route öffnen",
+    playAudio: "Audio starten",
+    noAudio:
+      "Für diesen Stopp ist in der gewählten Sprache noch kein Audio verfügbar.",
+    audioBlocked:
+      "Tippe auf Abspielen. Dein Telefon blockiert manchmal den automatischen Audiostart.",
+    arrived: "Du bist am richtigen Ort",
+    walkToStop: "Gehe zu diesem Punkt",
+    stops: "Routenpunkte",
+    expires: "Zugang aktiv",
+    selected: "Ausgewählt",
+    completed: "Gehört",
+    metersAway: "entfernt",
+    allStops: "Alle Stopps",
+    gpsRequest: "Standort erneut anfragen",
+  },
+};
+
+function cn(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(" ");
 }
 
-function toNumber(value: unknown): number | null {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
+function stringValue(source: PlayerStop | PlayerTour | null, keys: string[]) {
+  if (!source) return "";
 
-  if (typeof value === 'string') {
-    const parsed = Number(value.replace(',', '.'));
-    if (Number.isFinite(parsed)) return parsed;
+  for (const key of keys) {
+    const value = source[key];
+
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "number") return String(value);
+  }
+
+  return "";
+}
+
+function numberValue(source: PlayerStop | null, keys: string[]) {
+  if (!source) return null;
+
+  for (const key of keys) {
+    const value = source[key];
+
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+
+    if (typeof value === "string" && value.trim()) {
+      const number = Number(value);
+      if (Number.isFinite(number)) return number;
+    }
   }
 
   return null;
 }
 
-function getStopTitle(stop: TourStop | undefined, fallback = 'Audiostop') {
-  return String(
-    readField(stop, 'title_nl') ??
-      readField(stop, 'title') ??
-      readField(stop, 'name') ??
-      fallback
-  );
+function titleFor(source: PlayerStop | PlayerTour | null, lang: PlayerLanguage) {
+  if (lang === "nl") return stringValue(source, ["title_nl", "title", "title_en", "title_de"]);
+  if (lang === "en") return stringValue(source, ["title_en", "title_nl", "title", "title_de"]);
+  return stringValue(source, ["title_de", "title_nl", "title", "title_en"]);
 }
 
-function getStopDescription(stop: TourStop | undefined) {
-  return String(
-    readField(stop, 'short_description') ??
-      readField(stop, 'description') ??
-      readField(stop, 'subtitle') ??
-      'Luister naar het verhaal op deze plek.'
-  );
+function descriptionFor(source: PlayerStop | PlayerTour | null, lang: PlayerLanguage) {
+  if (lang === "nl") {
+    return stringValue(source, ["description_nl", "description", "description_en", "description_de"]);
+  }
+
+  if (lang === "en") {
+    return stringValue(source, ["description_en", "description_nl", "description", "description_de"]);
+  }
+
+  return stringValue(source, ["description_de", "description_nl", "description", "description_en"]);
 }
 
-function getStopLat(stop: TourStop | undefined) {
-  return toNumber(readField(stop, 'lat') ?? readField(stop, 'latitude'));
+function audioFor(stop: PlayerStop | null, lang: PlayerLanguage) {
+  if (!stop) return "";
+
+  if (lang === "nl") return stringValue(stop, ["audio_url_nl", "audio_nl", "audioUrlNl", "audio_url"]);
+  if (lang === "en") return stringValue(stop, ["audio_url_en", "audio_en", "audioUrlEn"]);
+  return stringValue(stop, ["audio_url_de", "audio_de", "audioUrlDe"]);
 }
 
-function getStopLng(stop: TourStop | undefined) {
-  return toNumber(readField(stop, 'lng') ?? readField(stop, 'longitude'));
+function stopKey(stop: PlayerStop | null, index: number) {
+  return String(stop?.id ?? stop?.order_index ?? index);
 }
 
-function getStopAudioUrl(stop: TourStop | undefined) {
-  const value =
-    readField(stop, 'audio_url') ??
-    readField(stop, 'audio_url_nl') ??
-    readField(stop, 'audioUrl');
+function coordinatesFor(stop: PlayerStop | null) {
+  if (!stop) return null;
 
-  return typeof value === 'string' && value.length > 0 ? value : null;
-}
-
-function getTriggerRadius(stop: TourStop | undefined) {
-  return (
-    toNumber(
-      readField(stop, 'trigger_radius_meters') ??
-        readField(stop, 'triggerRadiusMeters') ??
-        readField(stop, 'radius')
-    ) ?? 35
-  );
-}
-
-function getStopOrder(stop: TourStop, index: number) {
-  return (
-    toNumber(
-      readField(stop, 'order_index') ??
-        readField(stop, 'order') ??
-        readField(stop, 'sort_order') ??
-        readField(stop, 'sequence')
-    ) ?? index
-  );
-}
-
-function pointFromStop(stop: TourStop | undefined): [number, number] | null {
-  const lat = getStopLat(stop);
-  const lng = getStopLng(stop);
+  const lat = numberValue(stop, ["latitude", "lat"]);
+  const lng = numberValue(stop, ["longitude", "lng"]);
 
   if (lat === null || lng === null) return null;
-  return [lat, lng];
+
+  return { lat, lng };
 }
 
-function getDistanceFromUser(position: UserPosition | null, stop: TourStop | undefined) {
-  const point = pointFromStop(stop);
-  if (!position || !point) return null;
-  return distanceInMeters(position.lat, position.lng, point[0], point[1]);
+function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const earthRadius = 6371000;
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+
+  const h =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1) *
+      Math.cos(lat2) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+
+  return 2 * earthRadius * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
+function bearingDegrees(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number }
+) {
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const toDeg = (value: number) => (value * 180) / Math.PI;
+
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const dLng = toRad(b.lng - a.lng);
+
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+function compassLabel(degrees: number) {
+  const labels = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  return labels[Math.round(degrees / 45) % 8];
 }
 
 function formatDistance(meters: number | null) {
-  if (meters === null) return 'zoeken';
-  if (meters < 1000) return `${Math.round(meters)} m`;
-  return `${(meters / 1000).toFixed(1).replace('.', ',')} km`;
+  if (meters === null || !Number.isFinite(meters)) return "—";
+  if (meters < 1000) return `${Math.max(0, Math.round(meters))} m`;
+  return `${(meters / 1000).toFixed(1)} km`;
 }
 
-function estimateWalkingTime(meters: number | null) {
-  if (meters === null) return '—';
-  const minutes = Math.max(1, Math.round(meters / 80));
-  if (minutes < 60) return `${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  return rest ? `${hours}u ${rest}m` : `${hours}u`;
+function formatExpiry(expiresAt: string | null, lang: PlayerLanguage) {
+  if (!expiresAt) return COPY[lang].expires;
+
+  const date = new Date(expiresAt);
+  if (Number.isNaN(date.getTime())) return COPY[lang].expires;
+
+  return `${COPY[lang].expires} · ${date.toLocaleDateString(
+    lang === "nl" ? "nl-NL" : lang === "de" ? "de-DE" : "en-GB",
+    { day: "2-digit", month: "short" }
+  )}`;
 }
 
-function formatAudioTime(seconds: number) {
-  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${String(secs).padStart(2, '0')}`;
+function LanguageSwitch({
+  language,
+  setLanguage,
+}: {
+  language: PlayerLanguage;
+  setLanguage: (language: PlayerLanguage) => void;
+}) {
+  return (
+    <div className="flex shrink-0 items-center gap-1 rounded-full border border-white/10 bg-white/10 p-1">
+      {LANGUAGES.map((item) => (
+        <button
+          key={item.code}
+          type="button"
+          aria-pressed={language === item.code}
+          onClick={() => setLanguage(item.code)}
+          className={cn(
+            "rounded-full px-3 py-1.5 text-xs font-black transition",
+            language === item.code
+              ? "bg-white text-slate-950 shadow"
+              : "text-white/70 hover:bg-white/10 hover:text-white"
+          )}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  );
 }
 
-async function fetchWalkingRoute(points: [number, number][]) {
-  if (points.length < 2) {
-    return {
-      points,
-      routed: false,
-    };
-  }
-
-  try {
-    const response = await fetch('/api/routing/walking', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ points }),
-    });
-
-    if (!response.ok) throw new Error('Walking route API failed');
-
-    const data = await response.json();
-
-    if (!Array.isArray(data?.points) || data.points.length < 2) {
-      return {
-        points,
-        routed: false,
-      };
-    }
-
-    return {
-      points: data.points as [number, number][],
-      routed: Boolean(data?.routed),
-    };
-  } catch {
-    return {
-      points,
-      routed: false,
-    };
-  }
+function MetricCard({ label, value, helper }: { label: string; value: string; helper?: string }) {
+  return (
+    <div className="min-w-0 rounded-[1.15rem] border border-white/10 bg-white/[0.055] p-3 shadow-lg">
+      <p className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 truncate text-xl font-black tracking-tight text-white">
+        {value}
+      </p>
+      {helper ? <p className="mt-0.5 truncate text-xs text-slate-400">{helper}</p> : null}
+    </div>
+  );
 }
 
-export function TourPlayer({
-  token,
-  stops,
-  tourTitle = 'Ameland Audio Tours',
-}: Props) {
-  void token;
+export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: Props) {
+  const [language, setLanguageState] = useState<PlayerLanguage>(initialLanguage);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [arrivedIndex, setArrivedIndex] = useState<number | null>(null);
+  const [reachedKeys, setReachedKeys] = useState<string[]>([]);
+  const [location, setLocation] = useState<GeoPoint | null>(null);
+  const [locationState, setLocationState] = useState<"waiting" | "active" | "denied" | "unsupported">("waiting");
+  const [audioBlocked, setAudioBlocked] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const mapElementRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<any>(null);
-  const userMarkerRef = useRef<any>(null);
-  const accuracyCircleRef = useRef<any>(null);
-  const targetMarkerRef = useRef<any>(null);
-  const routeGlowLineRef = useRef<any>(null);
-  const routeLineRef = useRef<any>(null);
-  const lastRouteKeyRef = useRef<string | null>(null);
+  const watchIdRef = useRef<number | null>(null);
+  const lastAcceptedLocationRef = useRef<GeoPoint | null>(null);
+  const playedAutomaticallyRef = useRef<Set<string>>(new Set());
 
-  const [hasChosenAudioSetup, setHasChosenAudioSetup] = useState(false);
-  const [includeHeadsetPartner, setIncludeHeadsetPartner] = useState(false);
+  const copy = COPY[language];
 
-  const orderedStops = useMemo(() => {
-    const sortedStops = [...stops].sort((a, b) => {
-      const indexA = stops.indexOf(a);
-      const indexB = stops.indexOf(b);
-      return getStopOrder(a, indexA) - getStopOrder(b, indexB);
-    });
+  const cleanStops = useMemo(
+    () => stops.filter((stop): stop is PlayerStop => Boolean(stop)),
+    [stops]
+  );
 
-    if (!includeHeadsetPartner) return sortedStops;
+  const selectedStop = cleanStops[selectedIndex] || cleanStops[0] || null;
+  const selectedStopCoordinates = coordinatesFor(selectedStop);
+  const selectedAudioUrl = audioFor(selectedStop, language);
 
-    return [
-      createHeadsetPartnerStop() as unknown as TourStop,
-      ...sortedStops,
-    ];
-  }, [includeHeadsetPartner, stops]);
+  const selectedDistance = useMemo(() => {
+    if (!location || !selectedStopCoordinates) return null;
+    return distanceMeters(location, selectedStopCoordinates);
+  }, [location, selectedStopCoordinates]);
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [gpsAllowed, setGpsAllowed] = useState(false);
-  const [playing, setPlaying] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [position, setPosition] = useState<UserPosition | null>(null);
-  const [locationStatus, setLocationStatus] = useState<LocationStatus>('loading');
-  const [routeGeometry, setRouteGeometry] = useState<[number, number][]>([]);
-  const [routeRouted, setRouteRouted] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const direction = useMemo(() => {
+    if (!location || !selectedStopCoordinates) return null;
+    const degrees = bearingDegrees(location, selectedStopCoordinates);
+    return { degrees, label: compassLabel(degrees) };
+  }, [location, selectedStopCoordinates]);
 
-  const currentStop = orderedStops[currentIndex];
-  const isPartnerStop = readField(currentStop, 'type') === 'partner';
-  const nextStop = orderedStops[currentIndex + 1] ?? null;
-  const previousStop = orderedStops[currentIndex - 1] ?? null;
-  const isLastStop = currentIndex >= orderedStops.length - 1;
+  const progress = cleanStops.length
+    ? `${Math.min(reachedKeys.length, cleanStops.length)}/${cleanStops.length}`
+    : "0/0";
 
-  const destinationStop = nextStop ?? currentStop;
-  const currentPoint = useMemo(() => pointFromStop(currentStop), [currentStop]);
-  const destinationPoint = useMemo(() => pointFromStop(destinationStop), [destinationStop]);
-
-  const progressPercentage =
-    orderedStops.length > 1 ? Math.round((currentIndex / (orderedStops.length - 1)) * 100) : 100;
-
-  const distanceToCurrentStop = useMemo(() => {
-    return getDistanceFromUser(position, currentStop);
-  }, [position, currentStop]);
-
-  const distanceToDestination = useMemo(() => {
-    return getDistanceFromUser(position, destinationStop);
-  }, [position, destinationStop]);
+  const selectedTitle = titleFor(selectedStop, language) || `${copy.stops} ${selectedIndex + 1}`;
+  const selectedDescription = descriptionFor(selectedStop, language);
+  const selectedKey = stopKey(selectedStop, selectedIndex);
+  const selectedIsReached = reachedKeys.includes(selectedKey);
+  const selectedIsArrived =
+    arrivedIndex === selectedIndex ||
+    (selectedDistance !== null && selectedDistance <= AUTO_PLAY_RADIUS_M);
 
   function requestLocation() {
-    if (!navigator.geolocation) {
-      setLocationStatus('error');
-      setError('Je apparaat ondersteunt geen locatiebepaling.');
+    if (!("geolocation" in navigator)) {
+      setLocationState("unsupported");
       return;
     }
 
-    setLocationStatus('loading');
+    setLocationState("waiting");
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setGpsAllowed(true);
-        setLocationStatus('ready');
-        setPosition({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-        });
-        setError(null);
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (position) => {
+        const next: GeoPoint = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy || 999,
+          at: Date.now(),
+        };
+
+        const previous = lastAcceptedLocationRef.current;
+        const moved = previous ? distanceMeters(previous, next) : Number.POSITIVE_INFINITY;
+        const accuracyImproved = previous ? next.accuracy < previous.accuracy * 0.75 : true;
+        const stale = previous ? Date.now() - previous.at > 20000 : true;
+
+        if (!previous || moved >= 6 || accuracyImproved || stale) {
+          lastAcceptedLocationRef.current = next;
+          setLocation(next);
+        }
+
+        setLocationState("active");
       },
       () => {
-        setLocationStatus('error');
-        setError('Locatie kon niet worden opgehaald. Je kunt de audiostops handmatig starten.');
+        setLocationState("denied");
       },
       {
         enableHighAccuracy: true,
-        maximumAge: 5000,
+        maximumAge: 8000,
         timeout: 15000,
       }
     );
+  }
+
+  function setLanguage(nextLanguage: PlayerLanguage) {
+    setLanguageState(nextLanguage);
+
+    try {
+      window.localStorage.setItem("aat.language", nextLanguage);
+      const nextUrl = new URL(window.location.href);
+      nextUrl.searchParams.set("lang", nextLanguage);
+      window.history.replaceState(null, "", nextUrl.toString());
+    } catch {
+      // niet kritiek
+    }
+  }
+
+  function openWalkingRoute() {
+    if (!selectedStopCoordinates) return;
+
+    const url = new URL("https://www.google.com/maps/dir/");
+    url.searchParams.set("api", "1");
+    url.searchParams.set("destination", `${selectedStopCoordinates.lat},${selectedStopCoordinates.lng}`);
+    url.searchParams.set("travelmode", "walking");
+
+    window.open(url.toString(), "_blank", "noopener,noreferrer");
+  }
+
+  function playAudio() {
+    setAudioBlocked(false);
+    audioRef.current?.play().catch(() => setAudioBlocked(true));
+  }
+
+  function goToStop(index: number) {
+    const nextIndex = Math.min(Math.max(index, 0), cleanStops.length - 1);
+    setSelectedIndex(nextIndex);
+    setAudioBlocked(false);
+  }
+
+  function goToThankYouPage() {
+    const params = new URLSearchParams();
+    params.set("lang", language);
+    params.set("token", token);
+    params.set("completed", "1");
+
+    window.location.assign(`${THANK_YOU_PATH}?${params.toString()}`);
+  }
+
+  function handleAudioEnded() {
+    setReachedKeys((current) =>
+      current.includes(selectedKey) ? current : [...current, selectedKey]
+    );
+
+    if (selectedIndex >= cleanStops.length - 1) {
+      window.setTimeout(goToThankYouPage, 450);
+    }
   }
 
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setLocationStatus('error');
-      setError('Je apparaat ondersteunt geen locatiebepaling.');
-      return;
-    }
+    try {
+      const stored = window.localStorage.getItem("aat.language");
 
-    requestLocation();
-
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        setGpsAllowed(true);
-        setLocationStatus('ready');
-        setPosition({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-        });
-      },
-      () => {
-        setLocationStatus('error');
-        setError('Locatie kon niet worden opgehaald. Je kunt de audiostops handmatig starten.');
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 5000,
-        timeout: 15000,
+      if (
+        stored &&
+        LANGUAGES.some((item) => item.code === stored) &&
+        !window.location.search.includes("lang=")
+      ) {
+        setLanguageState(stored as PlayerLanguage);
       }
-    );
-
-    return () => navigator.geolocation.clearWatch(watchId);
+    } catch {
+      // ignore
+    }
   }, []);
 
   useEffect(() => {
-    setCurrentTime(0);
-    setDuration(0);
-    setPlaying(false);
-
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current.removeAttribute('src');
-      audioRef.current.load();
-    }
-  }, [currentIndex]);
-
-  useEffect(() => {
-    if (!position || !currentStop || playing) return;
-
-    const point = pointFromStop(currentStop);
-    const audioUrl = getStopAudioUrl(currentStop);
-
-    if (!point || !audioUrl) return;
-
-    const distance = distanceInMeters(position.lat, position.lng, point[0], point[1]);
-
-    if (distance <= getTriggerRadius(currentStop)) {
-      void playCurrentStop();
-    }
-  }, [position, currentStop, playing]);
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadPointToPointRoute() {
-      const start = position
-        ? ([position.lat, position.lng] as [number, number])
-        : currentPoint;
-
-      const end = destinationPoint;
-
-      if (!start || !end) {
-        setRouteGeometry([]);
-        setRouteRouted(false);
-        return;
-      }
-
-      const routeKey = [
-        currentIndex,
-        Math.round(start[0] * 10000),
-        Math.round(start[1] * 10000),
-        Math.round(end[0] * 10000),
-        Math.round(end[1] * 10000),
-      ].join(':');
-
-      if (lastRouteKeyRef.current === routeKey) {
-        return;
-      }
-
-      lastRouteKeyRef.current = routeKey;
-
-      const route = await fetchWalkingRoute([start, end]);
-
-      if (!active) return;
-
-      setRouteGeometry(route.points);
-      setRouteRouted(route.routed);
-    }
-
-    loadPointToPointRoute();
+    requestLocation();
 
     return () => {
-      active = false;
+      if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
     };
-  }, [position, currentPoint, destinationPoint, currentIndex]);
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function setupMap() {
-      if (!mapElementRef.current || mapRef.current) return;
-
-      const center =
-        position
-          ? ([position.lat, position.lng] as [number, number])
-          : destinationPoint ?? currentPoint;
-
-      if (!center) return;
-
-      const leaflet = await import('leaflet');
-      if (cancelled || !mapElementRef.current) return;
-
-      const L = (leaflet as any).default ?? leaflet;
-
-      const map = L.map(mapElementRef.current, {
-        zoomControl: false,
-        scrollWheelZoom: true,
-        attributionControl: true,
-      }).setView(center, 16);
-
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
-        maxZoom: 19,
-      }).addTo(map);
-
-      L.control.zoom({ position: 'bottomright' }).addTo(map);
-      mapRef.current = map;
-
-      setTimeout(() => {
-        map.invalidateSize();
-      }, 150);
-    }
-
-    setupMap();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [position, destinationPoint, currentPoint]);
+    if (!cleanStops.length) return;
+    if (selectedIndex > cleanStops.length - 1) setSelectedIndex(0);
+  }, [cleanStops.length, selectedIndex]);
 
   useEffect(() => {
-    async function updateMap() {
-      if (!mapRef.current) return;
+    if (!location || !cleanStops.length) return;
 
-      const leaflet = await import('leaflet');
-      const L = (leaflet as any).default ?? leaflet;
-      const map = mapRef.current;
-
-      if (routeGlowLineRef.current) {
-        routeGlowLineRef.current.remove();
-        routeGlowLineRef.current = null;
-      }
-
-      if (routeLineRef.current) {
-        routeLineRef.current.remove();
-        routeLineRef.current = null;
-      }
-
-      if (targetMarkerRef.current) {
-        targetMarkerRef.current.remove();
-        targetMarkerRef.current = null;
-      }
-
-      const startPoint = position
-        ? ([position.lat, position.lng] as [number, number])
-        : currentPoint;
-
-      const endPoint = destinationPoint;
-
-      const lineToDraw =
-        routeGeometry.length > 1
-          ? routeGeometry
-          : ([startPoint, endPoint].filter(Boolean) as [number, number][]);
-
-      if (lineToDraw.length > 1) {
-        if (routeRouted) {
-          routeGlowLineRef.current = L.polyline(lineToDraw, {
-            color: '#d8efe5',
-            weight: 11,
-            opacity: 0.95,
-            lineCap: 'round',
-            lineJoin: 'round',
-          }).addTo(map);
-        }
-
-        routeLineRef.current = L.polyline(lineToDraw, {
-          color: routeRouted ? '#0a7a57' : '#b59b6a',
-          weight: routeRouted ? 6 : 4,
-          opacity: routeRouted ? 1 : 0.78,
-          dashArray: routeRouted ? undefined : '6 8',
-          lineCap: 'round',
-          lineJoin: 'round',
-        }).addTo(map);
-      }
-
-      if (endPoint) {
-        targetMarkerRef.current = L.marker(endPoint, {
-          icon: L.divIcon({
-            className: '',
-            html: `
-              <div style="
-                min-width: 84px;
-                height: 30px;
-                padding: 0 10px;
-                border-radius: 999px;
-                background: #0b3b2d;
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 800;
-                font-size: 11px;
-                border: 2px solid white;
-                box-shadow: 0 10px 24px rgba(11,59,45,.22);
-                white-space: nowrap;
-              ">
-                Bestemming
-              </div>
-            `,
-            iconSize: [84, 30],
-            iconAnchor: [42, 15],
-          }),
-        }).addTo(map);
-      }
-
-      const bounds = L.latLngBounds([]);
-      lineToDraw.forEach((point) => bounds.extend(point));
-      if (position) bounds.extend([position.lat, position.lng]);
-
-      if (bounds.isValid()) {
-        map.fitBounds(bounds, {
-          padding: [34, 34],
-          maxZoom: 17,
-        });
-      }
-    }
-
-    updateMap();
-  }, [routeGeometry, routeRouted, position, currentPoint, destinationPoint]);
-
-  useEffect(() => {
-    async function updateUserMarker() {
-      if (!mapRef.current || !position) return;
-
-      const leaflet = await import('leaflet');
-      const L = (leaflet as any).default ?? leaflet;
-      const map = mapRef.current;
-
-      const userIcon = L.divIcon({
-        className: '',
-        html: `
-          <div style="
-            width: 20px;
-            height: 20px;
-            border-radius: 999px;
-            background: #2563eb;
-            border: 3px solid white;
-            box-shadow: 0 6px 14px rgba(37,99,235,.28);
-          "></div>
-        `,
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
-      });
-
-      if (!userMarkerRef.current) {
-        userMarkerRef.current = L.marker([position.lat, position.lng], {
-          icon: userIcon,
-          zIndexOffset: 1000,
-        }).addTo(map);
-      } else {
-        userMarkerRef.current.setLatLng([position.lat, position.lng]);
-      }
-
-      if (accuracyCircleRef.current) {
-        accuracyCircleRef.current.setLatLng([position.lat, position.lng]);
-        accuracyCircleRef.current.setRadius(position.accuracy ?? 20);
-      } else {
-        accuracyCircleRef.current = L.circle([position.lat, position.lng], {
-          radius: position.accuracy ?? 20,
-          color: '#2563eb',
-          fillColor: '#2563eb',
-          fillOpacity: 0.08,
-          weight: 1,
-        }).addTo(map);
-      }
-    }
-
-    updateUserMarker();
-  }, [position]);
-
-  async function playCurrentStop() {
-    const audioUrl = getStopAudioUrl(currentStop);
-
-    if (!audioRef.current || !audioUrl) {
-      setError('Bij deze stop is nog geen audiobestand gevonden.');
-      return;
-    }
-
-    if (audioRef.current.src !== audioUrl) {
-      audioRef.current.src = audioUrl;
-      audioRef.current.load();
-    }
-
-    try {
-      await audioRef.current.play();
-      setPlaying(true);
-      setError(null);
-    } catch {
-      setError('Audio kon niet automatisch starten. Druk op afspelen om handmatig te starten.');
-    }
-  }
-
-  function pauseCurrentStop() {
-    if (!audioRef.current) return;
-    audioRef.current.pause();
-    setPlaying(false);
-  }
-
-  function seekAudio(seconds: number) {
-    if (!audioRef.current) return;
-
-    const audio = audioRef.current;
-    const total = audio.duration || duration || 0;
-    const targetTime = Math.max(0, Math.min(total, audio.currentTime + seconds));
-
-    audio.currentTime = targetTime;
-    setCurrentTime(targetTime);
-  }
-
-  function goToPreviousStop() {
-    pauseCurrentStop();
-    setCurrentIndex((prev) => Math.max(prev - 1, 0));
-  }
-
-  function goToNextStop() {
-    pauseCurrentStop();
-    setCurrentIndex((prev) => Math.min(prev + 1, orderedStops.length - 1));
-  }
-
-  function focusOnUser() {
-    if (!position || !mapRef.current) {
-      requestLocation();
-      return;
-    }
-
-    mapRef.current.setView([position.lat, position.lng], 17, {
-      animate: true,
+    const nearbyIndex = cleanStops.findIndex((stop) => {
+      const coordinates = coordinatesFor(stop);
+      if (!coordinates) return false;
+      return distanceMeters(location, coordinates) <= AUTO_PLAY_RADIUS_M;
     });
-  }
 
-  if (orderedStops.length === 0) {
+    setArrivedIndex(nearbyIndex >= 0 ? nearbyIndex : null);
+  }, [location, cleanStops]);
+
+  useEffect(() => {
+    if (arrivedIndex === null) return;
+
+    const stop = cleanStops[arrivedIndex];
+    const key = stopKey(stop, arrivedIndex);
+
+    setSelectedIndex(arrivedIndex);
+    setReachedKeys((current) => (current.includes(key) ? current : [...current, key]));
+  }, [arrivedIndex, cleanStops]);
+
+  useEffect(() => {
+    setAudioBlocked(false);
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.pause();
+    audio.currentTime = 0;
+    audio.load();
+  }, [selectedAudioUrl, selectedIndex, language]);
+
+  useEffect(() => {
+    if (arrivedIndex === null || arrivedIndex !== selectedIndex || !selectedAudioUrl) return;
+
+    const key = `${language}-${selectedKey}`;
+    if (playedAutomaticallyRef.current.has(key)) return;
+
+    playedAutomaticallyRef.current.add(key);
+
+    const timer = window.setTimeout(() => {
+      audioRef.current?.play().catch(() => setAudioBlocked(true));
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [arrivedIndex, language, selectedAudioUrl, selectedIndex, selectedKey]);
+
+  const locationLabel =
+    locationState === "active"
+      ? copy.gpsActive
+      : locationState === "denied"
+      ? copy.gpsDenied
+      : locationState === "unsupported"
+      ? copy.gpsUnsupported
+      : copy.gpsWaiting;
+
+  if (!cleanStops.length) {
     return (
-      <div className="rounded-3xl bg-white p-6 shadow-soft">
-        <h1 className="text-2xl font-black text-[#123c2f]">Geen stops gevonden</h1>
-        <p className="mt-2 text-sm leading-6 text-stone-600">
-          Deze tour heeft nog geen actieve stops. Controleer in Supabase of de tourstops actief zijn.
-        </p>
-      </div>
-    );
-  }
-
-  const audioProgress = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
-
-  if (!hasChosenAudioSetup) {
-    return (
-      <div className="mx-auto w-full max-w-5xl px-4 py-5">
-        <PreTourAudioCheck
-          onStartWithoutPartner={() => {
-            setIncludeHeadsetPartner(false);
-            setHasChosenAudioSetup(true);
-            setCurrentIndex(0);
-          }}
-          onStartWithPartner={() => {
-            setIncludeHeadsetPartner(true);
-            setHasChosenAudioSetup(true);
-            setCurrentIndex(0);
-          }}
-        />
-      </div>
+      <main className="flex min-h-[100dvh] items-center justify-center bg-slate-950 p-6 text-white">
+        <div className="max-w-lg rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 text-center shadow-2xl">
+          <h1 className="text-2xl font-black">Ameland Audiotours</h1>
+          <p className="mt-3 text-slate-300">Route klaar</p>
+        </div>
+      </main>
     );
   }
 
   return (
-    <main className="premium-tour-page min-h-screen px-3 py-3 text-[#123c2f] sm:px-5 sm:py-5">
-      <audio
-        ref={audioRef}
-        onLoadedMetadata={() => {
-          if (audioRef.current) {
-            setDuration(Number.isFinite(audioRef.current.duration) ? audioRef.current.duration : 0);
-          }
-        }}
-        onTimeUpdate={() => {
-          if (audioRef.current) {
-            setCurrentTime(audioRef.current.currentTime);
-          }
-        }}
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        onEnded={() => {
-          setPlaying(false);
-          setCurrentTime(0);
-          if (currentIndex < orderedStops.length - 1) {
-            setCurrentIndex((prev) => prev + 1);
-          }
-        }}
-      />
+    <main className="min-h-[100dvh] overflow-x-hidden bg-slate-950 text-white">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.14),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.1),transparent_35%)]" />
 
-      <section className="mx-auto max-w-5xl">
-        <div className="premium-tour-shell overflow-hidden rounded-[2rem] border border-black/10 bg-white shadow-2xl">
-          <div className="px-5 py-5 sm:px-6">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#123c2f] px-2.5 py-1 text-[10px] font-black uppercase tracking-[.12em] text-white">
-                <Compass className="h-3 w-3" />
-                Je volgt nu
-              </span>
-
-              <span className="inline-flex items-center rounded-full bg-[#f6f3ea] px-2.5 py-1 text-[10px] font-semibold text-[#123c2f]">
-                {isPartnerStop ? 'Voor vertrek' : `Stop ${currentIndex + 1} / ${includeHeadsetPartner ? orderedStops.length - 1 : orderedStops.length}`}
-              </span>
-
-              <span className="inline-flex items-center rounded-full bg-[#f6f3ea] px-2.5 py-1 text-[10px] font-semibold text-[#123c2f]">
-                {locationStatus === 'ready' && gpsAllowed
-                  ? 'GPS actief'
-                  : locationStatus === 'loading'
-                    ? 'GPS zoeken'
-                    : 'GPS beperkt'}
-              </span>
+      <div className="relative mx-auto flex min-h-[100dvh] max-w-5xl flex-col gap-3 px-3 py-3 sm:px-5 sm:py-5">
+        <header className="rounded-[1.35rem] border border-white/10 bg-white/[0.055] p-3 shadow-xl backdrop-blur">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="truncate text-[10px] font-black uppercase tracking-[0.22em] text-emerald-300">
+                {copy.brand}
+              </p>
+              <h1 className="mt-1 truncate text-lg font-black tracking-tight text-white sm:text-xl">
+                {selectedIndex + 1}. {selectedTitle}
+              </h1>
             </div>
 
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-[#123c2f] sm:text-4xl">
-              {tourTitle}
-            </h1>
-
-            <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/20">
-              <div
-                className="h-full rounded-full bg-[#d6bd7a] transition-all"
-                style={{ width: `${progressPercentage}%` }}
-              />
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={cn(
+                  "rounded-full border px-3 py-2 text-xs font-black",
+                  locationState === "active"
+                    ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-100"
+                    : locationState === "denied" || locationState === "unsupported"
+                    ? "border-amber-300/30 bg-amber-300/10 text-amber-100"
+                    : "border-white/10 bg-white/10 text-slate-200"
+                )}
+              >
+                {locationLabel}
+              </span>
+              <LanguageSwitch language={language} setLanguage={setLanguage} />
             </div>
           </div>
+        </header>
 
-          <div className="border-y border-black/10 bg-[#f8fbf9] px-5 py-3.5 sm:px-6">
-            <div className="flex flex-col gap-3">
-              <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[.16em] text-stone-400">
-                  Navigatie
-                </p>
-                <h2 className="mt-1 line-clamp-1 text-lg font-semibold text-[#123c2f] sm:text-xl">
-                  {getStopTitle(destinationStop, 'Volgende stop')}
-                </h2>
-                <p className="mt-1 hidden text-xs leading-5 text-stone-500 sm:block">
-                  {getStopDescription(destinationStop)}
-                </p>
-              </div>
-
-              <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <div className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold text-[#123c2f] ring-1 ring-black/5">
-                  {formatDistance(distanceToDestination)}
-                </div>
-
-                <div className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold text-[#123c2f] ring-1 ring-black/5">
-                  {estimateWalkingTime(distanceToDestination)}
-                </div>
-
-                <div className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold text-[#123c2f] ring-1 ring-black/5">
-                  {routeRouted ? 'Wandelroute' : 'Route'}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={goToPreviousStop}
-                  disabled={!previousStop}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#123c2f] ring-1 ring-black/5 transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Vorige stop"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={goToNextStop}
-                  disabled={isLastStop}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#123c2f] text-white transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Volgende stop"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={focusOnUser}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#123c2f] ring-1 ring-black/5 transition hover:scale-[1.03]"
-                  aria-label="Mijn locatie"
-                >
-                  <LocateFixed className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
+        <section className="overflow-hidden rounded-[1.6rem] border border-white/10 bg-white/[0.06] shadow-2xl backdrop-blur">
+          <div className="h-[43vh] min-h-[330px] max-h-[520px]">
+            <PlayerMap
+              stops={cleanStops}
+              language={language}
+              location={location}
+              selectedIndex={selectedIndex}
+              arrivedIndex={arrivedIndex}
+              reachedKeys={reachedKeys}
+              onSelect={goToStop}
+            />
           </div>
 
-          <div className="relative h-[66vh] min-h-[540px] bg-[#dbe9e5] lg:h-[74vh]">
-            {currentPoint || destinationPoint ? (
-              <div ref={mapElementRef} className="absolute inset-0" />
-            ) : (
-              <div className="flex h-full items-center justify-center p-8 text-center">
-                <div>
-                  <MapPinned className="mx-auto h-10 w-10 text-stone-300" />
-                  <h2 className="mt-4 text-xl font-black text-[#123c2f]">
-                    Geen coördinaten gevonden
-                  </h2>
-                  <p className="mt-2 max-w-md text-sm leading-6 text-stone-600">
-                    Voeg lat/lng of latitude/longitude toe aan je tourstops in Supabase.
-                  </p>
-                </div>
-              </div>
-            )}
+          <div className="border-t border-white/10 bg-slate-950/94 p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-300">
+              {selectedIsArrived ? copy.arrived : copy.currentStory}
+            </p>
 
-            <div className="pointer-events-none absolute left-4 top-4 z-[500]">
-              <div className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/86 px-2.5 py-1 text-[10px] font-semibold text-[#123c2f] shadow-sm backdrop-blur">
-                <Navigation className="h-3 w-3" />
-                {routeRouted ? 'Wandelroute' : 'Route'}
-              </div>
-            </div>
+            <h2 className="mt-2 text-2xl font-black tracking-tight text-white">
+              {selectedIndex + 1}. {selectedTitle}
+            </h2>
 
-            <div className="pointer-events-none absolute bottom-4 left-1/2 z-[500] -translate-x-1/2">
-              <div className="pointer-events-auto rounded-full border border-white/70 bg-white/86 px-3 py-1.5 text-[10px] font-semibold text-[#123c2f] shadow-sm backdrop-blur">
-                {getStopTitle(destinationStop, 'Volgende stop')}
-              </div>
-            </div>
-          </div>
-
-          <div className="px-5 py-5 sm:px-6">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <span className="inline-flex items-center rounded-full bg-[#123c2f] px-2.5 py-1 text-[10px] font-black uppercase tracking-[.12em] text-white">
-                Audio
-              </span>
-              <span className="inline-flex items-center rounded-full bg-[#f6f3ea] px-2.5 py-1 text-[10px] font-semibold text-[#123c2f]">
-                {getStopTitle(currentStop, `Stop ${currentIndex + 1}`)}
-              </span>
-              <span className="inline-flex items-center rounded-full bg-[#f6f3ea] px-2.5 py-1 text-[10px] font-semibold text-[#123c2f]">
-                {formatDistance(distanceToCurrentStop)}
-              </span>
-            </div>
-
-            {error ? (
-              <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
-                <div className="flex gap-3">
-                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
-                  <p className="text-sm leading-6">{error}</p>
-                </div>
-              </div>
+            {selectedDescription ? (
+              <p className="mt-3 text-sm leading-7 text-slate-200">
+                {selectedDescription}
+              </p>
             ) : null}
 
-            <div className="mt-5">
-              <div className="mb-2 flex items-center justify-between text-xs font-semibold text-stone-500">
-                <span>{formatAudioTime(currentTime)}</span>
-                <span>{formatAudioTime(duration)}</span>
-              </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <MetricCard
+                label={copy.distance}
+                value={formatDistance(selectedDistance)}
+                helper={direction ? direction.label : copy.walkToStop}
+              />
+              <MetricCard
+                label={copy.progress}
+                value={progress}
+                helper={selectedIsReached ? copy.completed : copy.selected}
+              />
+            </div>
 
-              <div className="h-1.5 overflow-hidden rounded-full bg-stone-200">
-                <div
-                  className="h-full rounded-full bg-[#0a7a57] transition-all"
-                  style={{ width: `${audioProgress}%` }}
-                />
-              </div>
+            <div className="mt-4 rounded-[1.2rem] border border-white/10 bg-white/[0.045] p-3">
+              {selectedAudioUrl ? (
+                <>
+                  <audio
+                    ref={audioRef}
+                    src={selectedAudioUrl}
+                    controls
+                    preload="metadata"
+                    playsInline
+                    onEnded={handleAudioEnded}
+                    className="w-full"
+                  />
 
-              <div className="mt-6 flex items-center justify-center gap-5 sm:gap-6">
-                <button
-                  type="button"
-                  onClick={() => seekAudio(-15)}
-                  className="relative inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#f6f3ea] text-[#123c2f] shadow-sm transition hover:scale-[1.03]"
-                  aria-label="15 seconden terugspoelen"
-                >
-                  <RotateCcw className="h-5 w-5 -translate-y-1" />
-                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[9px] font-semibold tracking-[.08em]">
-                    15s
-                  </span>
-                </button>
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <button
+                      type="button"
+                      onClick={playAudio}
+                      className="rounded-full bg-emerald-300 px-3 py-3 text-sm font-black text-slate-950 transition hover:bg-emerald-200"
+                    >
+                      {copy.playAudio}
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={() => (playing ? pauseCurrentStop() : playCurrentStop())}
-                  className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-[#123c2f] text-white shadow-lg transition hover:scale-[1.03]"
-                  aria-label={playing ? 'Pauzeer audio' : 'Speel audio af'}
-                >
-                  {playing ? <Pause className="h-7 w-7" /> : <Play className="ml-0.5 h-7 w-7" />}
-                </button>
+                    <button
+                      type="button"
+                      onClick={openWalkingRoute}
+                      disabled={!selectedStopCoordinates}
+                      className="rounded-full border border-white/10 bg-white/10 px-3 py-3 text-sm font-bold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {copy.openRoute}
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={() => seekAudio(15)}
-                  className="relative inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#f6f3ea] text-[#123c2f] shadow-sm transition hover:scale-[1.03]"
-                  aria-label="15 seconden vooruitspoelen"
-                >
-                  <RotateCw className="h-5 w-5 -translate-y-1" />
-                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[9px] font-semibold tracking-[.08em]">
-                    15s
-                  </span>
-                </button>
-              </div>
+                    <button
+                      type="button"
+                      onClick={() => goToStop(selectedIndex - 1)}
+                      disabled={selectedIndex === 0}
+                      className="rounded-full border border-white/10 bg-white/10 px-3 py-3 text-sm font-bold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {copy.previous}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => goToStop(selectedIndex + 1)}
+                      disabled={selectedIndex >= cleanStops.length - 1}
+                      className="rounded-full border border-white/10 bg-white/10 px-3 py-3 text-sm font-bold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {copy.next}
+                    </button>
+                  </div>
+
+                  {audioBlocked ? (
+                    <p className="mt-3 rounded-2xl bg-amber-300/10 p-3 text-sm leading-6 text-amber-100">
+                      {copy.audioBlocked}
+                    </p>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <div className="rounded-2xl bg-amber-300/10 p-4 text-sm leading-6 text-amber-100">
+                    {copy.noAudio}
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => goToStop(selectedIndex - 1)}
+                      disabled={selectedIndex === 0}
+                      className="rounded-full border border-white/10 bg-white/10 px-3 py-3 text-sm font-bold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {copy.previous}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => goToStop(selectedIndex + 1)}
+                      disabled={selectedIndex >= cleanStops.length - 1}
+                      className="rounded-full border border-white/10 bg-white/10 px-3 py-3 text-sm font-bold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {copy.next}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        <section className="rounded-[1.35rem] border border-white/10 bg-white/[0.045] p-3 shadow-xl backdrop-blur">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-300">
+              {copy.allStops}
+            </h2>
+            <span className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-200">
+              {formatExpiry(expiresAt, language)}
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {cleanStops.map((stop, index) => {
+              const key = stopKey(stop, index);
+              const coordinates = coordinatesFor(stop);
+              const distance = location && coordinates ? distanceMeters(location, coordinates) : null;
+              const isSelected = selectedIndex === index;
+              const isArrived = arrivedIndex === index;
+              const isReached = reachedKeys.includes(key);
+
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => goToStop(index)}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-[1.05rem] border p-3 text-left transition",
+                    isSelected
+                      ? "border-emerald-300/45 bg-emerald-300/12"
+                      : "border-white/10 bg-white/[0.035] hover:bg-white/[0.07]"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-black",
+                      isArrived
+                        ? "bg-amber-300 text-slate-950"
+                        : isReached
+                        ? "bg-emerald-300 text-slate-950"
+                        : isSelected
+                        ? "bg-white text-slate-950"
+                        : "bg-slate-800 text-white"
+                    )}
+                  >
+                    {index + 1}
+                  </span>
+
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-black text-white">
+                      {titleFor(stop, language) || `${copy.stops} ${index + 1}`}
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-slate-400">
+                      {isArrived
+                        ? copy.arrived
+                        : distance !== null
+                        ? `${formatDistance(distance)} ${copy.metersAway}`
+                        : copy.walkToStop}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={requestLocation}
+            className="mt-3 w-full rounded-full border border-white/10 bg-white/10 px-4 py-3 text-sm font-bold text-white transition hover:bg-white/20"
+          >
+            {copy.gpsRequest}
+          </button>
+        </section>
+      </div>
     </main>
   );
 }
