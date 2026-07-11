@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prepare:player": "node scripts/ensure-proximity-safe-player.mjs",
+    "predev": "npm run prepare:player",
     "dev": "next dev",
+    "prebuild": "npm run prepare:player",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
