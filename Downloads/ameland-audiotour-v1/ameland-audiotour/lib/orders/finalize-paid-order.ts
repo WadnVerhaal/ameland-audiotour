@@ -100,7 +100,7 @@ export async function finalizePaidOrder({
       createdNewToken = true
     }
   } else {
-    console.log(`[${source}] Existing access token found, attempting to send access email again`)
+    console.log(`[${source}] Existing access token found; skipping duplicate access email`)
   }
 
   const appUrl = (
@@ -108,6 +108,13 @@ export async function finalizePaidOrder({
   ).replace(/\/$/, '')
 
   const accessUrl = `${appUrl}/player/${token}`
+
+  // The token insert is the idempotency boundary for the booking email. Both
+  // Mollie's webhook and the success page can finalize the same paid order.
+  // Only the request that created the token may send the automatic email.
+  if (!createdNewToken) {
+    return { ok: true, token, accessUrl, emailSent: false }
+  }
 
   const { data: order, error: orderReadError } = await supabase
     .from('orders')
@@ -145,7 +152,6 @@ export async function finalizePaidOrder({
 
     console.log(`[${source}] Access email sent`, {
       orderId: cleanOrderId,
-      email: order.email,
       createdNewToken,
     })
 

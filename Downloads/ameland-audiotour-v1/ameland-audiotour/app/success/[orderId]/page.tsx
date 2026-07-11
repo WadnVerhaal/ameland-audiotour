@@ -118,6 +118,7 @@ export default async function SuccessPage({ params, searchParams }: PageProps) {
   let email: string | undefined
   let paymentReference: string | undefined
   let paymentCheckError: string | undefined
+  let finalizedPaidOrder = false
 
   if (cleanOrderId) {
     const { data: order, error: orderError } = await supabase
@@ -142,6 +143,7 @@ export default async function SuccessPage({ params, searchParams }: PageProps) {
           const mollieStatus = normalizeStatus(payment.status)
 
           if (mollieStatus === 'paid') {
+            finalizedPaidOrder = true
             const finalizeResult = await finalizePaidOrder({
               orderId: cleanOrderId,
               paymentReference,
@@ -163,7 +165,7 @@ export default async function SuccessPage({ params, searchParams }: PageProps) {
         }
       }
 
-      if (orderStatus === 'paid') {
+      if (orderStatus === 'paid' && !finalizedPaidOrder) {
         const finalizeResult = await finalizePaidOrder({
           orderId: cleanOrderId,
           paymentReference,
