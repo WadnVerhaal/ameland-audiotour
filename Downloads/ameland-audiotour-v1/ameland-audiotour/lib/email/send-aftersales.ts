@@ -20,13 +20,17 @@ type LowRatingAlertInput = {
   feedback?: string | null
 }
 
+type ResendResult = {
+  data?: { id?: string | null } | null
+  error?: unknown
+}
+
 const copy = {
   nl: {
     completedSubject: (title: string) => `Bedankt voor je wandeling: ${title}`,
     completedPreview: 'Je tour is afgerond. Luister terug of deel je ervaring.',
     completedTitle: 'Bedankt dat je met ons op pad ging',
-    completedText:
-      'Je hebt de audiotour afgerond. We hopen dat je Hollum nu met andere ogen bekijkt.',
+    completedText: 'Je hebt de audiotour afgerond. We hopen dat je Hollum nu met andere ogen bekijkt.',
     reviewTitle: 'Hoe was je ervaring?',
     reviewText: 'Met een korte beoordeling help je ons de route beter te maken.',
     reviewButton: 'Geef je beoordeling',
@@ -36,15 +40,13 @@ const copy = {
     reminderSubject: (title: string) => `Hoe vond je ${title}?`,
     reminderPreview: 'Een korte beoordeling helpt ons en andere bezoekers.',
     reminderTitle: 'Mogen we je één vraag stellen?',
-    reminderText:
-      'Hoe heb je de audiotour ervaren? Een beoordeling duurt minder dan een minuut. Heb je al gereageerd, dan hoef je niets meer te doen.',
+    reminderText: 'Hoe heb je de audiotour ervaren? Een beoordeling duurt minder dan een minuut. Heb je al gereageerd, dan hoef je niets meer te doen.',
   },
   en: {
     completedSubject: (title: string) => `Thank you for walking with us: ${title}`,
     completedPreview: 'Your tour is complete. Listen again or share your experience.',
     completedTitle: 'Thank you for exploring with us',
-    completedText:
-      'You have completed the audio tour. We hope you now see Hollum through different eyes.',
+    completedText: 'You have completed the audio tour. We hope you now see Hollum through different eyes.',
     reviewTitle: 'How was your experience?',
     reviewText: 'A short review helps us improve the route.',
     reviewButton: 'Leave a review',
@@ -54,15 +56,13 @@ const copy = {
     reminderSubject: (title: string) => `How did you like ${title}?`,
     reminderPreview: 'A short review helps us and other visitors.',
     reminderTitle: 'May we ask one quick question?',
-    reminderText:
-      'How did you experience the audio tour? A review takes less than a minute. If you already responded, there is nothing else to do.',
+    reminderText: 'How did you experience the audio tour? A review takes less than a minute. If you already responded, there is nothing else to do.',
   },
   de: {
     completedSubject: (title: string) => `Danke für deine Tour: ${title}`,
     completedPreview: 'Deine Tour ist beendet. Höre noch einmal zu oder teile deine Erfahrung.',
     completedTitle: 'Danke, dass du mit uns unterwegs warst',
-    completedText:
-      'Du hast die Audiotour beendet. Wir hoffen, dass du Hollum nun mit anderen Augen siehst.',
+    completedText: 'Du hast die Audiotour beendet. Wir hoffen, dass du Hollum nun mit anderen Augen siehst.',
     reviewTitle: 'Wie war deine Erfahrung?',
     reviewText: 'Mit einer kurzen Bewertung hilfst du uns, die Route zu verbessern.',
     reviewButton: 'Bewertung abgeben',
@@ -72,8 +72,7 @@ const copy = {
     reminderSubject: (title: string) => `Wie hat dir ${title} gefallen?`,
     reminderPreview: 'Eine kurze Bewertung hilft uns und anderen Besuchern.',
     reminderTitle: 'Dürfen wir dir eine kurze Frage stellen?',
-    reminderText:
-      'Wie hast du die Audiotour erlebt? Eine Bewertung dauert weniger als eine Minute. Wenn du bereits geantwortet hast, brauchst du nichts mehr zu tun.',
+    reminderText: 'Wie hast du die Audiotour erlebt? Eine Bewertung dauert weniger als eine Minute. Wenn du bereits geantwortet hast, brauchst du nichts mehr zu tun.',
   },
 } as const
 
@@ -92,27 +91,35 @@ function getClient() {
   return new Resend(apiKey)
 }
 
+function normalizeResult(result: unknown) {
+  const response = result as ResendResult
+  if (response.error) {
+    const message =
+      typeof response.error === 'object'
+        ? JSON.stringify(response.error)
+        : String(response.error)
+    throw new Error(message)
+  }
+  return response.data?.id ?? null
+}
+
 function emailShell(preview: string, title: string, body: string) {
-  return `<!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHtml(
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHtml(
     title
-  )}</title></head>
-<body style="margin:0;background:#f5efe3;color:#123c2f;font-family:Arial,sans-serif">
-<div style="display:none;max-height:0;overflow:hidden">${escapeHtml(preview)}</div>
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5efe3"><tr><td align="center" style="padding:28px 14px">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 18px 50px rgba(18,60,47,.12)">
-<tr><td style="background:#123c2f;padding:26px 28px;color:#ffffff"><div style="font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#a7f3d0">Ameland Audiotours</div><h1 style="margin:12px 0 0;font-size:30px;line-height:1.15">${escapeHtml(
+  )}</title></head><body style="margin:0;background:#f5efe3;color:#123c2f;font-family:Arial,sans-serif"><div style="display:none;max-height:0;overflow:hidden">${escapeHtml(
+    preview
+  )}</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5efe3"><tr><td align="center" style="padding:28px 14px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 18px 50px rgba(18,60,47,.12)"><tr><td style="background:#123c2f;padding:26px 28px;color:#ffffff"><div style="font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#a7f3d0">Ameland Audiotours</div><h1 style="margin:12px 0 0;font-size:30px;line-height:1.15">${escapeHtml(
     title
-  )}</h1></td></tr>
-<tr><td style="padding:28px">${body}</td></tr>
-<tr><td style="padding:20px 28px;background:#eef6f1;color:#4b635b;font-size:13px;line-height:1.6">Bjorn &amp; Sander · Ameland Audiotours<br><a href="mailto:info@amelandaudiotours.nl" style="color:#123c2f">info@amelandaudiotours.nl</a></td></tr>
-</table></td></tr></table></body></html>`
+  )}</h1></td></tr><tr><td style="padding:28px">${body}</td></tr><tr><td style="padding:20px 28px;background:#eef6f1;color:#4b635b;font-size:13px;line-height:1.6">Bjorn &amp; Sander · Ameland Audiotours<br><a href="mailto:info@amelandaudiotours.nl" style="color:#123c2f">info@amelandaudiotours.nl</a></td></tr></table></td></tr></table></body></html>`
 }
 
 function button(label: string, href: string, primary = true) {
-  return `<a href="${escapeHtml(href)}" style="display:inline-block;margin-top:14px;padding:13px 20px;border-radius:999px;text-decoration:none;font-weight:700;${
-    primary ? 'background:#123c2f;color:#ffffff' : 'background:#eef6f1;color:#123c2f'
-  }">${escapeHtml(label)}</a>`
+  const colors = primary
+    ? 'background:#123c2f;color:#ffffff'
+    : 'background:#eef6f1;color:#123c2f'
+  return `<a href="${escapeHtml(href)}" style="display:inline-block;margin-top:14px;padding:13px 20px;border-radius:999px;text-decoration:none;font-weight:700;${colors}">${escapeHtml(
+    label
+  )}</a>`
 }
 
 async function sendCustomerEmail(
@@ -126,7 +133,6 @@ async function sendCustomerEmail(
     : t.completedSubject(input.tourTitle)
   const preview = isReminder ? t.reminderPreview : t.completedPreview
   const title = isReminder ? t.reminderTitle : t.completedTitle
-
   const body = isReminder
     ? `<p style="margin:0;font-size:17px;line-height:1.7;color:#31473d">${escapeHtml(
         t.reminderText
@@ -143,32 +149,20 @@ async function sendCustomerEmail(
         t.support
       )}</p>`
 
-  const from =
-    process.env.MAIL_FROM || `${amelandBrand.fromName} <${amelandBrand.fromEmail}>`
-  const replyTo = process.env.MAIL_REPLY_TO || amelandBrand.fromEmail
-
   const result = await getClient().emails.send({
-    from,
+    from: process.env.MAIL_FROM || `${amelandBrand.fromName} <${amelandBrand.fromEmail}>`,
     to: [input.to],
-    replyTo,
+    replyTo: process.env.MAIL_REPLY_TO || amelandBrand.fromEmail,
     subject,
     html: emailShell(preview, title, body),
     text: isReminder
       ? `${title}\n\n${t.reminderText}\n\n${t.reviewButton}: ${input.reviewUrl}`
       : `${title}\n\n${t.completedText}\n\n${t.reviewButton}: ${input.reviewUrl}\n\n${t.accessButton}: ${input.accessUrl}\n\n${t.support}`,
     scheduledAt: input.scheduledAt,
-    headers: {
-      'X-Entity-Ref-ID': `${kind}-${input.orderId}`,
-    },
+    headers: { 'X-Entity-Ref-ID': `${kind}-${input.orderId}` },
   })
 
-  if (result.error) {
-    throw new Error(
-      typeof result.error === 'object' ? JSON.stringify(result.error) : String(result.error)
-    )
-  }
-
-  return result.data?.id ?? null
+  return normalizeResult(result)
 }
 
 export function sendCompletionAftersalesEmail(input: CustomerEmailInput) {
@@ -181,12 +175,9 @@ export function scheduleReviewReminderEmail(input: CustomerEmailInput) {
 
 export async function sendLowRatingAlertEmail(input: LowRatingAlertInput) {
   const recipient = process.env.SUPPORT_EMAIL || amelandBrand.fromEmail
-  const from =
-    process.env.MAIL_FROM || `${amelandBrand.fromName} <${amelandBrand.fromEmail}>`
   const feedback = input.feedback?.trim() || 'Geen toelichting gegeven.'
-
   const result = await getClient().emails.send({
-    from,
+    from: process.env.MAIL_FROM || `${amelandBrand.fromName} <${amelandBrand.fromEmail}>`,
     to: [recipient],
     replyTo: recipient,
     subject: `Aandacht gevraagd: beoordeling ${input.rating}/5`,
@@ -202,16 +193,8 @@ export async function sendLowRatingAlertEmail(input: LowRatingAlertInput) {
       )}</p>`
     ),
     text: `Tour: ${input.tourTitle}\nScore: ${input.rating}/5\nFeedback: ${feedback}\nBestelling: ${input.orderId}`,
-    headers: {
-      'X-Entity-Ref-ID': `low-rating-${input.orderId}`,
-    },
+    headers: { 'X-Entity-Ref-ID': `low-rating-${input.orderId}` },
   })
 
-  if (result.error) {
-    throw new Error(
-      typeof result.error === 'object' ? JSON.stringify(result.error) : String(result.error)
-    )
-  }
-
-  return result.data?.id ?? null
+  return normalizeResult(result)
 }
