@@ -15,6 +15,9 @@ export default async function PrivacyPage() {
         <p className="mt-3 text-sm leading-6 text-stone-600">
           {t.privacyText2}
         </p>
+        <p className="mt-3 text-sm leading-6 text-stone-600">
+          {t.privacySupportText}
+        </p>
       </div>
     </main>
   )

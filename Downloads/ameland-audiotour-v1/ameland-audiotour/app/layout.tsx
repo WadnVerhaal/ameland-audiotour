@@ -1,6 +1,7 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
+import { DeJutterChat } from '@/components/support/de-jutter-chat'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -20,7 +21,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="nl" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full bg-app text-app">{children}</body>
+      <body className="min-h-full bg-app text-app">
+        {children}
+        <DeJutterChat />
+      </body>
     </html>
   )
 }

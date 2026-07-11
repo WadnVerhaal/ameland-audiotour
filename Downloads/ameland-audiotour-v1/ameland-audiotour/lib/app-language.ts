@@ -42,6 +42,8 @@ export const translations = {
       'Deze app verwerkt alleen gegevens die nodig zijn om de audiotour te leveren, zoals je e-mailadres, betaalstatus en beperkte gebruiksgegevens voor verbetering van de dienst.',
     privacyText2:
       'Locatie wordt alleen gebruikt tijdens de tour om het juiste audiofragment op het juiste moment te starten.',
+    privacySupportText:
+      'De Jutter gebruikt kunstmatige intelligentie om klantenservicevragen te beantwoorden. Chatberichten en gegevens die je zelf in de chat deelt, worden alleen gebruikt om je vraag af te handelen, misbruik te voorkomen en waar nodig een supportverzoek te registreren. Deel nooit betaalgegevens of wachtwoorden in de chat.',
 
     terms: 'Voorwaarden',
     termsTitle: 'Voorwaarden',
@@ -236,6 +238,8 @@ export const translations = {
       'This app only processes data needed to provide the audio tour, such as your email address, payment status, and limited usage data to improve the service.',
     privacyText2:
       'Location is only used during the tour to start the correct audio fragment at the right moment.',
+    privacySupportText:
+      'De Jutter uses artificial intelligence to answer customer-service questions. Chat messages and details you choose to share are only used to handle your question, prevent abuse and, when needed, register a support request. Never share payment details or passwords in the chat.',
 
     terms: 'Terms',
     termsTitle: 'Terms',
@@ -430,6 +434,8 @@ export const translations = {
       'Diese App verarbeitet nur Daten, die für die Audiotour notwendig sind, wie deine E-Mail-Adresse, den Zahlungsstatus und begrenzte Nutzungsdaten zur Verbesserung des Dienstes.',
     privacyText2:
       'Der Standort wird nur während der Tour verwendet, um das richtige Audiofragment im richtigen Moment zu starten.',
+    privacySupportText:
+      'De Jutter nutzt künstliche Intelligenz, um Kundenservicefragen zu beantworten. Chatnachrichten und Angaben, die du selbst teilst, werden nur zur Bearbeitung deiner Frage, zur Missbrauchsprävention und bei Bedarf zur Erfassung einer Supportanfrage verwendet. Teile niemals Zahlungsdaten oder Passwörter im Chat.',
 
     terms: 'Bedingungen',
     termsTitle: 'Bedingungen',
