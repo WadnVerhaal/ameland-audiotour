@@ -129,7 +129,12 @@ function detectLanguage(): Language {
 
   const languageCookie = document.cookie
     .split('; ')
-    .find((entry) => entry.startsWith('wadnverhaal-language=') || entry.startsWith('locale='))
+    .find(
+      (entry) =>
+        entry.startsWith('amelandaudiotours-language=') ||
+        entry.startsWith('wadnverhaal-language=') ||
+        entry.startsWith('locale=')
+    )
     ?.split('=')[1]
   if (languageCookie === 'nl' || languageCookie === 'en' || languageCookie === 'de') {
     return languageCookie
