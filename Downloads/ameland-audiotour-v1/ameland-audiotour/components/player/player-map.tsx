@@ -1,3 +1,3 @@
 'use client'
 
-export { PlayerMap } from './player-map-v3'
+export { PlayerMap } from './player-map-v4'
