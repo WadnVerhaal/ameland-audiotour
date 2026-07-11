@@ -1,4 +1,5 @@
 import { sendBookingConfirmationEmail } from '@/lib/email/send-booking-confirmation'
+import { Resend } from 'resend'
 
 export type SendAccessEmailInput = {
   to?: string | null
@@ -173,3 +174,42 @@ export const sendTourAccessEmail = sendAccessEmail
 export const sendOrderAccessEmail = sendAccessEmail
 export const sendConfirmationEmail = sendAccessEmail
 export const sendTourConfirmationEmail = sendAccessEmail
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
+}
+
+export async function sendSupportNotification(input: {
+  reference: string
+  category: string
+  summary: string
+  email: string | null
+  orderId: string | null
+  pageContext: string
+}) {
+  const from = process.env.MAIL_FROM
+  const apiKey = process.env.RESEND_API_KEY
+  if (!from || !apiKey) throw new Error('Missing mail configuration')
+
+  const resend = new Resend(apiKey)
+  return resend.emails.send({
+    from,
+    to: process.env.SUPPORT_EMAIL || 'info@amelandaudiotours.nl',
+    subject: `De Jutter: nieuw supportverzoek ${input.reference.slice(0, 8).toUpperCase()}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#163c43">
+        <h2>Nieuw supportverzoek van De Jutter</h2>
+        <p><strong>Categorie:</strong> ${escapeHtml(input.category)}</p>
+        <p><strong>Samenvatting:</strong><br>${escapeHtml(input.summary)}</p>
+        <p><strong>E-mail:</strong> ${escapeHtml(input.email || 'Niet opgegeven')}</p>
+        <p><strong>Bestelnummer:</strong> ${escapeHtml(input.orderId || 'Niet opgegeven')}</p>
+        <p><strong>Pagina:</strong> ${escapeHtml(input.pageContext)}</p>
+      </div>
+    `,
+  })
+}

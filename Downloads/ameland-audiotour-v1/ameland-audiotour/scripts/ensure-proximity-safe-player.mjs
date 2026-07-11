@@ -91,8 +91,8 @@ const replacements = [
 ]
 
 for (const replacement of replacements) {
-  if (source.includes(replacement.after) && replacement.after) continue
   if (!source.includes(replacement.before)) {
+    if (!replacement.after || source.includes(replacement.after)) continue
     throw new Error(`Player patch failed: ${replacement.name}`)
   }
   source = source.replace(replacement.before, replacement.after)

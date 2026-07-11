@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import AppLanguageBar from '@/components/i18n/AppLanguageBar'
 import AppAutoTranslator from '@/components/i18n/AppAutoTranslator'
+import { DeJutterChat } from '@/components/support/de-jutter-chat'
 
 export const metadata: Metadata = {
   title: 'Ameland Audiotours',
@@ -27,6 +28,7 @@ export default function RootLayout({
         <AppLanguageBar />
         <AppAutoTranslator />
         {children}
+        <DeJutterChat />
       </body>
     </html>
   )

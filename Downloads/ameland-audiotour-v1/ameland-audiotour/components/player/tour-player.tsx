@@ -383,7 +383,6 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
   const watchIdRef = useRef<number | null>(null)
   const lastAcceptedLocationRef = useRef<GeoPoint | null>(null)
   const playedAutomaticallyRef = useRef<Set<string>>(new Set())
-  const autoSelectedNearestRef = useRef(false)
   const completingRef = useRef(false)
   const startedAtRef = useRef(Date.now())
 
@@ -562,7 +561,12 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
       if (stored) {
         const progress = JSON.parse(stored) as PersistedProgress
         if (Array.isArray(progress.completedKeys)) setCompletedKeys(progress.completedKeys)
-        if (Number.isInteger(progress.selectedIndex)) {
+        if (Array.isArray(progress.completedKeys) && progress.completedKeys.length > 0) {
+          const nextIncomplete = cleanStops.findIndex(
+            (stop, index) => !progress.completedKeys!.includes(stopKey(stop, index))
+          )
+          setSelectedIndex(nextIncomplete >= 0 ? nextIncomplete : Math.max(0, cleanStops.length - 1))
+        } else if (Number.isInteger(progress.selectedIndex)) {
           setSelectedIndex(Math.max(0, Math.min(progress.selectedIndex || 0, cleanStops.length - 1)))
         }
         if (!window.location.search.includes('lang=') && progress.language) {
@@ -600,44 +604,21 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
   }, [])
 
   useEffect(() => {
-    if (!location || !cleanStops.length) return
-
-    const candidates = cleanStops
-      .map((stop, index) => {
-        const coordinates = coordinatesFor(stop)
-        if (!coordinates) return null
-        return {
-          index,
-          distance: distanceMeters(location, coordinates),
-          radius: Math.max(triggerRadiusFor(stop), Math.min(30, location.accuracy)),
-        }
-      })
-      .filter(Boolean)
-      .sort((a, b) => a!.distance - b!.distance) as Array<{
-      index: number
-      distance: number
-      radius: number
-    }>
-
-    const closest = candidates[0]
-    const arrived =
-      closest &&
-      location.accuracy <= MAX_AUTO_ARRIVAL_ACCURACY_M &&
-      closest.distance <= closest.radius
-        ? closest.index
-        : null
-
-    setArrivedIndex(arrived)
-    if (arrived !== null) setSelectedIndex(arrived)
-
-    if (!autoSelectedNearestRef.current && closest && closest.distance <= 250) {
-      autoSelectedNearestRef.current = true
-      const nearestIncomplete = candidates.find(
-        (candidate) => !completedKeys.includes(stopKey(cleanStops[candidate.index], candidate.index))
-      )
-      if (nearestIncomplete) setSelectedIndex(nearestIncomplete.index)
+    if (!location || !selectedStop || selectedDistance === null) {
+      setArrivedIndex(null)
+      return
     }
-  }, [cleanStops, completedKeys, location])
+
+    const configuredRadius = triggerRadiusFor(selectedStop)
+    const accuracyAllowance = Math.min(10, Math.max(0, location.accuracy - 10))
+    const arrivalRadius = configuredRadius + accuracyAllowance
+    const leaveRadius = arrivalRadius + 12
+    const wasAlreadyArrived = arrivedIndex === selectedIndex
+    const isInside = selectedDistance <= (wasAlreadyArrived ? leaveRadius : arrivalRadius)
+    const isAccurateEnough = location.accuracy <= MAX_AUTO_ARRIVAL_ACCURACY_M
+
+    setArrivedIndex(isAccurateEnough && isInside ? selectedIndex : null)
+  }, [arrivedIndex, location, selectedDistance, selectedIndex, selectedStop])
 
   useEffect(() => {
     setAudioBlocked(false)
