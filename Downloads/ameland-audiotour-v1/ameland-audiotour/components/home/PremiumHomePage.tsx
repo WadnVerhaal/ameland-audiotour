@@ -50,8 +50,10 @@ function localized(value: Record<string, unknown>, base: string, lang: Lang, fal
 
 async function getPreviewStops(tourId: unknown): Promise<PreviewStop[]> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!supabaseUrl || !anonKey || !tourId) return []
+  const serverKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const publicKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const apiKey = serverKey || publicKey
+  if (!supabaseUrl || !apiKey || !tourId) return []
 
   const params = new URLSearchParams({
     select: 'title,title_en,title_de,audio_url,audio_url_nl,image_url,order_index',
@@ -65,7 +67,7 @@ async function getPreviewStops(tourId: unknown): Promise<PreviewStop[]> {
     const response = await fetch(
       `${supabaseUrl.replace(/\/$/, '')}/rest/v1/tour_stops?${params.toString()}`,
       {
-        headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
+        headers: { apikey: apiKey, Authorization: `Bearer ${apiKey}` },
         next: { revalidate: 60 },
       }
     )
