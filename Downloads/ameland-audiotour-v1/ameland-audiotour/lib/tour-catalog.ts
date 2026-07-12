@@ -41,25 +41,25 @@ export function isPublishedTour(tour: Record<string, any>) {
 
 export async function getAvailableTours() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const serverKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const publicKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const apiKey = serverKey || publicKey
 
-  if (!supabaseUrl || !anonKey) return []
+  if (!supabaseUrl || !apiKey) return []
 
-  const endpoint = `${supabaseUrl.replace(/\/$/, '')}/rest/v1/tours?select=*`
+  const endpoint = `${supabaseUrl.replace(/\/$/, '')}/rest/v1/tours?select=*&is_active=eq.true&order=created_at.asc`
 
   try {
     const res = await fetch(endpoint, {
       headers: {
-        apikey: anonKey,
-        Authorization: `Bearer ${anonKey}`,
+        apikey: apiKey,
+        Authorization: `Bearer ${apiKey}`,
       },
       next: { revalidate: 30 },
     })
 
     if (!res.ok) return []
-
     const data = await res.json()
-
     if (!Array.isArray(data)) return []
 
     return data
