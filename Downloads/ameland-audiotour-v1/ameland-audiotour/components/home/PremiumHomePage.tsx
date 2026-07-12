@@ -96,7 +96,7 @@ const COPY = {
     noAppText: 'Alles werkt in de browser van je telefoon. Locatie wordt alleen gebruikt om je onderweg te begeleiden.',
     finalTitle: 'Klaar om Hollum anders te zien?',
     finalText: 'Start wanneer het jou uitkomt. Neem alleen je telefoon en oortjes mee.',
-    finalCta: 'Bekijk Maak kennis met Hollum',
+    finalCta: 'Bestel Maak kennis met Hollum',
   },
   en: {
     eyebrow: 'Self-guided audio tour on Ameland',
@@ -119,7 +119,7 @@ const COPY = {
     noAppText: 'Everything works in your phone browser. Location is only used to guide you during the walk.',
     finalTitle: 'Ready to see Hollum differently?',
     finalText: 'Start whenever it suits you. Bring only your phone and earphones.',
-    finalCta: 'View Discover Hollum',
+    finalCta: 'Book Discover Hollum',
   },
   de: {
     eyebrow: 'Selbstgeführte Audiotour auf Ameland',
@@ -142,7 +142,7 @@ const COPY = {
     noAppText: 'Alles funktioniert im Browser deines Handys. Der Standort wird nur für die Wegführung verwendet.',
     finalTitle: 'Bereit, Hollum anders zu erleben?',
     finalText: 'Starte, wann es dir passt. Du brauchst nur dein Handy und Kopfhörer.',
-    finalCta: 'Entdecke Hollum ansehen',
+    finalCta: 'Entdecke Hollum buchen',
   },
 } as const
 
@@ -155,15 +155,10 @@ export default async function PremiumHomePage() {
   const previewStop = stops.find((stop) => stop.audio_url_nl || stop.audio_url) || null
   const slug = tour ? getTourSlug(tour) : ''
   const title = tour ? localized(tour, 'title', lang, 'Maak kennis met Hollum') : 'Maak kennis met Hollum'
-  const description = tour
-    ? localized(tour, 'description', lang, '')
-    : ''
+  const description = tour ? localized(tour, 'description', lang, '') : ''
   const heroImage = tour ? asText(tour.hero_image_url) : ''
   const duration = tour ? asNumber(tour.duration_minutes) || 90 : 90
   const distance = tour ? asNumber(tour.distance_km) : 6.5
-  const previewTitle = previewStop
-    ? localized(previewStop as Record<string, unknown>, 'title', lang, title)
-    : title
   const previewAudio = previewStop?.audio_url_nl || previewStop?.audio_url || ''
   const checkoutHref = slug ? `/checkout/${slug}?lang=${lang}` : `/tours?lang=${lang}`
 
@@ -215,14 +210,10 @@ export default async function PremiumHomePage() {
                   </p>
                 ))}
               </div>
-
-              <Link href={`/tours?lang=${lang}`} className="mt-8 inline-flex items-center gap-2 font-black text-[#0f5d67] transition hover:gap-3">
-                {t.finalCta} <ArrowRight className="h-4 w-4" />
-              </Link>
             </div>
 
             <div className="border-t border-[#e7ded1] bg-[#e8efe7] p-5 sm:p-7 lg:border-l lg:border-t-0">
-              {previewAudio ? <TourPreview audioUrl={previewAudio} title={previewTitle} language={lang} /> : null}
+              {previewAudio ? <TourPreview audioUrl={previewAudio} language={lang} /> : null}
               {stops.length ? (
                 <div className="mt-5 rounded-[1.6rem] bg-[#fffdf8] p-5">
                   <p className="text-[10px] font-black uppercase tracking-[.2em] text-[#7a8875]">{t.route}</p>
@@ -257,20 +248,15 @@ export default async function PremiumHomePage() {
           </div>
         </section>
 
-        <section className="grid gap-6 rounded-[2.2rem] border border-[#ddd2c2] bg-[#fffdf8] p-6 sm:grid-cols-[1fr_auto] sm:items-center sm:p-9">
-          <div>
-            <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[.2em] text-[#0f5d67]"><Smartphone className="h-4 w-4" /> {t.noApp}</p>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-[#5e685f]">{t.noAppText}</p>
-          </div>
-          <Link href={checkoutHref} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-[#20372f] px-7 font-black text-white transition hover:bg-[#2b4a40]">
-            {t.start} <ArrowRight className="h-5 w-5" />
-          </Link>
+        <section className="rounded-[2.2rem] border border-[#ddd2c2] bg-[#fffdf8] p-6 sm:p-9">
+          <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[.2em] text-[#0f5d67]"><Smartphone className="h-4 w-4" /> {t.noApp}</p>
+          <p className="mt-3 max-w-2xl text-base leading-7 text-[#5e685f]">{t.noAppText}</p>
         </section>
 
         <section className="px-2 py-8 text-center sm:py-12">
           <h2 className="text-4xl font-black tracking-[-.045em] sm:text-6xl">{t.finalTitle}</h2>
           <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-[#667067]">{t.finalText}</p>
-          <Link href={`/tours?lang=${lang}`} className="mt-7 inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-[#e47750] px-7 font-black text-white shadow-xl transition hover:-translate-y-0.5 hover:bg-[#ee835c]">
+          <Link href={checkoutHref} className="mt-7 inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-[#e47750] px-7 font-black text-white shadow-xl transition hover:-translate-y-0.5 hover:bg-[#ee835c]">
             {t.finalCta} <ArrowRight className="h-5 w-5" />
           </Link>
         </section>
