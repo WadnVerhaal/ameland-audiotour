@@ -1,23 +1,29 @@
-import Link from 'next/link'
 import Image from 'next/image'
+import Link from 'next/link'
 import { cookies } from 'next/headers'
 import {
   CheckCircle2,
   Clock3,
   Headphones,
-  Map,
-  MapPin,
+  MapPinned,
   Navigation,
-  PlayCircle,
   ShieldCheck,
   Smartphone,
   Sparkles,
 } from 'lucide-react'
+import TourPreview from './TourPreview'
+import { asNumber, asText, getAvailableTours, getTourSlug } from '@/lib/tour-catalog'
 
 type Lang = 'nl' | 'de' | 'en'
 
-const PREVIEW_AUDIO =
-  'https://judnkscpszrdxlzauewo.supabase.co/storage/v1/object/sign/Fietsen%20door%20Hollum/Stop%201.mp3?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV83OTVkNjY5NC01ZWFmLTRhZTctOTVlOS01ZTQ3N2I0OWZkMWYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJGaWV0c2VuIGRvb3IgSG9sbHVtL1N0b3AgMS5tcDMiLCJpYXQiOjE3NzU4MzE2MDUsImV4cCI6MjYzOTc0NTIwNX0.ED7wcHVzQRkiAiSSlV8C2hTyFb833DCeC7p-VzMNkmw'
+type PreviewStop = {
+  title?: string | null
+  title_en?: string | null
+  title_de?: string | null
+  audio_url?: string | null
+  audio_url_nl?: string | null
+  image_url?: string | null
+}
 
 async function getLang(): Promise<Lang> {
   const cookieStore = await cookies()
@@ -29,237 +35,323 @@ async function getLang(): Promise<Lang> {
   return 'nl'
 }
 
-const copy = {
+function localized(value: Record<string, unknown>, base: string, lang: Lang, fallback = '') {
+  const candidates =
+    lang === 'en'
+      ? [value[`${base}_en`], value[base], value[`${base}_de`]]
+      : lang === 'de'
+      ? [value[`${base}_de`], value[base], value[`${base}_en`]]
+      : [value[base], value[`${base}_en`], value[`${base}_de`]]
+
+  return (
+    candidates.find((candidate) => typeof candidate === 'string' && candidate.trim()) || fallback
+  ) as string
+}
+
+async function getPreviewStops(tourId: unknown): Promise<PreviewStop[]> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serverKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const publicKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const apiKey = serverKey || publicKey
+  if (!supabaseUrl || !apiKey || !tourId) return []
+
+  const params = new URLSearchParams({
+    select: 'title,title_en,title_de,audio_url,audio_url_nl,image_url,order_index',
+    tour_id: `eq.${String(tourId)}`,
+    is_active: 'eq.true',
+    order: 'order_index.asc',
+    limit: '4',
+  })
+
+  try {
+    const response = await fetch(
+      `${supabaseUrl.replace(/\/$/, '')}/rest/v1/tour_stops?${params.toString()}`,
+      {
+        headers: { apikey: apiKey, Authorization: `Bearer ${apiKey}` },
+        next: { revalidate: 60 },
+      }
+    )
+    if (!response.ok) return []
+    const result = await response.json()
+    return Array.isArray(result) ? result : []
+  } catch {
+    return []
+  }
+}
+
+const COPY = {
   nl: {
-    eyebrow: 'Jouw persoonlijke eilandgids',
-    title: 'Hoor Ameland zoals je het nog nooit beleefde.',
-    text: 'Wandel op je eigen tempo door Hollum. Je telefoon wijst de weg en op bijzondere plekken beginnen de verhalen vanzelf.',
-    cta: 'Bekijk de audiotour',
-    preview: 'Luister naar een voorproefje',
-    previewText: 'Zet je geluid aan en ervaar direct de rustige vertelstijl van de tour.',
-    trust: ['Professioneel ingesproken', 'GPS-begeleiding onderweg', 'Start wanneer het jou uitkomt'],
-    facts: [
-      ['9', 'bijzondere verhalen'],
-      ['± 90 min', 'wandelen en luisteren'],
-      ['NL · EN · DE', 'beschikbare talen'],
+    eyebrow: 'Audiotours op Ameland',
+    title: 'Hoor Ameland zoals je het nog nooit hebt beleefd.',
+    text: 'Je persoonlijke eilandgids leidt je langs bijzondere plekken, precies op het moment dat je er staat.',
+    primary: 'Ontdek de tours',
+    secondary: 'Zo werkt het',
+    trustTitle: 'Zonder gedoe op pad',
+    trust: [
+      ['9 verhalen', 'Zorgvuldig gekozen stops in en rond Hollum'],
+      ['± 90 minuten', 'Start wanneer het jou uitkomt'],
+      ['Professionele stem', 'Rustig, helder en prettig om naar te luisteren'],
+      ['Op je eigen telefoon', 'Geen app-download of gids nodig'],
     ],
-    how: 'Zo werkt het',
+    previewTitle: 'Hoor eerst wat je krijgt',
+    previewText: 'Luister naar een kort fragment en bekijk alvast de eerste routepunten.',
+    howEyebrow: 'Van kiezen naar beleven',
+    howTitle: 'Je hoeft alleen maar te wandelen en te luisteren.',
     steps: [
-      ['Kies', 'Bestel de tour', 'Na je betaling ontvang je direct een persoonlijke toegangsknop.'],
-      ['Open', 'Start op je telefoon', 'Geen app-installatie nodig. Locatie aan, oortjes in en gaan.'],
-      ['Beleef', 'Volg je eilandgids', 'De kaart brengt je naar de volgende stop en de audio start bij aankomst.'],
+      ['1', 'Kies je tour', 'Bestel veilig online en ontvang direct toegang.'],
+      ['2', 'Open op je telefoon', 'Sta locatie en audio toe; de route staat meteen klaar.'],
+      ['3', 'Volg je gids', 'Je ziet alleen de volgende stop en hoort het verhaal wanneer je aankomt.'],
     ],
-    featureTitle: 'Alles wat je nodig hebt voor een ontspannen ontdekkingstocht',
-    features: [
-      ['Persoonlijke navigatie', 'Je ziet alleen de volgende relevante stop en de beste wandelroute ernaartoe.'],
-      ['Automatische voortgang', 'De tour onthoudt waar je bent gebleven en welke verhalen je al hebt gehoord.'],
-      ['Echte eilandverhalen', 'Cultuur, zeevaart, reddingswerk en het leven in Hollum komen samen.'],
-      ['Veilig onderweg', 'Luister met één oortje of open-ear audio en houd zicht op je omgeving.'],
-    ],
-    quote: 'Niet alleen kijken waar je loopt, maar horen waarom die plek bijzonder is.',
-    start: 'Start jouw ontdekking van Hollum',
-    route: 'Van dorpsstraat naar duin en vuurtoren',
-  },
-  de: {
-    eyebrow: 'Dein persönlicher Inselguide',
-    title: 'Höre Ameland, wie du es noch nie erlebt hast.',
-    text: 'Spaziere in deinem eigenen Tempo durch Hollum. Dein Handy zeigt den Weg und an besonderen Orten beginnen die Geschichten automatisch.',
-    cta: 'Audiotour ansehen',
-    preview: 'Hör dir eine Vorschau an',
-    previewText: 'Schalte den Ton ein und erlebe direkt den ruhigen Erzählstil der Tour.',
-    trust: ['Professionell eingesprochen', 'GPS-Begleitung unterwegs', 'Start, wann du möchtest'],
-    facts: [['9', 'besondere Geschichten'], ['ca. 90 Min.', 'wandern und hören'], ['NL · EN · DE', 'verfügbare Sprachen']],
-    how: 'So funktioniert es',
-    steps: [
-      ['Wählen', 'Tour buchen', 'Nach der Zahlung erhältst du sofort deinen persönlichen Zugang.'],
-      ['Öffnen', 'Auf dem Handy starten', 'Keine App nötig. Standort an, Kopfhörer auf und los.'],
-      ['Erleben', 'Dem Inselguide folgen', 'Die Karte führt dich zum nächsten Stopp, die Audio startet bei Ankunft.'],
-    ],
-    featureTitle: 'Alles für eine entspannte Entdeckungstour',
-    features: [
-      ['Persönliche Navigation', 'Du siehst den nächsten relevanten Stopp und die passende Fußroute.'],
-      ['Automatischer Fortschritt', 'Die Tour merkt sich, wo du warst und welche Geschichten du gehört hast.'],
-      ['Echte Inselgeschichten', 'Kultur, Seefahrt, Rettungswesen und das Leben in Hollum werden lebendig.'],
-      ['Sicher unterwegs', 'Höre mit einem Ohrhörer oder Open-Ear-Audio und achte auf deine Umgebung.'],
-    ],
-    quote: 'Nicht nur sehen, wo du gehst, sondern hören, warum dieser Ort besonders ist.',
-    start: 'Entdecke Hollum',
-    route: 'Vom Dorf über die Dünen bis zum Leuchtturm',
+    proof: 'Ontworpen voor buiten',
+    proofText: 'Grote knoppen, duidelijke route-instructies en een rustige interface die ook onderweg prettig werkt.',
+    safe: 'Luister veilig met één oortje of open-ear audio en blijf alert op verkeer en je omgeving.',
+    final: 'Start jouw Ameland-verhaal',
+    routeLabel: 'Eerste routepunten',
+    noPreview: 'De luisterpreview wordt voorbereid. De volledige tour is wel direct beschikbaar.',
   },
   en: {
-    eyebrow: 'Your personal island guide',
+    eyebrow: 'Audio tours on Ameland',
     title: 'Hear Ameland as you have never experienced it before.',
-    text: 'Explore Hollum at your own pace. Your phone guides the way and the stories begin automatically at special places.',
-    cta: 'View the audio tour',
-    preview: 'Listen to a preview',
-    previewText: 'Turn on your sound and experience the calm narration style of the tour.',
-    trust: ['Professionally narrated', 'GPS guidance along the way', 'Start whenever it suits you'],
-    facts: [['9', 'remarkable stories'], ['about 90 min', 'walking and listening'], ['NL · EN · DE', 'available languages']],
-    how: 'How it works',
+    text: 'Your personal island guide leads you to remarkable places and tells each story exactly where it happened.',
+    primary: 'Explore the tours',
+    secondary: 'How it works',
+    trustTitle: 'Easy from the first step',
+    trust: [
+      ['9 stories', 'Carefully selected stops in and around Hollum'],
+      ['± 90 minutes', 'Start whenever it suits you'],
+      ['Professional narration', 'Calm, clear and pleasant to listen to'],
+      ['On your own phone', 'No app download or guide required'],
+    ],
+    previewTitle: 'Hear what you are buying',
+    previewText: 'Listen to a short sample and preview the first route points.',
+    howEyebrow: 'From choosing to experiencing',
+    howTitle: 'All you need to do is walk and listen.',
     steps: [
-      ['Choose', 'Book the tour', 'After payment you immediately receive your personal access link.'],
-      ['Open', 'Start on your phone', 'No app installation. Enable location, put in your earbuds and go.'],
-      ['Experience', 'Follow your island guide', 'The map leads to the next stop and audio starts when you arrive.'],
+      ['1', 'Choose your tour', 'Book securely online and receive access immediately.'],
+      ['2', 'Open it on your phone', 'Allow location and audio; your route is ready.'],
+      ['3', 'Follow your guide', 'Only the next stop is shown and the story starts when you arrive.'],
     ],
-    featureTitle: 'Everything you need for a relaxed discovery walk',
-    features: [
-      ['Personal navigation', 'See the next relevant stop and the best walking route to reach it.'],
-      ['Automatic progress', 'The tour remembers where you left off and which stories you have heard.'],
-      ['Authentic island stories', 'Culture, seafaring, rescue work and life in Hollum come together.'],
-      ['Safe on the road', 'Use one earbud or open-ear audio and stay aware of your surroundings.'],
-    ],
-    quote: 'Do not just see where you walk. Hear why that place matters.',
-    start: 'Start discovering Hollum',
-    route: 'From village streets to dunes and lighthouse',
+    proof: 'Designed for outdoors',
+    proofText: 'Large controls, clear directions and a calm interface that remains easy to use while walking.',
+    safe: 'Listen safely with one earbud or open-ear audio and stay aware of traffic and your surroundings.',
+    final: 'Start your Ameland story',
+    routeLabel: 'First route points',
+    noPreview: 'The listening preview is being prepared. The complete tour is available now.',
   },
-} satisfies Record<Lang, any>
-
-const featureIcons = [Navigation, Smartphone, Sparkles, ShieldCheck]
+  de: {
+    eyebrow: 'Audiotouren auf Ameland',
+    title: 'Höre Ameland so, wie du es noch nie erlebt hast.',
+    text: 'Dein persönlicher Inselguide führt dich zu besonderen Orten und erzählt jede Geschichte genau dort, wo sie passiert ist.',
+    primary: 'Touren entdecken',
+    secondary: 'So funktioniert es',
+    trustTitle: 'Einfach losgehen',
+    trust: [
+      ['9 Geschichten', 'Sorgfältig ausgewählte Stopps in und um Hollum'],
+      ['± 90 Minuten', 'Starte, wann es dir passt'],
+      ['Professionelle Stimme', 'Ruhig, klar und angenehm zu hören'],
+      ['Auf deinem Handy', 'Kein App-Download und kein Guide nötig'],
+    ],
+    previewTitle: 'Höre vorher, was dich erwartet',
+    previewText: 'Höre eine kurze Probe und sieh dir die ersten Routenpunkte an.',
+    howEyebrow: 'Vom Wählen zum Erleben',
+    howTitle: 'Du musst nur noch gehen und zuhören.',
+    steps: [
+      ['1', 'Tour auswählen', 'Sicher online buchen und sofort Zugang erhalten.'],
+      ['2', 'Auf dem Handy öffnen', 'Standort und Audio erlauben; die Route ist direkt bereit.'],
+      ['3', 'Deinem Guide folgen', 'Nur der nächste Stopp wird gezeigt und die Geschichte startet bei der Ankunft.'],
+    ],
+    proof: 'Für draußen gemacht',
+    proofText: 'Große Bedienelemente, klare Wegführung und eine ruhige Oberfläche für unterwegs.',
+    safe: 'Höre sicher mit einem Ohrhörer oder Open-Ear-Audio und achte weiter auf Verkehr und Umgebung.',
+    final: 'Starte deine Ameland-Geschichte',
+    routeLabel: 'Erste Routenpunkte',
+    noPreview: 'Die Hörprobe wird vorbereitet. Die vollständige Tour ist bereits verfügbar.',
+  },
+} as const
 
 export default async function PremiumHomePage() {
   const lang = await getLang()
-  const t = copy[lang]
+  const t = COPY[lang]
+  const tours = await getAvailableTours()
+  const featuredTour = tours[0] || null
+  const previewStops = featuredTour ? await getPreviewStops(featuredTour.id) : []
+  const previewStop = previewStops.find((stop) => stop.audio_url_nl || stop.audio_url) || null
+  const slug = featuredTour ? getTourSlug(featuredTour) : ''
+  const title = featuredTour
+    ? localized(featuredTour, 'title', lang, 'Maak kennis met Hollum')
+    : 'Maak kennis met Hollum'
+  const heroImage =
+    (featuredTour ? asText(featuredTour.hero_image_url) : '') ||
+    previewStops.find((stop) => stop.image_url)?.image_url ||
+    ''
+  const duration = featuredTour ? asNumber(featuredTour.duration_minutes) || 90 : 90
+  const distance = featuredTour ? asNumber(featuredTour.distance_km) : null
+  const previewTitle = previewStop
+    ? localized(previewStop as Record<string, unknown>, 'title', lang, title)
+    : title
+  const previewAudio = previewStop?.audio_url_nl || previewStop?.audio_url || ''
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f3eee4] text-[#20372f]">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(216,235,214,.9),transparent_32%),radial-gradient(circle_at_90%_18%,rgba(190,221,226,.55),transparent_28%)]" />
+    <main className="min-h-[100svh] bg-[#efe7da] pb-24 text-[#20372f]">
+      <section className="relative isolate min-h-[78svh] overflow-hidden bg-slate-950 text-white">
+        {heroImage ? (
+          <img
+            src={heroImage}
+            alt="Ameland"
+            className="absolute inset-0 h-full w-full object-cover opacity-55"
+          />
+        ) : null}
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,.28),rgba(2,6,23,.94))]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(16,185,129,.24),transparent_35%)]" />
 
-      <div className="relative mx-auto max-w-6xl px-4 pb-24 pt-4 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between rounded-full border border-[#dcd2c1] bg-white/80 px-4 py-3 shadow-sm backdrop-blur sm:px-5">
+        <div className="relative mx-auto flex min-h-[78svh] max-w-6xl flex-col justify-between px-5 pb-10 pt-8 sm:px-8 sm:pb-16">
           <div className="flex items-center gap-3">
-            <Image src="/images/ameland-audiotours-logo.webp" alt="Ameland Audiotours" width={54} height={54} priority className="h-12 w-12 rounded-full object-cover shadow-md" />
+            <Image
+              src="/images/ameland-audiotours-logo.webp"
+              alt="Ameland Audiotours"
+              width={68}
+              height={68}
+              className="h-16 w-16 rounded-full border border-white/30 object-cover shadow-2xl"
+              priority
+            />
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[.22em] text-[#6d7e70]">Ameland</p>
-              <strong className="text-base font-black tracking-tight text-[#164c58]">Audiotours</strong>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-200">Ameland</p>
+              <p className="text-lg font-black">Audiotours</p>
             </div>
           </div>
-          <Link href={`/tours?lang=${lang}`} className="rounded-full bg-[#0f5d67] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#0f5d67]/15 transition hover:-translate-y-0.5">
-            {t.cta}
-          </Link>
-        </header>
 
-        <section className="mt-4 overflow-hidden rounded-[2.4rem] border border-[#d9cfbe] bg-[#fffdf8] shadow-[0_32px_90px_rgba(36,51,43,.14)]">
-          <div className="grid lg:grid-cols-[1.08fr_.92fr]">
-            <div className="p-6 sm:p-10 lg:p-14">
-              <div className="inline-flex items-center gap-2 rounded-full bg-[#eaf3e7] px-4 py-2 text-xs font-black uppercase tracking-[.18em] text-[#426153]">
-                <MapPin className="h-4 w-4" /> {t.eyebrow}
-              </div>
-              <h1 className="mt-6 max-w-3xl text-[clamp(3.2rem,8vw,6.5rem)] font-black leading-[.86] tracking-[-.07em] text-[#20372f]">
-                {t.title}
-              </h1>
-              <p className="mt-7 max-w-2xl text-lg font-medium leading-8 text-[#626b61] sm:text-xl">{t.text}</p>
+          <div className="max-w-3xl pt-24 sm:pt-32">
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-emerald-200">{t.eyebrow}</p>
+            <h1 className="mt-5 text-[clamp(3rem,10vw,6.8rem)] font-black leading-[.88] tracking-[-.065em]">
+              {t.title}
+            </h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200 sm:text-xl">{t.text}</p>
 
-              <div className="mt-7 grid gap-2 sm:grid-cols-3">
-                {t.trust.map((item: string) => (
-                  <div key={item} className="flex items-center gap-2 rounded-2xl bg-[#f7f2e8] px-3 py-3 text-sm font-bold text-[#395247]">
-                    <CheckCircle2 className="h-5 w-5 shrink-0 text-[#c96643]" /> {item}
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link href={`/tours?lang=${lang}`} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-[#c96643] px-7 py-4 font-black text-white shadow-xl shadow-[#c96643]/20 transition hover:-translate-y-0.5">
-                  <Headphones className="h-5 w-5" /> {t.cta}
-                </Link>
-                <a href="#preview" className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-[#ddd3c3] bg-white px-7 py-4 font-black text-[#31473d] transition hover:bg-[#f7f2e8]">
-                  <PlayCircle className="h-5 w-5" /> {t.preview}
-                </a>
-              </div>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href={`/tours?lang=${lang}`}
+                className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-[#d86f48] px-7 text-base font-black text-white shadow-2xl transition hover:-translate-y-0.5 hover:bg-[#e37a53]"
+              >
+                {t.primary} <Navigation className="h-5 w-5" />
+              </Link>
+              <a
+                href="#zo-werkt-het"
+                className="inline-flex min-h-14 items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-7 text-base font-black text-white backdrop-blur transition hover:bg-white/20"
+              >
+                {t.secondary}
+              </a>
             </div>
 
-            <div className="relative min-h-[430px] overflow-hidden bg-[linear-gradient(155deg,#0f5d67_0%,#174852_48%,#172f2f_100%)] p-6 text-white sm:p-9 lg:min-h-full">
-              <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-[#e6c876]/20 blur-3xl" />
-              <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-[#86c7cc]/20 blur-3xl" />
-              <div className="relative flex h-full flex-col justify-between">
-                <div className="flex justify-end">
-                  <Image src="/images/ameland-audiotours-logo.webp" alt="" width={190} height={190} className="h-40 w-40 rounded-full border-8 border-white/10 object-cover shadow-2xl sm:h-48 sm:w-48" />
-                </div>
-                <div>
-                  <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[.2em] text-[#d9f1e3]">
-                    <Map className="h-4 w-4" /> {t.route}
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {t.facts.map((fact: string[]) => (
-                      <div key={fact[1]} className="rounded-2xl border border-white/10 bg-white/[.08] p-3 backdrop-blur">
-                        <p className="text-lg font-black tracking-tight">{fact[0]}</p>
-                        <p className="mt-1 text-xs leading-5 text-white/65">{fact[1]}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+            <div className="mt-6 flex flex-wrap gap-2 text-xs font-bold text-slate-200">
+              <span className="rounded-full border border-white/15 bg-white/10 px-3 py-2 backdrop-blur">
+                {duration} min
+              </span>
+              {distance ? (
+                <span className="rounded-full border border-white/15 bg-white/10 px-3 py-2 backdrop-blur">
+                  ± {String(distance).replace('.', ',')} km
+                </span>
+              ) : null}
+              <span className="rounded-full border border-white/15 bg-white/10 px-3 py-2 backdrop-blur">
+                9 stops
+              </span>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section id="preview" className="mt-5 grid gap-5 lg:grid-cols-[.9fr_1.1fr]">
-          <article className="rounded-[2rem] border border-[#d9cfbe] bg-[#20372f] p-6 text-white shadow-xl sm:p-8">
-            <div className="flex items-center gap-3">
-              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#d9edda] text-[#20372f]"><PlayCircle className="h-7 w-7" /></div>
-              <div>
-                <p className="text-xs font-black uppercase tracking-[.2em] text-[#a9c7b8]">Audio preview</p>
-                <h2 className="mt-1 text-2xl font-black tracking-tight">{t.preview}</h2>
-              </div>
-            </div>
-            <p className="mt-4 leading-7 text-white/70">{t.previewText}</p>
-            <audio className="mt-6 w-full" controls preload="metadata" src={PREVIEW_AUDIO} />
-          </article>
-
-          <article className="rounded-[2rem] border border-[#d9cfbe] bg-white/75 p-6 shadow-xl backdrop-blur sm:p-8">
-            <p className="text-xs font-black uppercase tracking-[.2em] text-[#7a8875]">{t.how}</p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              {t.steps.map((step: string[], index: number) => (
-                <div key={step[0]} className="rounded-[1.4rem] bg-[#f7f2e8] p-4">
-                  <div className="grid h-10 w-10 place-items-center rounded-full bg-[#0f5d67] text-sm font-black text-white">{index + 1}</div>
-                  <p className="mt-4 text-[10px] font-black uppercase tracking-[.18em] text-[#819080]">{step[0]}</p>
-                  <h3 className="mt-1 text-lg font-black tracking-tight">{step[1]}</h3>
-                  <p className="mt-2 text-sm leading-6 text-[#657064]">{step[2]}</p>
-                </div>
-              ))}
-            </div>
-          </article>
-        </section>
-
-        <section className="mt-5 rounded-[2.2rem] border border-[#d9cfbe] bg-[#fffdf8] p-6 shadow-xl sm:p-9">
-          <div className="max-w-3xl">
-            <p className="text-xs font-black uppercase tracking-[.2em] text-[#7a8875]">Ameland Audiotours</p>
-            <h2 className="mt-3 text-3xl font-black tracking-[-.04em] sm:text-5xl">{t.featureTitle}</h2>
+      <div className="mx-auto -mt-1 max-w-6xl space-y-8 px-4 py-8 sm:px-8 sm:py-12">
+        <section className="rounded-[2.2rem] border border-[#ded4c5] bg-[#fffdf8] p-5 shadow-[0_24px_70px_rgba(31,39,32,.11)] sm:p-8">
+          <div className="flex items-center gap-3">
+            <ShieldCheck className="h-6 w-6 text-teal-700" />
+            <h2 className="text-2xl font-black tracking-tight">{t.trustTitle}</h2>
           </div>
-          <div className="mt-7 grid gap-3 sm:grid-cols-2">
-            {t.features.map((feature: string[], index: number) => {
-              const Icon = featureIcons[index]
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {t.trust.map(([label, text], index) => {
+              const Icon = [MapPinned, Clock3, Headphones, Smartphone][index]
               return (
-                <article key={feature[0]} className="rounded-[1.6rem] border border-[#ece3d4] bg-[#f8f4eb] p-5">
-                  <Icon className="h-7 w-7 text-[#c96643]" />
-                  <h3 className="mt-4 text-xl font-black tracking-tight">{feature[0]}</h3>
-                  <p className="mt-2 leading-7 text-[#657064]">{feature[1]}</p>
+                <article key={label} className="rounded-3xl border border-[#ebe3d7] bg-[#f8f2e8] p-5">
+                  <Icon className="h-6 w-6 text-[#0f5d67]" />
+                  <h3 className="mt-4 text-lg font-black">{label}</h3>
+                  <p className="mt-2 text-sm leading-6 text-[#677066]">{text}</p>
                 </article>
               )
             })}
           </div>
         </section>
 
-        <section className="mt-5 overflow-hidden rounded-[2.2rem] bg-[#c96643] p-7 text-white shadow-2xl sm:p-10">
-          <div className="grid items-center gap-7 lg:grid-cols-[1fr_auto]">
-            <div>
-              <Sparkles className="h-8 w-8 text-[#ffe6a8]" />
-              <blockquote className="mt-5 max-w-3xl text-3xl font-black leading-tight tracking-[-.04em] sm:text-5xl">“{t.quote}”</blockquote>
-              <div className="mt-6 flex flex-wrap gap-3 text-sm font-bold text-white/80">
-                <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4" /> ± 90 min</span>
-                <span className="inline-flex items-center gap-2"><MapPin className="h-4 w-4" /> Hollum</span>
-                <span className="inline-flex items-center gap-2"><Headphones className="h-4 w-4" /> Smartphone + oortjes</span>
+        <section className="grid gap-5 lg:grid-cols-[1.05fr_.95fr]">
+          <div className="rounded-[2.2rem] border border-[#ded4c5] bg-[#fffdf8] p-5 sm:p-8">
+            <p className="text-xs font-black uppercase tracking-[.22em] text-[#8a887d]">{t.previewTitle}</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{title}</h2>
+            <p className="mt-4 max-w-xl text-base leading-7 text-[#626b61]">{t.previewText}</p>
+
+            <div className="mt-6 rounded-3xl bg-[#edf5ea] p-5">
+              <p className="text-xs font-black uppercase tracking-[.18em] text-[#6f806e]">{t.routeLabel}</p>
+              <div className="mt-4 space-y-3">
+                {previewStops.slice(0, 4).map((stop, index) => (
+                  <div key={`${stop.title}-${index}`} className="flex items-center gap-3">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-sm font-black text-[#0f5d67] shadow-sm">
+                      {index + 1}
+                    </span>
+                    <span className="font-bold text-[#31473d]">
+                      {localized(stop as Record<string, unknown>, 'title', lang, `${index + 1}`)}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
-            <Link href={`/tours?lang=${lang}`} className="inline-flex min-h-16 items-center justify-center rounded-2xl bg-white px-8 py-4 text-center font-black text-[#9d452d] shadow-xl transition hover:-translate-y-0.5">
-              {t.start}
-            </Link>
+          </div>
+
+          {previewAudio ? (
+            <TourPreview
+              audioUrl={previewAudio}
+              title={previewTitle}
+              imageUrl={previewStop?.image_url || heroImage}
+              language={lang}
+            />
+          ) : (
+            <div className="flex min-h-72 items-center rounded-[2rem] border border-[#ded4c5] bg-slate-950 p-7 text-white">
+              <div>
+                <Sparkles className="h-8 w-8 text-emerald-300" />
+                <p className="mt-5 text-xl font-black">{t.noPreview}</p>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <section id="zo-werkt-het" className="rounded-[2.2rem] border border-[#ded4c5] bg-[#fffdf8] p-5 sm:p-8">
+          <p className="text-xs font-black uppercase tracking-[.22em] text-[#8a887d]">{t.howEyebrow}</p>
+          <h2 className="mt-3 max-w-3xl text-3xl font-black tracking-tight sm:text-5xl">{t.howTitle}</h2>
+          <div className="mt-7 grid gap-3 md:grid-cols-3">
+            {t.steps.map(([number, label, text]) => (
+              <article key={number} className="rounded-3xl border border-[#ebe3d7] bg-[#f8f2e8] p-5">
+                <span className="grid h-11 w-11 place-items-center rounded-full bg-[#0f5d67] text-sm font-black text-white">
+                  {number}
+                </span>
+                <h3 className="mt-5 text-xl font-black">{label}</h3>
+                <p className="mt-2 text-sm leading-6 text-[#677066]">{text}</p>
+              </article>
+            ))}
           </div>
         </section>
 
-        <footer className="mt-8 flex flex-col items-center justify-between gap-3 text-center text-xs font-bold text-[#7c7a72] sm:flex-row sm:text-left">
-          <span>© Ameland Audiotours</span>
-          <span className="inline-flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> Veilig betalen · directe toegang · persoonlijke ondersteuning</span>
-        </footer>
+        <section className="grid gap-4 rounded-[2.2rem] bg-[#153f45] p-6 text-white sm:grid-cols-[1fr_auto] sm:items-center sm:p-9">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[.22em] text-emerald-200">{t.proof}</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight">{t.proofText}</h2>
+            <p className="mt-4 flex max-w-2xl items-start gap-2 text-sm leading-6 text-slate-200">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" /> {t.safe}
+            </p>
+          </div>
+          <Link
+            href={slug ? `/checkout/${slug}?lang=${lang}` : `/tours?lang=${lang}`}
+            className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-white px-7 font-black text-[#153f45] shadow-xl transition hover:bg-emerald-100"
+          >
+            {t.final}
+          </Link>
+        </section>
+
+        <p className="pb-2 text-center text-xs font-bold text-[#8a867d]">© Ameland Audiotours</p>
       </div>
     </main>
   )

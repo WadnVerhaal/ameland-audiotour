@@ -1,12 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-const target = path.join(
-  process.cwd(),
-  'components',
-  'player',
-  'tour-player.tsx'
-)
+const target = path.join(process.cwd(), 'components', 'player', 'tour-player.tsx')
 
 let source = fs.readFileSync(target, 'utf8')
 
@@ -98,5 +93,42 @@ for (const replacement of replacements) {
   source = source.replace(replacement.before, replacement.after)
 }
 
+if (!source.includes("import { TourExperiencePanel } from './tour-experience-panel'")) {
+  const importAnchor = "import Image from 'next/image'\n"
+  if (!source.includes(importAnchor)) throw new Error('Player patch failed: experience import anchor')
+  source = source.replace(
+    importAnchor,
+    `${importAnchor}import { TourExperiencePanel } from './tour-experience-panel'\n`
+  )
+}
+
+if (!source.includes('<TourExperiencePanel')) {
+  const sectionAnchor =
+    '        <section className="overflow-hidden rounded-[1.6rem] border border-white/10 bg-white/[0.06] shadow-2xl backdrop-blur">'
+
+  if (!source.includes(sectionAnchor)) throw new Error('Player patch failed: experience panel anchor')
+
+  const panel = `        <TourExperiencePanel
+          token={token}
+          tourId={String(tour.id || '')}
+          language={language}
+          currentIndex={selectedIndex}
+          totalStops={cleanStops.length}
+          completedStops={Math.min(completedKeys.length, cleanStops.length)}
+          distanceMeters={selectedDistance}
+          arrived={selectedIsArrived}
+          selectedCompleted={selectedIsCompleted}
+          title={selectedTitle}
+          imageUrls={[
+            stringValue(selectedStop, ['image_url']),
+            stringValue(tour, ['hero_image_url']),
+          ].filter(Boolean)}
+        />
+
+`
+
+  source = source.replace(sectionAnchor, `${panel}${sectionAnchor}`)
+}
+
 fs.writeFileSync(target, source)
-console.log('Tour player arrival logic is proximity safe.')
+console.log('Tour player arrival logic and premium guide layer are ready.')
