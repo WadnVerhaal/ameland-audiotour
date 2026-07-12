@@ -15,6 +15,22 @@ export const upcomingTours = [
   },
 ]
 
+const fallbackTour = {
+  id: '057516f3-1f33-447d-b631-9151c64ed4af',
+  slug: 'Kennismaken-hollum',
+  title: 'Maak kennis met Hollum',
+  title_en: 'Discover Hollum',
+  title_de: 'Entdecke Hollum',
+  description: 'Een ontspannen audiotour langs de mooiste verhalen van Hollum, van het oude dorp tot de vuurtoren.',
+  description_en: 'A relaxed audio tour through the stories of Hollum, from the old village to the lighthouse.',
+  description_de: 'Eine entspannte Audiotour durch die Geschichten von Hollum, vom alten Dorf bis zum Leuchtturm.',
+  hero_image_url: 'https://www.amelandaudiotours.nl/images/tour-dorp.jpg',
+  duration_minutes: 90,
+  distance_km: 6.5,
+  price_cents: 999,
+  is_active: true,
+}
+
 export function asText(value: unknown, fallback = '') {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback
 }
@@ -45,7 +61,7 @@ export async function getAvailableTours() {
   const publicKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   const apiKey = serverKey || publicKey
 
-  if (!supabaseUrl || !apiKey) return []
+  if (!supabaseUrl || !apiKey) return [fallbackTour]
 
   const endpoint = `${supabaseUrl.replace(/\/$/, '')}/rest/v1/tours?select=*&is_active=eq.true&order=created_at.asc`
 
@@ -58,15 +74,17 @@ export async function getAvailableTours() {
       next: { revalidate: 30 },
     })
 
-    if (!res.ok) return []
+    if (!res.ok) return [fallbackTour]
     const data = await res.json()
-    if (!Array.isArray(data)) return []
+    if (!Array.isArray(data)) return [fallbackTour]
 
-    return data
+    const publishedTours = data
       .filter((tour) => tour && typeof tour === 'object')
       .filter((tour) => getTourSlug(tour).length > 0)
       .filter(isPublishedTour)
+
+    return publishedTours.length ? publishedTours : [fallbackTour]
   } catch {
-    return []
+    return [fallbackTour]
   }
 }
