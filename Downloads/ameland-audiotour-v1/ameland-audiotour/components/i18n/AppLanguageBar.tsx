@@ -1,14 +1,15 @@
 'use client'
 
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 type Lang = 'nl' | 'de' | 'en'
 
-const languages: Array<{ code: Lang; label: string; flag: string }> = [
-  { code: 'nl', label: 'NL', flag: '🇳🇱' },
-  { code: 'de', label: 'DE', flag: '🇩🇪' },
-  { code: 'en', label: 'EN', flag: '🇬🇧' },
+const languages: Array<{ code: Lang; label: string }> = [
+  { code: 'nl', label: 'NL' },
+  { code: 'de', label: 'DE' },
+  { code: 'en', label: 'EN' },
 ]
 
 function getCurrentLang(): Lang {
@@ -24,23 +25,20 @@ function getCurrentLang(): Lang {
 }
 
 export default function AppLanguageBar() {
+  const pathname = usePathname() || '/'
   const [current, setCurrent] = useState<Lang>('nl')
-  const [hidden, setHidden] = useState(false)
+  const home = pathname === '/'
 
   useEffect(() => {
-    const path = window.location.pathname
-    setHidden(path.startsWith('/player/'))
     setCurrent(getCurrentLang())
-  }, [])
+  }, [pathname])
 
   function setLang(lang: Lang) {
     setCurrent(lang)
     document.documentElement.lang = lang
-
     window.localStorage.setItem('ameland-audiotours-language', lang)
     document.cookie = `ameland-audiotours-language=${lang}; path=/; max-age=31536000; SameSite=Lax`
     document.cookie = `NEXT_LOCALE=${lang}; path=/; max-age=31536000; SameSite=Lax`
-
     window.dispatchEvent(new CustomEvent('app-language-change', { detail: { language: lang } }))
 
     const url = new URL(window.location.href)
@@ -48,71 +46,58 @@ export default function AppLanguageBar() {
     window.location.assign(url.toString())
   }
 
-  if (hidden) return null
-
   return (
-    <div
-      style={{
-        width: '100%',
-        maxWidth: 560,
-        margin: '0 auto',
-        padding: '14px 14px 0',
-        boxSizing: 'border-box',
-        position: 'relative',
-        zIndex: 10,
-      }}
+    <header
+      className={home ? 'absolute inset-x-0 top-0 z-50 text-white' : 'relative z-50 text-[#20372f]'}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
-        <a href="/" aria-label="Ameland Audiotours home" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#20372f', textDecoration: 'none', fontWeight: 950 }}>
-          <Image src="/images/ameland-audiotours-logo.webp" alt="Ameland Audiotours logo" width={44} height={44} style={{ borderRadius: 999, objectFit: 'cover', boxShadow: '0 8px 20px rgba(31,39,32,.12)' }} priority />
-          <span style={{ display: 'none' }}>Ameland Audiotours</span>
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 pb-3 pt-[max(1.1rem,env(safe-area-inset-top))] sm:px-8 sm:pt-6">
+        <a href="/" aria-label="Ameland Audiotours home" className="inline-flex min-w-0 items-center gap-3 no-underline">
+          <Image
+            src="/images/ameland-audiotours-logo.webp"
+            alt="Ameland Audiotours"
+            width={48}
+            height={48}
+            className="h-11 w-11 shrink-0 rounded-full border border-white/30 object-cover shadow-xl"
+            priority
+          />
+          <span className={`min-w-0 text-sm font-black tracking-tight sm:text-base ${home ? 'text-white' : 'text-[#20372f]'}`}>
+            Ameland Audiotours
+          </span>
         </a>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            borderRadius: 999,
-            border: '1px solid #ddd4c4',
-            background: 'rgba(255,253,248,0.96)',
-            padding: 4,
-            boxShadow: '0 12px 30px rgba(31,39,32,0.10)',
-            backdropFilter: 'blur(12px)',
-          }}
+
+        <nav
+          aria-label="Taal kiezen"
+          className={`flex items-center rounded-full border p-1 shadow-lg backdrop-blur-xl ${
+            home
+              ? 'border-white/20 bg-slate-950/30'
+              : 'border-[#ddd4c4] bg-[#fffdf8]/95'
+          }`}
         >
           {languages.map((lang) => {
             const active = lang.code === current
-
             return (
               <button
                 key={lang.code}
                 type="button"
                 onClick={() => setLang(lang.code)}
                 aria-pressed={active}
-                style={{
-                  height: 36,
-                  minWidth: 62,
-                  border: 0,
-                  borderRadius: 999,
-                  background: active ? '#111b17' : 'transparent',
-                  color: active ? '#fff' : '#31473d',
-                  padding: '0 11px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 5,
-                  fontSize: 12,
-                  fontWeight: 950,
-                  cursor: 'pointer',
-                }}
+                className={`grid h-9 min-w-10 place-items-center rounded-full px-3 text-xs font-black transition ${
+                  active
+                    ? home
+                      ? 'bg-white text-slate-950'
+                      : 'bg-[#153f45] text-white'
+                    : home
+                    ? 'text-white/75 hover:bg-white/10 hover:text-white'
+                    : 'text-[#53635a] hover:bg-[#efe8dc] hover:text-[#20372f]'
+                }`}
               >
-                <span>{lang.flag}</span>
-                <span>{lang.label}</span>
+                {lang.label}
               </button>
             )
           })}
-        </div>
+        </nav>
       </div>
-    </div>
+    </header>
   )
 }
 
