@@ -97,8 +97,23 @@ const replacements = [
     ? Math.round((Math.min(completedKeys.length, cleanStops.length) / cleanStops.length) * 100)
     : 0
   const remainingStops = Math.max(0, cleanStops.length - completedKeys.length)
-  const walkingMinutes = selectedDistance === null ? null : Math.max(1, Math.ceil(selectedDistance / 75))
   const storageKey = \`aat.progress.${'${token}'}\``,
+  },
+  {
+    name: 'add walking time after distance calculation',
+    before: `  const selectedDistance = useMemo(() => {
+    if (!location || !selectedCoordinates) return null
+    return distanceMeters(location, selectedCoordinates)
+  }, [location, selectedCoordinates])
+
+  const selectedIsArrived = arrivedIndex === selectedIndex`,
+    after: `  const selectedDistance = useMemo(() => {
+    if (!location || !selectedCoordinates) return null
+    return distanceMeters(location, selectedCoordinates)
+  }, [location, selectedCoordinates])
+  const walkingMinutes = selectedDistance === null ? null : Math.max(1, Math.ceil(selectedDistance / 75))
+
+  const selectedIsArrived = arrivedIndex === selectedIndex`,
   },
   {
     name: 'add personal guide feedback below metrics',
