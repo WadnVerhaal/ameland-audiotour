@@ -198,6 +198,45 @@ replaceOnce(
 )
 
 replaceOnce(
+  'remove metric helper repetition',
+  `            <div className="mt-4 grid grid-cols-2 gap-3">
+              <MetricCard label={copy.distance} value={formatDistance(selectedDistance)} helper={copy.walkToStop} />
+              <MetricCard label={copy.progress} value={progress} helper={selectedIsCompleted ? copy.completed : copy.selected} />
+            </div>`,
+  `            <div className="mt-4 grid grid-cols-2 gap-3">
+              <MetricCard label={copy.distance} value={formatDistance(selectedDistance)} />
+              <MetricCard label={copy.progress} value={progress} />
+            </div>`
+)
+
+replaceOnce(
+  'remove repeated stop-list subtitles',
+  `                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-black text-white">
+                      {titleFor(stop, language) || \`${'${copy.routePoints} ${index + 1}'}\`}
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-slate-400">
+                      {isArrived
+                        ? copy.arrived
+                        : isCompleted
+                        ? copy.completed
+                        : distance !== null
+                        ? \`${'${formatDistance(distance)} ${copy.away}'}\`
+                        : copy.walkToStop}
+                    </span>
+                  </span>
+                  {isSelected ? <Navigation className="h-5 w-5 shrink-0 text-emerald-300" /> : null}`,
+  `                  <span className="min-w-0 flex-1 truncate text-sm font-black text-white">
+                    {titleFor(stop, language) || \`${'${copy.routePoints} ${index + 1}'}\`}
+                  </span>
+                  {isSelected ? (
+                    <Navigation className="h-5 w-5 shrink-0 text-emerald-300" />
+                  ) : distance !== null ? (
+                    <span className="shrink-0 text-xs font-bold text-slate-400">{formatDistance(distance)}</span>
+                  ) : null}`
+)
+
+replaceOnce(
   'remove native duplicate audio controls',
   `                    controls
                     preload="metadata"
