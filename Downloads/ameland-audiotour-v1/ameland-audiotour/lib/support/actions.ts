@@ -171,7 +171,7 @@ export async function getPageSupportState(pathname: string) {
 }
 
 export async function enforceSupportRateLimit(ip: string) {
-  const salt = process.env.SUPPORT_RATE_LIMIT_SALT || 'de-jutter-rate-limit-v1'
+  const salt = process.env.SUPPORT_RATE_LIMIT_SALT || 'skipper-hidde-rate-limit-v1'
   const ipHash = crypto.createHash('sha256').update(`${salt}:${ip}`).digest('hex')
   const supabase = createServerSupabase()
   const windowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString()

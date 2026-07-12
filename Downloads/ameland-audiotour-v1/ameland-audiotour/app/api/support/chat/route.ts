@@ -1,5 +1,7 @@
 import {
   convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
   stepCountIs,
   streamText,
   tool,
@@ -15,6 +17,7 @@ import {
   resendAccessLink,
 } from '@/lib/support/actions'
 import { getSupportKnowledge } from '@/lib/support/knowledge'
+import { buildFallbackSupportResponse } from '@/lib/support/fallback'
 
 export const maxDuration = 45
 
@@ -51,6 +54,18 @@ function normalizeLanguage(value: unknown): AppLanguage {
 
 function errorResponse(message: string, status: number, origin: string | null) {
   return Response.json({ error: message }, { status, headers: corsHeaders(origin) })
+}
+
+function supportTextResponse(text: string, origin: string | null) {
+  const id = `skipper-hidde-${Date.now()}`
+  const stream = createUIMessageStream({
+    execute({ writer }) {
+      writer.write({ type: 'text-start', id })
+      writer.write({ type: 'text-delta', id, delta: text })
+      writer.write({ type: 'text-end', id })
+    },
+  })
+  return createUIMessageStreamResponse({ stream, headers: corsHeaders(origin) })
 }
 
 export async function OPTIONS(request: Request) {
@@ -95,12 +110,24 @@ export async function POST(request: Request) {
     getPageSupportState(pathname),
   ])
 
+  // The deterministic service layer keeps support available without an external
+  // model. Enable AI augmentation only after the provider account is ready.
+  if (process.env.SUPPORT_AI_ENABLED !== 'true') {
+    const text = await buildFallbackSupportResponse({
+      messages,
+      language,
+      pageContext,
+      knowledge,
+    })
+    return supportTextResponse(text, origin)
+  }
+
   const result = streamText({
-    model: process.env.SUPPORT_AI_MODEL || 'openai/gpt-5.4-mini',
-    system: `You are De Jutter, the autonomous customer-service host for Wad'n Verhaal / Ameland Audiotours.
+    model: process.env.SUPPORT_AI_MODEL || 'openai/gpt-5.4',
+    system: `You are Skipper Hidde, the autonomous customer-service host for Wad'n Verhaal / Ameland Audiotours.
 
 IDENTITY AND LANGUAGE
-- You are a friendly, practical Ameland beachcomber: calm, lightly playful, never theatrical or verbose.
+- You are a friendly, practical Ameland skipper: calm, lightly playful, never theatrical or verbose.
 - Always answer in ${language === 'nl' ? 'Dutch' : language === 'de' ? 'German' : 'English'}, unless the visitor explicitly asks to switch.
 - Stay within customer service for the website, checkout and audio-tour app.
 
@@ -163,10 +190,10 @@ ${knowledge.faq}`,
   const response = result.toUIMessageStreamResponse({
     onError: () =>
       language === 'de'
-        ? 'De Jutter ist kurz nicht erreichbar. Versuche es bitte noch einmal.'
+        ? 'Skipper Hidde ist kurz nicht erreichbar. Versuche es bitte noch einmal.'
         : language === 'en'
-          ? 'De Jutter is briefly unavailable. Please try again.'
-          : 'De Jutter is even niet bereikbaar. Probeer het nog eens.',
+          ? 'Skipper Hidde is briefly unavailable. Please try again.'
+          : 'Skipper Hidde is even niet bereikbaar. Probeer het nog eens.',
   })
   corsHeaders(origin).forEach((value, key) => response.headers.set(key, value))
   return response

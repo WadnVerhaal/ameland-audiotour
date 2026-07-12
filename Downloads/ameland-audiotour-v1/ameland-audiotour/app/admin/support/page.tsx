@@ -39,11 +39,11 @@ export default async function SupportPage() {
 
       <div className="mt-4 rounded-[2rem] border border-[#dbecef] bg-white p-6 shadow-[0_24px_70px_rgba(15,75,88,0.08)]">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#5a8d93]">
-          De Jutter
+          Skipper Hidde
         </p>
         <h1 className="mt-2 text-3xl font-semibold text-[#143a43]">Supportverzoeken</h1>
         <p className="mt-3 text-sm leading-7 text-[#5b757b]">
-          Hier staan alleen vragen die De Jutter niet zelfstandig kon oplossen.
+          Hier staan alleen vragen die Skipper Hidde niet zelfstandig kon oplossen.
         </p>
 
         {requests.length === 0 ? (

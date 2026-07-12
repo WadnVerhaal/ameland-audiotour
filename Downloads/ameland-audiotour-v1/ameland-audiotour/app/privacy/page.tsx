@@ -30,10 +30,10 @@ export default function PrivacyPage() {
             </p>
 
             <h2 style={{ margin: '22px 0 0', color: '#20372f', fontSize: 22, fontWeight: 950, letterSpacing: '-0.035em' }}>
-              De Jutter
+              Skipper Hidde
             </h2>
             <p className="aat-text" style={{ margin: '10px 0 0', fontSize: 15 }}>
-              De Jutter gebruikt kunstmatige intelligentie om klantenservicevragen te beantwoorden. Berichten en gegevens die je zelf in de chat deelt, gebruiken we alleen om je vraag af te handelen, misbruik te voorkomen en waar nodig een supportverzoek te registreren. Deel nooit betaalgegevens of wachtwoorden in de chat.
+              Skipper Hidde gebruikt slimme automatisering en, wanneer beschikbaar, kunstmatige intelligentie om klantenservicevragen te beantwoorden. Berichten en gegevens die je zelf in de chat deelt, gebruiken we alleen om je vraag af te handelen, misbruik te voorkomen en waar nodig een supportverzoek te registreren. Deel nooit betaalgegevens of wachtwoorden in de chat.
             </p>
 
             <h2 style={{ margin: '22px 0 0', color: '#20372f', fontSize: 22, fontWeight: 950, letterSpacing: '-0.035em' }}>

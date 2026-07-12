@@ -9,7 +9,7 @@ const links = [
   { href: '/admin/marketing-tours', label: 'Marketing tours beheren' },
   { href: '/admin/orders', label: 'Orders' },
   { href: '/admin/reviews', label: 'Reviews' },
-  { href: '/admin/support', label: 'De Jutter support' },
+  { href: '/admin/support', label: 'Skipper Hidde support' },
   { href: '/admin/partners', label: 'Partners' },
 ]
 
