@@ -1,11 +1,15 @@
 import Link from 'next/link'
 import {
-  asNumber,
-  asText,
-  getAvailableTours,
-  getTourSlug,
-  upcomingTours,
-} from '@/lib/tour-catalog'
+  ArrowRight,
+  CheckCircle2,
+  Clock3,
+  Headphones,
+  MapPinned,
+  ShieldCheck,
+  Smartphone,
+  Sparkles,
+} from 'lucide-react'
+import { asNumber, asText, getAvailableTours, getTourSlug } from '@/lib/tour-catalog'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,6 +17,16 @@ type Lang = 'nl' | 'de' | 'en'
 
 function getLang(searchParams?: { lang?: string }): Lang {
   return searchParams?.lang === 'de' || searchParams?.lang === 'en' ? searchParams.lang : 'nl'
+}
+
+function localized(tour: Record<string, any>, base: string, language: Lang, fallback = '') {
+  const values =
+    language === 'en'
+      ? [tour[`${base}_en`], tour[base], tour[`${base}_de`]]
+      : language === 'de'
+      ? [tour[`${base}_de`], tour[base], tour[`${base}_en`]]
+      : [tour[base], tour[`${base}_en`], tour[`${base}_de`]]
+  return values.find((value) => typeof value === 'string' && value.trim())?.trim() || fallback
 }
 
 function durationLabel(tour: Record<string, any>) {
@@ -27,47 +41,68 @@ function distanceLabel(tour: Record<string, any>) {
   return asText(tour.distance, '± 3 km')
 }
 
-const copy = {
+const COPY = {
   nl: {
-    back: '← Terug naar begin',
-    eyebrow: 'Tours',
-    title: 'Kies de tour die bij jouw dag past',
-    intro: 'Beschikbare tours kun je direct starten. De andere routes komen binnenkort online.',
+    back: 'Terug naar het begin',
+    eyebrow: 'Kies je eilandverhaal',
+    title: 'Welke kant van Ameland wil je vandaag horen?',
+    intro: 'Elke tour combineert route, professionele audio en heldere navigatie op je eigen telefoon.',
     available: 'Nu beschikbaar',
-    availablePill: 'Beschikbaar',
-    comingSoon: 'Binnenkort',
-    emptyTitle: 'Nog geen actieve tour gevonden',
-    emptyText: 'Zet in Supabase minimaal één tour actief met een slug. Dan verschijnt hij hier automatisch.',
-    fallbackSubtitle: 'Een rustige audiotour langs bijzondere plekken op Ameland.',
-    footer: '© Ameland Audiotours',
-  },
-  de: {
-    back: '← Zurück zum Start',
-    eyebrow: 'Touren',
-    title: 'Wähle die Tour, die zu deinem Tag passt',
-    intro: 'Verfügbare Touren kannst du direkt starten. Weitere Routen kommen bald online.',
-    available: 'Jetzt verfügbar',
-    availablePill: 'Verfügbar',
-    comingSoon: 'Bald verfügbar',
-    emptyTitle: 'Noch keine aktive Tour gefunden',
-    emptyText: 'Aktiviere in Supabase mindestens eine Tour mit einem Slug. Dann erscheint sie hier automatisch.',
-    fallbackSubtitle: 'Eine ruhige Audiotour entlang besonderer Orte auf Ameland.',
+    badge: 'Direct starten',
+    buy: 'Bekijk en bestel',
+    included: ['Professioneel ingesproken', 'GPS-route met volgende stop', '48 uur persoonlijke toegang'],
+    promise: 'Zo weet je vooraf precies wat je krijgt',
+    trust: ['Veilig online betalen', 'Geen app-download', 'Start wanneer je wilt'],
+    coming: 'Hierna te ontdekken',
+    comingText: 'Nieuwe dorpsverhalen worden voorbereid in dezelfde rustige, persoonlijke stijl.',
+    future: [
+      ['Nes', 'Steegjes, commandeurs en het levendige hart van Ameland.', 'Wandeltour'],
+      ['Ballum', 'Bestuur, buitenplaatsen en het dorp van de Cammingha’s.', 'Wandeltour'],
+      ['Buren', 'Boerenleven, duinen en verhalen uit het oosten.', 'Wandeltour'],
+    ],
     footer: '© Ameland Audiotours',
   },
   en: {
-    back: '← Back to start',
-    eyebrow: 'Tours',
-    title: 'Choose the tour that fits your day',
-    intro: 'Available tours can be started right away. More routes are coming soon.',
+    back: 'Back to the start',
+    eyebrow: 'Choose your island story',
+    title: 'Which side of Ameland would you like to hear today?',
+    intro: 'Every tour combines a route, professional narration and clear navigation on your own phone.',
     available: 'Available now',
-    availablePill: 'Available',
-    comingSoon: 'Coming soon',
-    emptyTitle: 'No active tour found yet',
-    emptyText: 'Activate at least one tour with a slug in Supabase. It will appear here automatically.',
-    fallbackSubtitle: 'A calm audio tour along special places on Ameland.',
+    badge: 'Start immediately',
+    buy: 'View and book',
+    included: ['Professional narration', 'GPS route to the next stop', '48-hour personal access'],
+    promise: 'Know exactly what you are getting',
+    trust: ['Secure online payment', 'No app download', 'Start whenever you like'],
+    coming: 'Discover next',
+    comingText: 'New village stories are being created in the same calm, personal style.',
+    future: [
+      ['Nes', 'Lanes, sea captains and the lively heart of Ameland.', 'Walking tour'],
+      ['Ballum', 'Island government, country houses and the Cammingha village.', 'Walking tour'],
+      ['Buren', 'Farm life, dunes and stories from the east.', 'Walking tour'],
+    ],
     footer: '© Ameland Audiotours',
   },
-} satisfies Record<Lang, Record<string, string>>
+  de: {
+    back: 'Zurück zum Start',
+    eyebrow: 'Wähle deine Inselgeschichte',
+    title: 'Welche Seite von Ameland möchtest du heute hören?',
+    intro: 'Jede Tour verbindet Route, professionelle Stimme und klare Navigation auf deinem eigenen Handy.',
+    available: 'Jetzt verfügbar',
+    badge: 'Sofort starten',
+    buy: 'Ansehen und buchen',
+    included: ['Professionell gesprochen', 'GPS-Route zum nächsten Stopp', '48 Stunden persönlicher Zugang'],
+    promise: 'Du weißt vorher genau, was dich erwartet',
+    trust: ['Sicher online bezahlen', 'Kein App-Download', 'Start, wann du möchtest'],
+    coming: 'Als Nächstes entdecken',
+    comingText: 'Neue Dorfgeschichten entstehen im gleichen ruhigen, persönlichen Stil.',
+    future: [
+      ['Nes', 'Gassen, Kapitäne und das lebendige Herz von Ameland.', 'Wandertour'],
+      ['Ballum', 'Inselverwaltung, Landhäuser und das Dorf der Camminghas.', 'Wandertour'],
+      ['Buren', 'Bauernleben, Dünen und Geschichten aus dem Osten.', 'Wandertour'],
+    ],
+    footer: '© Ameland Audiotours',
+  },
+} as const
 
 export default async function ToursPage({
   searchParams,
@@ -76,305 +111,120 @@ export default async function ToursPage({
 }) {
   const resolvedSearchParams = await searchParams
   const lang = getLang(resolvedSearchParams)
-  const t = copy[lang]
+  const t = COPY[lang]
   const availableTours = await getAvailableTours()
 
   return (
-    <main
-      style={{
-        minHeight: '100svh',
-        background:
-          'radial-gradient(circle at 18% 0%, rgba(231,241,225,0.95) 0, transparent 36%), linear-gradient(180deg,#f4efe4 0%,#eee6d9 100%)',
-        color: '#20372f',
-        padding: '14px 14px 92px',
-        fontFamily:
-          'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-      }}
-    >
-      <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
-        <section
-          style={{
-            overflow: 'hidden',
-            borderRadius: 38,
-            background: '#fffdf8',
-            border: '1px solid #ddd4c4',
-            boxShadow: '0 28px 80px rgba(31,39,32,0.13)',
-          }}
-        >
-          <div
-            style={{
-              padding: '30px 24px 24px',
-              background:
-                'radial-gradient(circle at 88% 0%, #e9f2e4 0, transparent 36%), linear-gradient(180deg,#ffffff 0%,#fbf6ec 100%)',
-            }}
-          >
-            <Link
-              href={`/?lang=${lang}`}
-              style={{
-                display: 'inline-flex',
-                color: '#657064',
-                textDecoration: 'none',
-                fontSize: 14,
-                fontWeight: 850,
-                marginBottom: 18,
-              }}
-            >
-              {t.back}
-            </Link>
+    <main className="min-h-[100svh] bg-[#efe7da] pb-24 text-[#20372f]">
+      <header className="bg-[#153f45] px-4 py-10 text-white sm:px-8 sm:py-16">
+        <div className="mx-auto max-w-6xl">
+          <Link href={`/?lang=${lang}`} className="inline-flex items-center gap-2 text-sm font-black text-emerald-100 transition hover:text-white">
+            ← {t.back}
+          </Link>
+          <p className="mt-10 text-xs font-black uppercase tracking-[.24em] text-emerald-200">{t.eyebrow}</p>
+          <h1 className="mt-4 max-w-4xl text-[clamp(2.8rem,8vw,5.8rem)] font-black leading-[.9] tracking-[-.06em]">{t.title}</h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200">{t.intro}</p>
 
-            <p
-              style={{
-                margin: 0,
-                color: '#7a8875',
-                fontSize: 11,
-                fontWeight: 950,
-                letterSpacing: '0.23em',
-                textTransform: 'uppercase',
-              }}
-            >
-              {t.eyebrow}
-            </p>
+          <div className="mt-8 flex flex-wrap gap-2">
+            {t.trust.map((item, index) => {
+              const Icon = [ShieldCheck, Smartphone, Clock3][index]
+              return (
+                <span key={item} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black text-slate-100 backdrop-blur">
+                  <Icon className="h-4 w-4 text-emerald-300" /> {item}
+                </span>
+              )
+            })}
+          </div>
+        </div>
+      </header>
 
-            <h1
-              style={{
-                margin: '10px 0 0',
-                color: '#20372f',
-                fontSize: 'clamp(40px, 10vw, 54px)',
-                lineHeight: 0.92,
-                letterSpacing: '-0.065em',
-                fontWeight: 950,
-              }}
-            >
-              {t.title}
-            </h1>
-
-            <p
-              style={{
-                margin: '16px 0 0',
-                maxWidth: 380,
-                color: '#626b61',
-                fontSize: 17,
-                lineHeight: 1.45,
-                fontWeight: 520,
-              }}
-            >
-              {t.intro}
-            </p>
+      <div className="mx-auto max-w-6xl space-y-10 px-4 py-8 sm:px-8 sm:py-12">
+        <section>
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[.22em] text-[#7a8875]">{t.available}</p>
+              <h2 className="mt-2 text-3xl font-black tracking-tight">{t.promise}</h2>
+            </div>
+            <Sparkles className="hidden h-8 w-8 text-[#d86f48] sm:block" />
           </div>
 
-          <div style={{ padding: '18px 18px 8px', background: '#fffdf8' }}>
-            <p
-              style={{
-                margin: '0 0 12px',
-                color: '#7a8875',
-                fontSize: 11,
-                fontWeight: 950,
-                letterSpacing: '0.22em',
-                textTransform: 'uppercase',
-              }}
-            >
-              {t.available}
-            </p>
+          <div className="grid gap-5">
+            {availableTours.map((tour: Record<string, any>, index: number) => {
+              const slug = getTourSlug(tour)
+              const title = localized(tour, 'title', lang, index === 0 ? 'Maak kennis met Hollum' : 'Audiotour Ameland')
+              const subtitle =
+                localized(tour, 'subtitle', lang) ||
+                localized(tour, 'description', lang, 'Een bijzondere audiotour op Ameland.')
+              const image = asText(tour.hero_image_url)
 
-            <div style={{ display: 'grid', gap: 13 }}>
-              {availableTours.length > 0 ? (
-                availableTours.map((tour: Record<string, any>, index: number) => {
-                  const slug = getTourSlug(tour)
-                  const title = asText(tour.title, index === 0 ? 'Maak kennis met Hollum' : 'Audiotour Ameland')
-                  const subtitle =
-                    asText(tour.subtitle) ||
-                    asText(tour.short_description) ||
-                    asText(tour.description, t.fallbackSubtitle)
-
-                  return (
-                    <Link
-                      key={slug}
-                      href={`/checkout/${slug}?lang=${lang}`}
-                      style={{
-                        display: 'block',
-                        borderRadius: 28,
-                        border: '1px solid #e3dccf',
-                        background: '#fbf8f1',
-                        padding: 18,
-                        color: '#20372f',
-                        textDecoration: 'none',
-                        boxShadow: '0 12px 28px rgba(31,39,32,0.05)',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 11 }}>
-                        <span
-                          style={{
-                            borderRadius: 999,
-                            background: '#e9f2e5',
-                            color: '#557257',
-                            padding: '6px 10px',
-                            fontSize: 11,
-                            lineHeight: 1,
-                            fontWeight: 950,
-                          }}
-                        >
-                          {t.availablePill}
-                        </span>
-
-                        <span style={{ color: '#7a7f74', fontSize: 12, fontWeight: 850 }}>{durationLabel(tour)}</span>
-                        <span style={{ color: '#7a7f74', fontSize: 12, fontWeight: 850 }}>{distanceLabel(tour)}</span>
+              return (
+                <article key={slug} className="overflow-hidden rounded-[2.2rem] border border-[#ded4c5] bg-[#fffdf8] shadow-[0_22px_60px_rgba(31,39,32,.1)]">
+                  <div className="grid lg:grid-cols-[1.05fr_.95fr]">
+                    <div className="relative min-h-64 overflow-hidden bg-slate-900 lg:min-h-[420px]">
+                      {image ? (
+                        <img src={image} alt={title} className="absolute inset-0 h-full w-full object-cover" />
+                      ) : null}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/25 to-transparent" />
+                      <div className="absolute inset-x-0 bottom-0 p-5 text-white sm:p-7">
+                        <span className="inline-flex rounded-full bg-emerald-300 px-3 py-1.5 text-xs font-black text-slate-950">{t.badge}</span>
+                        <h3 className="mt-4 text-3xl font-black leading-none tracking-tight sm:text-4xl">{title}</h3>
+                        <p className="mt-3 max-w-xl text-sm leading-6 text-slate-200">{subtitle}</p>
                       </div>
+                    </div>
 
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14 }}>
-                        <div style={{ minWidth: 0 }}>
-                          <h2
-                            style={{
-                              margin: 0,
-                              color: '#20372f',
-                              fontSize: 22,
-                              lineHeight: 1.1,
-                              letterSpacing: '-0.035em',
-                              fontWeight: 950,
-                            }}
-                          >
-                            {title}
-                          </h2>
-
-                          <p
-                            style={{
-                              margin: '8px 0 0',
-                              color: '#626b61',
-                              fontSize: 14,
-                              lineHeight: 1.45,
-                              fontWeight: 650,
-                            }}
-                          >
-                            {subtitle}
-                          </p>
+                    <div className="flex flex-col justify-between p-5 sm:p-7">
+                      <div>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="inline-flex items-center gap-2 rounded-full bg-[#edf5ea] px-3 py-2 text-xs font-black text-[#315848]">
+                            <Clock3 className="h-4 w-4" /> {durationLabel(tour)}
+                          </span>
+                          <span className="inline-flex items-center gap-2 rounded-full bg-[#edf5ea] px-3 py-2 text-xs font-black text-[#315848]">
+                            <MapPinned className="h-4 w-4" /> {distanceLabel(tour)}
+                          </span>
+                          <span className="inline-flex items-center gap-2 rounded-full bg-[#edf5ea] px-3 py-2 text-xs font-black text-[#315848]">
+                            <Headphones className="h-4 w-4" /> 9 stops
+                          </span>
                         </div>
 
-                        <span
-                          style={{
-                            flexShrink: 0,
-                            width: 42,
-                            height: 42,
-                            borderRadius: 999,
-                            background: '#fffdf8',
-                            color: '#c96643',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: 24,
-                            fontWeight: 300,
-                          }}
-                        >
-                          →
-                        </span>
+                        <div className="mt-7 space-y-4">
+                          {t.included.map((item) => (
+                            <p key={item} className="flex items-start gap-3 text-sm font-bold leading-6 text-[#4f5f55]">
+                              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#0f5d67]" /> {item}
+                            </p>
+                          ))}
+                        </div>
                       </div>
-                    </Link>
-                  )
-                })
-              ) : (
-                <div
-                  style={{
-                    borderRadius: 28,
-                    border: '1px solid #e3dccf',
-                    background: '#fbf8f1',
-                    padding: 18,
-                  }}
-                >
-                  <p style={{ margin: 0, color: '#20372f', fontSize: 18, fontWeight: 950 }}>
-                    {t.emptyTitle}
-                  </p>
-                  <p style={{ margin: '8px 0 0', color: '#626b61', fontSize: 14, lineHeight: 1.45, fontWeight: 650 }}>
-                    {t.emptyText}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
 
-          <div style={{ padding: '18px 18px 22px', background: '#fffdf8' }}>
-            <p
-              style={{
-                margin: '0 0 12px',
-                color: '#7a8875',
-                fontSize: 11,
-                fontWeight: 950,
-                letterSpacing: '0.22em',
-                textTransform: 'uppercase',
-              }}
-            >
-              {t.comingSoon}
-            </p>
-
-            <div style={{ display: 'grid', gap: 13 }}>
-              {upcomingTours.map((tour) => (
-                <div
-                  key={tour.title}
-                  style={{
-                    borderRadius: 28,
-                    border: '1px solid #eee6d8',
-                    background: '#f7f2e8',
-                    padding: 18,
-                    opacity: 0.92,
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 11 }}>
-                    <span
-                      style={{
-                        borderRadius: 999,
-                        background: '#efe6d8',
-                        color: '#8a6f54',
-                        padding: '6px 10px',
-                        fontSize: 11,
-                        lineHeight: 1,
-                        fontWeight: 950,
-                      }}
-                    >
-                      {t.comingSoon}
-                    </span>
-
-                    <span style={{ color: '#7a7f74', fontSize: 12, fontWeight: 850 }}>{tour.duration}</span>
-                    <span style={{ color: '#7a7f74', fontSize: 12, fontWeight: 850 }}>{tour.distance}</span>
+                      <Link href={`/checkout/${slug}?lang=${lang}`} className="mt-8 inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-[#d86f48] px-6 font-black text-white shadow-xl transition hover:-translate-y-0.5 hover:bg-[#e37a53]">
+                        {t.buy} <ArrowRight className="h-5 w-5" />
+                      </Link>
+                    </div>
                   </div>
-
-                  <h2
-                    style={{
-                      margin: 0,
-                      color: '#20372f',
-                      fontSize: 22,
-                      lineHeight: 1.1,
-                      letterSpacing: '-0.035em',
-                      fontWeight: 950,
-                    }}
-                  >
-                    {tour.title}
-                  </h2>
-
-                  <p
-                    style={{
-                      margin: '8px 0 0',
-                      color: '#626b61',
-                      fontSize: 14,
-                      lineHeight: 1.45,
-                      fontWeight: 650,
-                    }}
-                  >
-                    {tour.subtitle}
-                  </p>
-                </div>
-              ))}
-            </div>
+                </article>
+              )
+            })}
           </div>
         </section>
 
-        <p
-          style={{
-            margin: '28px 0 0',
-            textAlign: 'center',
-            color: '#8a867d',
-            fontSize: 12,
-            fontWeight: 750,
-          }}
-        >
-          {t.footer}
-        </p>
+        <section className="rounded-[2.2rem] border border-[#ded4c5] bg-[#fffdf8] p-5 sm:p-8">
+          <p className="text-xs font-black uppercase tracking-[.22em] text-[#7a8875]">{t.coming}</p>
+          <h2 className="mt-3 text-3xl font-black tracking-tight">{t.comingText}</h2>
+          <div className="mt-7 grid gap-3 md:grid-cols-3">
+            {t.future.map(([place, description, type], index) => (
+              <article key={place} className="rounded-3xl border border-[#ebe3d7] bg-[#f8f2e8] p-5">
+                <div className="flex items-center justify-between">
+                  <MapPinned className="h-6 w-6 text-[#0f5d67]" />
+                  <span className="rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[.14em] text-[#7a8875]">{type}</span>
+                </div>
+                <h3 className="mt-5 text-2xl font-black">{place}</h3>
+                <p className="mt-2 text-sm leading-6 text-[#677066]">{description}</p>
+                <p className="mt-5 text-xs font-black uppercase tracking-[.16em] text-[#c96643]">0{index + 1}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <p className="text-center text-xs font-bold text-[#8a867d]">{t.footer}</p>
       </div>
     </main>
   )
