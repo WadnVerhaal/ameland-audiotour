@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import AppAutoTranslator from '@/components/i18n/AppAutoTranslator'
 import AppChrome from '@/components/app/AppChrome'
 
 export const metadata: Metadata = {
@@ -25,7 +24,6 @@ export default function RootLayout({
     <html lang="nl">
       <body>
         <AppChrome />
-        <AppAutoTranslator />
         {children}
       </body>
     </html>
