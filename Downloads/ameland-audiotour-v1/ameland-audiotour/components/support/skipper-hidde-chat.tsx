@@ -114,7 +114,6 @@ function detectLanguage(): Language {
     .find(
       (entry) =>
         entry.startsWith('amelandaudiotours-language=') ||
-        entry.startsWith('wadnverhaal-language=') ||
         entry.startsWith('locale=')
     )
     ?.split('=')[1]

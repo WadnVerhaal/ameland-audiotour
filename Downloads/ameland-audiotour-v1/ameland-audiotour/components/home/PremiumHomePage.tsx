@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { cookies } from 'next/headers'
 
 type Lang = 'nl' | 'de' | 'en'
@@ -7,7 +8,6 @@ async function getLang(): Promise<Lang> {
   const cookieStore = await cookies()
   const value =
     cookieStore.get('ameland-audiotours-language')?.value ||
-    cookieStore.get('wadnverhaal-language')?.value ||
     cookieStore.get('NEXT_LOCALE')?.value
 
   if (value === 'de' || value === 'en' || value === 'nl') return value
@@ -107,6 +107,10 @@ export default async function PremiumHomePage() {
             }}
           >
             <div style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
+                <Image src="/images/ameland-audiotours-logo.webp" alt="Ameland Audiotours logo" width={76} height={76} priority style={{ borderRadius: 999, objectFit: 'cover', boxShadow: '0 14px 32px rgba(15,93,103,.18)' }} />
+                <strong style={{ maxWidth: 180, color: '#164c58', fontSize: 17, lineHeight: 1.1, letterSpacing: '-0.02em' }}>Ameland Audiotours</strong>
+              </div>
               <p style={{ margin: 0, color: '#7a8875', fontSize: 11, fontWeight: 950, letterSpacing: '0.22em', textTransform: 'uppercase' }}>
                 {t.eyebrow}
               </p>

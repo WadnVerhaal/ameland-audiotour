@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import Image from 'next/image'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   CheckCircle2,
@@ -669,11 +670,21 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
       <div className="relative mx-auto flex min-h-[100dvh] max-w-5xl flex-col gap-3 px-3 py-3 sm:px-5 sm:py-5">
         <header className="rounded-[1.35rem] border border-white/10 bg-white/[0.055] p-3 shadow-xl backdrop-blur">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <p className="truncate text-[10px] font-black uppercase tracking-[0.22em] text-emerald-300">{copy.brand}</p>
-              <h1 className="mt-1 truncate text-lg font-black tracking-tight text-white sm:text-xl">
-                {selectedIndex + 1}. {selectedTitle}
-              </h1>
+            <div className="flex min-w-0 items-center gap-3">
+              <Image
+                src="/images/ameland-audiotours-logo.webp"
+                alt="Ameland Audiotours logo"
+                width={44}
+                height={44}
+                className="h-11 w-11 shrink-0 rounded-full border border-white/20 object-cover shadow-lg"
+                priority
+              />
+              <div className="min-w-0">
+                <p className="truncate text-[10px] font-black uppercase tracking-[0.22em] text-emerald-300">{copy.brand}</p>
+                <h1 className="mt-1 truncate text-lg font-black tracking-tight text-white sm:text-xl">
+                  {selectedIndex + 1}. {selectedTitle}
+                </h1>
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
@@ -709,7 +720,6 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
               selectedIndex={selectedIndex}
               arrivedIndex={arrivedIndex}
               reachedKeys={completedKeys}
-              onSelect={goToStop}
             />
           </div>
 

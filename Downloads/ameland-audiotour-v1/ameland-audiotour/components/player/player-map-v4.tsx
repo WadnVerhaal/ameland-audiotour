@@ -37,7 +37,6 @@ type Props = {
   selectedIndex: number
   arrivedIndex: number | null
   reachedKeys: string[]
-  onSelect: (index: number) => void
 }
 
 type CameraMode = 'route' | 'follow' | 'free'
@@ -264,9 +263,9 @@ function stopIcon(number: number, state: 'pending' | 'selected' | 'arrived' | 'c
 
   return L.divIcon({
     className: '',
-    html: `<div style="width:42px;height:42px;border-radius:999px;background:${palette.background};color:${palette.color};display:flex;align-items:center;justify-content:center;font:900 14px Arial;border:3px solid white;box-shadow:0 0 0 5px ${palette.ring},0 14px 28px rgba(2,6,23,.35)">${number}</div>`,
-    iconSize: [42, 42],
-    iconAnchor: [21, 21],
+    html: `<div style="width:34px;height:34px;border-radius:999px;background:${palette.background};color:${palette.color};display:flex;align-items:center;justify-content:center;font:800 13px Arial;border:2px solid white;box-shadow:0 0 0 2px ${palette.ring},0 8px 18px rgba(2,6,23,.28)">${number}</div>`,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
   })
 }
 
@@ -519,7 +518,6 @@ export function PlayerMap({
   selectedIndex,
   arrivedIndex,
   reachedKeys,
-  onSelect,
 }: Props) {
   const t = COPY[language]
   const selectedStop = stops[selectedIndex] || stops[0] || null
@@ -647,11 +645,6 @@ export function PlayerMap({
   const routeDuration = formatDuration(activeRoute?.durationSeconds ?? null, language)
   const routeSummary = [routeDistance, routeDuration].filter(Boolean).join(' · ')
 
-  function selectStop(index: number) {
-    setCameraMode('route')
-    onSelect(index)
-  }
-
   function retryRoute() {
     lastLiveRequest.current = null
     if (location) {
@@ -763,39 +756,24 @@ export function PlayerMap({
           </>
         ) : null}
 
-        {stops.map((stop, index) => {
-          const coordinates = coordinatesFor(stop)
-          if (!coordinates) return null
-          const key = stopKey(stop, index)
-          const state =
-            arrivedIndex === index
-              ? 'arrived'
-              : reachedKeys.includes(key)
-              ? 'completed'
-              : selectedIndex === index
-              ? 'selected'
-              : 'pending'
-          return (
-            <Marker
-              key={key}
-              position={coordinates}
-              icon={stopIcon(index + 1, state)}
-              eventHandlers={{ click: () => selectStop(index) }}
-              zIndexOffset={selectedIndex === index ? 700 : state === 'completed' ? 300 : 0}
-            >
-              <Tooltip direction="top" offset={[0, -22]} opacity={1}>
-                {index + 1}. {titleFor(stop, language)}
-                {state === 'completed'
-                  ? ` · ${t.completed}`
-                  : state === 'arrived'
-                  ? ` · ${t.arrived}`
-                  : state === 'selected'
-                  ? ` · ${t.selected}`
-                  : ''}
-              </Tooltip>
-            </Marker>
-          )
-        })}
+        {target ? (
+          <Marker
+            position={target}
+            icon={stopIcon(
+              selectedIndex + 1,
+              arrivedIndex === selectedIndex
+                ? 'arrived'
+                : reachedKeys.includes(stopKey(selectedStop, selectedIndex))
+                ? 'completed'
+                : 'selected'
+            )}
+            zIndexOffset={700}
+          >
+            <Tooltip direction="top" offset={[0, -18]} opacity={1}>
+              {selectedIndex + 1}. {selectedTitle}
+            </Tooltip>
+          </Marker>
+        ) : null}
 
         {target ? (
           <Circle

@@ -14,9 +14,7 @@ function getLang(): Lang {
   if (typeof window === 'undefined') return 'nl'
 
   const fromUrl = new URLSearchParams(window.location.search).get('lang')
-  const stored =
-    window.localStorage.getItem('ameland-audiotours-language') ||
-    window.localStorage.getItem('wadnverhaal-language')
+  const stored = window.localStorage.getItem('ameland-audiotours-language')
 
   if (fromUrl === 'de' || fromUrl === 'en' || fromUrl === 'nl') return fromUrl
   if (stored === 'de' || stored === 'en' || stored === 'nl') return stored
