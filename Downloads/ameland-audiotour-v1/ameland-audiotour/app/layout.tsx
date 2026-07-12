@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import AppLanguageBar from '@/components/i18n/AppLanguageBar'
 import AppAutoTranslator from '@/components/i18n/AppAutoTranslator'
-import { SkipperHiddeChat } from '@/components/support/skipper-hidde-chat'
+import AppChrome from '@/components/app/AppChrome'
 
 export const metadata: Metadata = {
   title: 'Ameland Audiotours',
@@ -25,10 +24,9 @@ export default function RootLayout({
   return (
     <html lang="nl">
       <body>
-        <AppLanguageBar />
+        <AppChrome />
         <AppAutoTranslator />
         {children}
-        <SkipperHiddeChat />
       </body>
     </html>
   )
