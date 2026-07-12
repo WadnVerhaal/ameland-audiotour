@@ -200,10 +200,10 @@ export async function sendSupportNotification(input: {
   return resend.emails.send({
     from,
     to: process.env.SUPPORT_EMAIL || 'info@amelandaudiotours.nl',
-    subject: `De Jutter: nieuw supportverzoek ${input.reference.slice(0, 8).toUpperCase()}`,
+    subject: `Skipper Hidde: nieuw supportverzoek ${input.reference.slice(0, 8).toUpperCase()}`,
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.6;color:#163c43">
-        <h2>Nieuw supportverzoek van De Jutter</h2>
+        <h2>Nieuw supportverzoek van Skipper Hidde</h2>
         <p><strong>Categorie:</strong> ${escapeHtml(input.category)}</p>
         <p><strong>Samenvatting:</strong><br>${escapeHtml(input.summary)}</p>
         <p><strong>E-mail:</strong> ${escapeHtml(input.email || 'Niet opgegeven')}</p>

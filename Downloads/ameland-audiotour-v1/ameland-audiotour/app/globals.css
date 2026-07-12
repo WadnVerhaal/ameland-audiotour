@@ -46,6 +46,31 @@ body {
   min-height: 100svh;
 }
 
+@keyframes skipper-hidde-float {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-3px) rotate(1deg); }
+}
+
+@keyframes skipper-hidde-glow {
+  0%, 100% { transform: scale(1); opacity: 0.28; }
+  50% { transform: scale(1.12); opacity: 0.45; }
+}
+
+.skipper-hidde-avatar {
+  animation: skipper-hidde-float 3.6s ease-in-out infinite;
+}
+
+.skipper-hidde-glow {
+  animation: skipper-hidde-glow 5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skipper-hidde-avatar,
+  .skipper-hidde-glow {
+    animation: none !important;
+  }
+}
+
 a {
   color: inherit;
 }
