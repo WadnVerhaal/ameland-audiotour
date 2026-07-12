@@ -237,9 +237,7 @@ const translations: Record<Exclude<Lang, 'nl'>, Record<string, string>> = {
 function getLang(): Lang {
   const params = new URLSearchParams(window.location.search)
   const fromUrl = params.get('lang')
-  const stored =
-    window.localStorage.getItem('ameland-audiotours-language') ||
-    window.localStorage.getItem('wadnverhaal-language')
+  const stored = window.localStorage.getItem('ameland-audiotours-language')
 
   if (fromUrl === 'de' || fromUrl === 'en' || fromUrl === 'nl') return fromUrl
   if (stored === 'de' || stored === 'en' || stored === 'nl') return stored

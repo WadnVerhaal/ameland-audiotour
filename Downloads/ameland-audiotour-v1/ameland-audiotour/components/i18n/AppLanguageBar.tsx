@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
 type Lang = 'nl' | 'de' | 'en'
@@ -15,9 +16,7 @@ function getCurrentLang(): Lang {
 
   const params = new URLSearchParams(window.location.search)
   const fromUrl = params.get('lang')
-  const stored =
-    window.localStorage.getItem('ameland-audiotours-language') ||
-    window.localStorage.getItem('wadnverhaal-language')
+  const stored = window.localStorage.getItem('ameland-audiotours-language')
 
   if (fromUrl === 'de' || fromUrl === 'en' || fromUrl === 'nl') return fromUrl
   if (stored === 'de' || stored === 'en' || stored === 'nl') return stored
@@ -39,10 +38,7 @@ export default function AppLanguageBar() {
     document.documentElement.lang = lang
 
     window.localStorage.setItem('ameland-audiotours-language', lang)
-    window.localStorage.setItem('wadnverhaal-language', lang)
-
     document.cookie = `ameland-audiotours-language=${lang}; path=/; max-age=31536000; SameSite=Lax`
-    document.cookie = `wadnverhaal-language=${lang}; path=/; max-age=31536000; SameSite=Lax`
     document.cookie = `NEXT_LOCALE=${lang}; path=/; max-age=31536000; SameSite=Lax`
 
     window.dispatchEvent(new CustomEvent('app-language-change', { detail: { language: lang } }))
@@ -66,7 +62,11 @@ export default function AppLanguageBar() {
         zIndex: 10,
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
+        <a href="/" aria-label="Ameland Audiotours home" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#20372f', textDecoration: 'none', fontWeight: 950 }}>
+          <Image src="/images/ameland-audiotours-logo.webp" alt="Ameland Audiotours logo" width={44} height={44} style={{ borderRadius: 999, objectFit: 'cover', boxShadow: '0 8px 20px rgba(31,39,32,.12)' }} priority />
+          <span style={{ display: 'none' }}>Ameland Audiotours</span>
+        </a>
         <div
           style={{
             display: 'flex',

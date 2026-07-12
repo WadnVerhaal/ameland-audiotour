@@ -28,7 +28,7 @@ export function ExpiredAccessCard({ language, variant = 'full' }: Props) {
       compactSubtext:
         'Je kunt de tour opnieuw aanschaffen om direct weer toegang te krijgen.',
       compactPrimary: 'Nieuwe tour kopen',
-      labelTop: 'Wad’n Verhaal',
+      labelTop: 'Ameland Audiotours',
       softLine: 'Opnieuw luisteren? Dat kan meteen met een nieuwe toegang.',
     },
     en: {

@@ -12,9 +12,7 @@ const languages: Array<{ code: Lang; label: string; flag: string }> = [
 
 function getLang(): Lang {
   if (typeof window === 'undefined') return 'nl'
-  const stored =
-    window.localStorage.getItem('ameland-audiotours-language') ||
-    window.localStorage.getItem('wadnverhaal-language')
+  const stored = window.localStorage.getItem('ameland-audiotours-language')
 
   if (stored === 'de' || stored === 'en' || stored === 'nl') return stored
   return 'nl'
@@ -31,9 +29,7 @@ export default function AppLanguageShell({
 
   function setLang(lang: Lang) {
     window.localStorage.setItem('ameland-audiotours-language', lang)
-    window.localStorage.setItem('wadnverhaal-language', lang)
     document.cookie = `ameland-audiotours-language=${lang}; path=/; max-age=31536000; SameSite=Lax`
-    document.cookie = `wadnverhaal-language=${lang}; path=/; max-age=31536000; SameSite=Lax`
     window.location.reload()
   }
 

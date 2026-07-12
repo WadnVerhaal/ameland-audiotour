@@ -48,7 +48,7 @@ export const translations = {
     termsText1:
       'Na aankoop krijg je toegang tot jouw audiotour. De toegang is persoonlijk en bedoeld voor normaal gebruik tijdens je bezoek.',
     termsText2:
-      'Wad’n Verhaal is niet aansprakelijk voor schade die ontstaat door onjuist gebruik van de app of het negeren van verkeers- en veiligheidsregels.',
+      'Ameland Audiotours is niet aansprakelijk voor schade die ontstaat door onjuist gebruik van de app of het negeren van verkeers- en veiligheidsregels.',
 
     back: 'Terug',
     backToHome: 'Terug naar home',
@@ -242,7 +242,7 @@ export const translations = {
     termsText1:
       'After purchase you receive access to your audio tour. Access is personal and intended for normal use during your visit.',
     termsText2:
-      'Wad’n Verhaal is not liable for damage caused by improper use of the app or by ignoring traffic and safety rules.',
+      'Ameland Audiotours is not liable for damage caused by improper use of the app or by ignoring traffic and safety rules.',
 
     back: 'Back',
     backToHome: 'Back to home',
@@ -436,7 +436,7 @@ export const translations = {
     termsText1:
       'Nach dem Kauf erhältst du Zugang zu deiner Audiotour. Der Zugang ist persönlich und für die normale Nutzung während deines Besuchs bestimmt.',
     termsText2:
-      'Wad’n Verhaal haftet nicht für Schäden, die durch unsachgemäße Nutzung der App oder durch das Ignorieren von Verkehrs- und Sicherheitsregeln entstehen.',
+      'Ameland Audiotours haftet nicht für Schäden, die durch unsachgemäße Nutzung der App oder durch das Ignorieren von Verkehrs- und Sicherheitsregeln entstehen.',
 
     back: 'Zurück',
     backToHome: 'Zurück zur Startseite',

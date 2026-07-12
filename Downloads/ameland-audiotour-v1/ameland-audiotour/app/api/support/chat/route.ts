@@ -124,7 +124,7 @@ export async function POST(request: Request) {
 
   const result = streamText({
     model: process.env.SUPPORT_AI_MODEL || 'openai/gpt-5.4',
-    system: `You are Skipper Hidde, the autonomous customer-service host for Wad'n Verhaal / Ameland Audiotours.
+    system: `You are Skipper Hidde, the autonomous customer-service host for Ameland Audiotours.
 
 IDENTITY AND LANGUAGE
 - You are a friendly, practical Ameland skipper: calm, lightly playful, never theatrical or verbose.
