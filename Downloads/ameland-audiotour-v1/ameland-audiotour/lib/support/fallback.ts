@@ -81,6 +81,10 @@ export async function buildFallbackSupportResponse({
     'rückerstattung', 'restitutie',
   ])
   const accessExpired = includesAny(context, ['verlopen', 'expired', 'abgelaufen'])
+  const asksHowItWorks = includesAny(context, [
+    'hoe werkt', 'how does', 'how it works', 'wie funktioniert',
+    'download', 'app store', 'install',
+  ])
 
   if (wantsAccessLink && !accessExpired) {
     if (!email) {
@@ -174,6 +178,14 @@ export async function buildFallbackSupportResponse({
     })
   }
 
+  if (asksHowItWorks) {
+    return answer(language, {
+      nl: 'Je hoeft niets te installeren. Kies een tour, betaal veilig via Mollie en open daarna je persoonlijke startlink op je telefoon. De link blijft normaal 48 uur geldig en opent direct de route, kaart en audio.',
+      en: 'There is nothing to install. Choose a tour, pay securely through Mollie, then open your personal start link on your phone. It normally stays valid for 48 hours and opens the route, map and audio.',
+      de: 'Du musst nichts installieren. Wähle eine Tour, bezahle sicher über Mollie und öffne danach deinen persönlichen Startlink auf dem Handy. Er ist normalerweise 48 Stunden gültig und öffnet Route, Karte und Audio.',
+    })
+  }
+
   if (includesAny(context, ['locatie', 'gps', 'location', 'standort', 'positie'])) {
     return answer(language, {
       nl: 'Loop dit even na: 1) geef Safari of Chrome toestemming voor je exacte locatie, 2) zet locatievoorzieningen en mobiele data aan, 3) ververs de tourpagina. Je kunt altijd handmatig de volgende stop kiezen. Doe dit alleen als je veilig stilstaat.',
@@ -203,14 +215,6 @@ export async function buildFallbackSupportResponse({
       nl: `Dit zijn de tours die nu beschikbaar zijn:\n\n${knowledge.tours}\n\nWil je vooral dorp, natuur of fietsen? Dan help ik je gericht kiezen.`,
       en: `These are the tours currently available:\n\n${knowledge.tours}\n\nWould you prefer village stories, nature or cycling? I’ll help you choose.`,
       de: `Diese Touren sind derzeit verfügbar:\n\n${knowledge.tours}\n\nMöchtest du lieber Dorfgeschichten, Natur oder Radfahren? Dann helfe ich dir bei der Wahl.`,
-    })
-  }
-
-  if (includesAny(context, ['hoe werkt', 'how does', 'how it works', 'wie funktioniert', 'download', 'app store', 'install'])) {
-    return answer(language, {
-      nl: 'Je hoeft niets te installeren. Kies een tour, betaal veilig via Mollie en open daarna je persoonlijke startlink op je telefoon. De link blijft normaal 48 uur geldig en opent direct de route, kaart en audio.',
-      en: 'There is nothing to install. Choose a tour, pay securely through Mollie, then open your personal start link on your phone. It normally stays valid for 48 hours and opens the route, map and audio.',
-      de: 'Du musst nichts installieren. Wähle eine Tour, bezahle sicher über Mollie und öffne danach deinen persönlichen Startlink auf dem Handy. Er ist normalerweise 48 Stunden gültig und öffnet Route, Karte und Audio.',
     })
   }
 
