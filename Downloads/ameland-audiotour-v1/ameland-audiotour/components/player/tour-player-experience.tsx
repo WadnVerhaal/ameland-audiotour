@@ -139,7 +139,8 @@ const COPY = {
     arrivedInstruction: 'Je bent op de juiste plek. Zoek een veilige plek, start het verhaal en pauzeer gerust wanneer dat nodig is.',
     distance: 'Nog te lopen',
     progress: 'Voortgang',
-    openRoute: 'Volg mij in de app',
+    openRoute: 'Begin de tour',
+    recenterRoute: 'Route opnieuw centreren',
     confirmArrival: 'Ik ben bij de stop',
     confirmArrivalHelp: 'Gebruik dit alleen wanneer GPS je niet automatisch herkent.',
     listen: 'Luister naar het verhaal',
@@ -155,9 +156,9 @@ const COPY = {
     pauseSafety: 'Je kunt de audio altijd pauzeren om eerst een veilige plek te zoeken.',
     gpsActive: 'GPS actief',
     gpsWaiting: 'GPS zoeken…',
-    gpsDenied: 'Locatie staat uit',
+    gpsDenied: 'GPS niet gevonden',
     gpsUnsupported: 'GPS niet beschikbaar',
-    enableLocation: 'Locatie opnieuw inschakelen',
+    enableLocation: 'Probeer GPS opnieuw',
     overview: 'Touroverzicht',
     current: 'Volgende stop',
     allStops: 'Alle stops',
@@ -185,7 +186,8 @@ const COPY = {
     arrivedInstruction: 'You are in the right place. Find a safe place, start the story and pause whenever needed.',
     distance: 'Distance to go',
     progress: 'Progress',
-    openRoute: 'Follow me in the app',
+    openRoute: 'Begin the tour',
+    recenterRoute: 'Recenter route',
     confirmArrival: 'I am at the stop',
     confirmArrivalHelp: 'Use this only when GPS does not recognise your location.',
     listen: 'Listen to the story',
@@ -201,9 +203,9 @@ const COPY = {
     pauseSafety: 'You can always pause the audio while you find a safe place to listen.',
     gpsActive: 'GPS active',
     gpsWaiting: 'Finding GPS…',
-    gpsDenied: 'Location is off',
+    gpsDenied: 'GPS not found',
     gpsUnsupported: 'GPS unavailable',
-    enableLocation: 'Enable location again',
+    enableLocation: 'Try GPS again',
     overview: 'Tour overview',
     current: 'Next stop',
     allStops: 'All stops',
@@ -231,7 +233,8 @@ const COPY = {
     arrivedInstruction: 'Du bist am richtigen Ort. Suche einen sicheren Platz, starte die Geschichte und pausiere bei Bedarf.',
     distance: 'Noch zu gehen',
     progress: 'Fortschritt',
-    openRoute: 'Mir in der App folgen',
+    openRoute: 'Tour beginnen',
+    recenterRoute: 'Route neu zentrieren',
     confirmArrival: 'Ich bin am Stopp',
     confirmArrivalHelp: 'Nutze dies nur, wenn GPS deinen Standort nicht automatisch erkennt.',
     listen: 'Geschichte anhören',
@@ -247,9 +250,9 @@ const COPY = {
     pauseSafety: 'Du kannst die Audioführung jederzeit pausieren, um zuerst einen sicheren Platz zu suchen.',
     gpsActive: 'GPS aktiv',
     gpsWaiting: 'GPS wird gesucht…',
-    gpsDenied: 'Standort ist aus',
+    gpsDenied: 'GPS nicht gefunden',
     gpsUnsupported: 'GPS nicht verfügbar',
-    enableLocation: 'Standort erneut aktivieren',
+    enableLocation: 'GPS erneut versuchen',
     overview: 'Tourübersicht',
     current: 'Nächster Stopp',
     allStops: 'Alle Stopps',
@@ -445,6 +448,8 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const watchIdRef = useRef<number | null>(null)
+  const locationTimeoutRef = useRef<number | null>(null)
+  const locationResolvedRef = useRef(false)
   const lastAcceptedLocationRef = useRef<GeoPoint | null>(null)
   const completingRef = useRef(false)
   const startedAtRef = useRef(Date.now())
@@ -488,30 +493,82 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
     }
 
     setLocationState('waiting')
+    locationResolvedRef.current = false
     if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current)
+    if (locationTimeoutRef.current !== null) window.clearTimeout(locationTimeoutRef.current)
 
+    try {
+      const cached = window.localStorage.getItem('aat.lastLocation')
+      if (cached) {
+        const saved = JSON.parse(cached) as GeoPoint
+        if (
+          Number.isFinite(saved.lat) &&
+          Number.isFinite(saved.lng) &&
+          Date.now() - saved.at < 30 * 60 * 1000
+        ) {
+          lastAcceptedLocationRef.current = saved
+          setLocation(saved)
+        }
+      }
+    } catch {
+      // Een opgeslagen positie is alleen een snelle fallback, nooit een blokkade.
+    }
+
+    const acceptPosition = (position: GeolocationPosition) => {
+      const next: GeoPoint = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+        accuracy: position.coords.accuracy || 999,
+        at: Date.now(),
+      }
+      const previous = lastAcceptedLocationRef.current
+      const moved = previous ? distanceMeters(previous, next) : Number.POSITIVE_INFINITY
+      const accuracyImproved = previous ? next.accuracy < previous.accuracy * 0.75 : true
+      const stale = previous ? Date.now() - previous.at > 20000 : true
+
+      if (!previous || moved >= 5 || accuracyImproved || stale) {
+        lastAcceptedLocationRef.current = next
+        setLocation(next)
+        try {
+          window.localStorage.setItem('aat.lastLocation', JSON.stringify(next))
+        } catch {
+          // De live locatie blijft ook zonder lokale opslag werken.
+        }
+      }
+      locationResolvedRef.current = true
+      setLocationState('active')
+      if (locationTimeoutRef.current !== null) {
+        window.clearTimeout(locationTimeoutRef.current)
+        locationTimeoutRef.current = null
+      }
+    }
+
+    const handleLocationError = (error: GeolocationPositionError) => {
+      if (error.code === error.PERMISSION_DENIED) {
+        setLocationState('denied')
+        if (locationTimeoutRef.current !== null) window.clearTimeout(locationTimeoutRef.current)
+      }
+    }
+
+    // Een snelle, eventueel grove fix voorkomt lang wachten op mobiel en laptop.
+    navigator.geolocation.getCurrentPosition(acceptPosition, handleLocationError, {
+      enableHighAccuracy: false,
+      maximumAge: 300000,
+      timeout: 8000,
+    })
+
+    // Daarna blijft een nauwkeurige watcher de positie en route verbeteren.
     watchIdRef.current = navigator.geolocation.watchPosition(
-      (position) => {
-        const next: GeoPoint = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          accuracy: position.coords.accuracy || 999,
-          at: Date.now(),
-        }
-        const previous = lastAcceptedLocationRef.current
-        const moved = previous ? distanceMeters(previous, next) : Number.POSITIVE_INFINITY
-        const accuracyImproved = previous ? next.accuracy < previous.accuracy * 0.75 : true
-        const stale = previous ? Date.now() - previous.at > 20000 : true
-
-        if (!previous || moved >= 5 || accuracyImproved || stale) {
-          lastAcceptedLocationRef.current = next
-          setLocation(next)
-        }
-        setLocationState('active')
-      },
-      () => setLocationState('denied'),
-      { enableHighAccuracy: true, maximumAge: 6000, timeout: 15000 }
+      acceptPosition,
+      handleLocationError,
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
     )
+
+    locationTimeoutRef.current = window.setTimeout(() => {
+      if (locationResolvedRef.current) return
+      setLocationState(lastAcceptedLocationRef.current ? 'active' : 'denied')
+      locationTimeoutRef.current = null
+    }, 12000)
   }
 
   function beginTour() {
@@ -692,6 +749,7 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
     if (restored && started && locationState === 'idle') requestLocation()
     return () => {
       if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current)
+      if (locationTimeoutRef.current !== null) window.clearTimeout(locationTimeoutRef.current)
     }
   }, [restored, started])
 
@@ -890,7 +948,7 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
               selectedIndex={selectedIndex}
               arrivedIndex={mapArrivedIndex}
               reachedKeys={completedKeys}
-              focusRequest={Math.max(1, navigationFocusRequest)}
+              focusRequest={navigationFocusRequest}
             />
           </div>
 
@@ -903,7 +961,7 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
                   disabled={!selectedCoordinates}
                   className="inline-flex min-h-13 items-center justify-center gap-2 rounded-2xl bg-blue-500 px-5 text-sm font-black text-white shadow-lg disabled:opacity-40"
                 >
-                  <Navigation className="h-5 w-5" /> {copy.openRoute}
+                  <Navigation className="h-5 w-5" /> {navigationFocusRequest === 0 ? copy.openRoute : copy.recenterRoute}
                 </button>
                 <button
                   type="button"
@@ -1057,7 +1115,7 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
             </div>
           ) : (
             <div className="grid grid-cols-[1.35fr_1fr] gap-2">
-              <button type="button" onClick={focusAppNavigation} disabled={!selectedCoordinates} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-[#e96551] px-4 text-sm font-black text-white shadow-xl disabled:opacity-40"><Navigation className="h-5 w-5" />{copy.openRoute}</button>
+              <button type="button" onClick={focusAppNavigation} disabled={!selectedCoordinates} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-[#e96551] px-4 text-sm font-black text-white shadow-xl disabled:opacity-40"><Navigation className="h-5 w-5" />{navigationFocusRequest === 0 ? copy.openRoute : copy.recenterRoute}</button>
               <button type="button" onClick={confirmArrival} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-3 text-sm font-black text-white"><MapPin className="h-5 w-5" />{copy.confirmArrival}</button>
             </div>
           )}
