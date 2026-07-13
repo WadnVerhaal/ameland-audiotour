@@ -17,6 +17,7 @@ import {
   resendAccessLink,
 } from '@/lib/support/actions'
 import { getSupportKnowledge } from '@/lib/support/knowledge'
+import { getLocationHelp } from '@/lib/support/location-help'
 import { buildFallbackSupportResponse } from '@/lib/support/fallback'
 
 export const maxDuration = 45
@@ -83,7 +84,11 @@ export async function POST(request: Request) {
     return errorResponse('Too many requests. Please try again in a few minutes.', 429, origin)
   }
 
-  let body: { messages?: UIMessage[]; locale?: unknown; context?: { pathname?: unknown } }
+  let body: {
+    messages?: UIMessage[]
+    locale?: unknown
+    context?: { pathname?: unknown; userAgent?: unknown; platform?: unknown }
+  }
   try {
     body = await request.json()
   } catch {
@@ -105,14 +110,20 @@ export async function POST(request: Request) {
   const language = normalizeLanguage(body.locale)
   const pathname =
     typeof body.context?.pathname === 'string' ? body.context.pathname.slice(0, 300) : '/'
+  const userAgent =
+    typeof body.context?.userAgent === 'string'
+      ? body.context.userAgent.slice(0, 500)
+      : request.headers.get('user-agent') || ''
+  const platform =
+    typeof body.context?.platform === 'string' ? body.context.platform.slice(0, 100) : ''
   const [knowledge, pageContext] = await Promise.all([
     getSupportKnowledge(language),
     getPageSupportState(pathname),
   ])
 
-  // The deterministic service layer keeps support available without an external
-  // model. Enable AI augmentation only after the provider account is ready.
-  if (process.env.SUPPORT_AI_ENABLED !== 'true') {
+  // AI support is the default. Setting SUPPORT_AI_ENABLED=false keeps the
+  // deterministic service layer available as an operational fallback.
+  if (process.env.SUPPORT_AI_ENABLED === 'false') {
     const text = await buildFallbackSupportResponse({
       messages,
       language,
@@ -144,10 +155,17 @@ BEHAVIOUR
 CURRENT PAGE
 ${pageContext}
 
+VISITOR DEVICE CONTEXT
+- Browser user agent: ${userAgent || 'unknown'}
+- Reported platform: ${platform || 'unknown'}
+- Use getLocationHelp for every location-permission or GPS-permission question. Do not guess menu names.
+
 PRODUCT FACTS
 - This is a browser-based mobile web app; no app-store download is required.
 - After a successful Mollie payment, a personal start link is shown and emailed.
-- Access links normally remain valid for 48 hours. Never extend expired access yourself.
+- Access links normally remain valid for 48 hours.
+- After the purchasing email and order number match a paid order, you may use renewAccessLink. This creates and emails a fresh 48-hour link and invalidates the old link.
+- Never renew access from an order number alone, and never reveal whether an email address or order exists before both values are supplied.
 - Location is used during the tour to show the route and trigger audio. A tour can also be followed manually if location is unavailable.
 
 ACTIVE TOURS
@@ -156,7 +174,7 @@ ${knowledge.tours}
 APPROVED FAQ
 ${knowledge.faq}`,
     messages: await convertToModelMessages(messages),
-    stopWhen: stepCountIs(5),
+    stopWhen: stepCountIs(7),
     tools: {
       checkOrderStatus: tool({
         description: 'Verify an order state only when the visitor supplied both the purchasing email and order number.',
@@ -166,13 +184,20 @@ ${knowledge.faq}`,
         }),
         execute: checkOrderStatus,
       }),
-      resendAccessLink: tool({
-        description: 'Resend an existing, still-valid personal tour link. Use when the visitor says the email or link is missing. An order number is preferred but optional.',
+      renewAccessLink: tool({
+        description: 'Create and email a fresh 48-hour tour link after the visitor supplied both the purchasing email and order number. The old link becomes invalid.',
         inputSchema: z.object({
           email: z.string().email(),
-          orderId: z.string().uuid().optional(),
+          orderId: z.string().uuid(),
         }),
         execute: ({ email, orderId }) => resendAccessLink({ email, orderId, language }),
+      }),
+      getLocationHelp: tool({
+        description: 'Return exact location-permission steps for the visitor device and browser. Always use this for GPS, location or permission questions.',
+        inputSchema: z.object({
+          issue: z.string().max(300).optional(),
+        }),
+        execute: () => getLocationHelp({ language, userAgent, platform }),
       }),
       createSupportRequest: tool({
         description: 'Create a support case autonomously for an unresolved payment, access, audio, location, route or other issue. Summarize facts only.',
