@@ -135,7 +135,10 @@ export default async function ToursPage({
             const slug = getTourSlug(tour)
             const title = localized(tour, 'title', lang, index === 0 ? 'Maak kennis met Hollum' : 'Audiotour Ameland')
             const description = localized(tour, 'description', lang, '')
-            const image = asText(tour.hero_image_url)
+            const storedImage = asText(tour.hero_image_url)
+            const image = storedImage.startsWith('https://www.amelandaudiotours.nl/images/')
+              ? storedImage.replace('https://www.amelandaudiotours.nl', '')
+              : storedImage || '/images/tour-dorp.jpg'
             const price = priceLabel(tour, lang)
             const factValues = [durationLabel(tour), distanceLabel(tour, lang), '9']
 
