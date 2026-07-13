@@ -76,10 +76,10 @@ async function getPreviewStops(tourId: unknown): Promise<PreviewStop[]> {
 
 const COPY = {
   nl: {
-    eyebrow: 'Zelfgeleide audiotour op Ameland',
-    title: 'Loop door Hollum. Hoor wat je anders voorbijloopt.',
-    intro: 'Negen verhalen leiden je van het oude dorp naar de vuurtoren. Op je eigen tempo, met GPS op je telefoon.',
-    start: 'Start de tour',
+    eyebrow: 'Verhalen die blijven hangen',
+    title: 'Ontdek Ameland met andere ogen',
+    intro: 'Luister, beleef en verwonder. Onze audiotours nemen je mee langs verhalen die je anders zou missen.',
+    start: 'Bekijk alle audiotours',
     preview: 'Luister 20 seconden',
     available: 'Nu te beleven',
     included: 'Dit zit in de tour',
@@ -99,10 +99,10 @@ const COPY = {
     finalCta: 'Bestel Maak kennis met Hollum',
   },
   en: {
-    eyebrow: 'Self-guided audio tour on Ameland',
-    title: 'Walk through Hollum. Hear what you would otherwise pass by.',
-    intro: 'Nine stories lead you from the old village to the lighthouse, at your own pace with GPS on your phone.',
-    start: 'Start the tour',
+    eyebrow: 'Stories that stay with you',
+    title: 'Discover Ameland with fresh eyes',
+    intro: 'Listen, experience and be amazed. Our audio tours guide you past stories you might otherwise miss.',
+    start: 'View all audio tours',
     preview: 'Listen for 20 seconds',
     available: 'Available now',
     included: 'Included in the tour',
@@ -122,10 +122,10 @@ const COPY = {
     finalCta: 'Book Discover Hollum',
   },
   de: {
-    eyebrow: 'Selbstgeführte Audiotour auf Ameland',
-    title: 'Spaziere durch Hollum. Höre, was du sonst übersehen würdest.',
-    intro: 'Neun Geschichten führen dich vom alten Dorf bis zum Leuchtturm – in deinem Tempo und mit GPS auf dem Handy.',
-    start: 'Tour starten',
+    eyebrow: 'Geschichten, die bleiben',
+    title: 'Entdecke Ameland mit anderen Augen',
+    intro: 'Höre, erlebe und staune. Unsere Audiotouren führen dich zu Geschichten, die du sonst verpassen würdest.',
+    start: 'Alle Audiotouren ansehen',
     preview: '20 Sekunden anhören',
     available: 'Jetzt erlebbar',
     included: 'In der Tour enthalten',
@@ -146,8 +146,8 @@ const COPY = {
   },
 } as const
 
-export default async function PremiumHomePage() {
-  const lang = await getLang()
+export default async function PremiumHomePage({ requestedLanguage }: { requestedLanguage?: Lang }) {
+  const lang = requestedLanguage || await getLang()
   const t = COPY[lang]
   const tours = await getAvailableTours()
   const tour = tours[0] || null
@@ -156,30 +156,30 @@ export default async function PremiumHomePage() {
   const slug = tour ? getTourSlug(tour) : ''
   const title = tour ? localized(tour, 'title', lang, 'Maak kennis met Hollum') : 'Maak kennis met Hollum'
   const description = tour ? localized(tour, 'description', lang, '') : ''
-  const heroImage = tour ? asText(tour.hero_image_url) : ''
+  const heroImage = '/images/tour-duinen.jpg'
   const duration = tour ? asNumber(tour.duration_minutes) || 90 : 90
   const distance = tour ? asNumber(tour.distance_km) : 6.5
   const previewAudio = previewStop?.audio_url_nl || previewStop?.audio_url || ''
   const checkoutHref = slug ? `/checkout/${slug}?lang=${lang}` : `/tours?lang=${lang}`
 
   return (
-    <main className="min-h-[100svh] bg-[#f1eadf] text-[#20372f]">
-      <section className="relative isolate min-h-[82svh] overflow-hidden bg-slate-950 text-white">
+    <main className="min-h-[100svh] bg-[#f7f5f1] text-[#082f3e]">
+      <section className="relative isolate min-h-[68svh] overflow-hidden bg-[#032f3e] text-white">
         {heroImage ? <img src={heroImage} alt="Hollum op Ameland" className="absolute inset-0 h-full w-full object-cover" /> : null}
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,.94)_0%,rgba(2,6,23,.72)_48%,rgba(2,6,23,.32)_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,.18),rgba(2,6,23,.88))]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,37,50,.97)_0%,rgba(2,37,50,.78)_45%,rgba(2,37,50,.12)_85%)]" />
 
-        <div className="relative mx-auto flex min-h-[82svh] max-w-6xl items-end px-5 pb-14 pt-36 sm:px-8 sm:pb-20 sm:pt-44">
+        <div className="relative mx-auto flex min-h-[68svh] max-w-7xl items-center px-5 py-16 sm:px-8 sm:py-24">
           <div className="max-w-3xl">
-            <p className="text-xs font-black uppercase tracking-[.23em] text-emerald-200">{t.eyebrow}</p>
-            <h1 className="mt-5 text-[clamp(3.2rem,9vw,6.7rem)] font-black leading-[.9] tracking-[-.065em]">{t.title}</h1>
+            <p className="text-xs font-black uppercase tracking-[.23em] text-[#ffd0c6]">{t.eyebrow}</p>
+            <h1 className="mt-5 font-serif text-[clamp(3.5rem,9vw,6.8rem)] font-medium leading-[.9] tracking-[-.035em]">{t.title}</h1>
+            <div className="mt-5 h-[3px] w-14 bg-[#ef6c57]" />
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-200 sm:text-xl">{t.intro}</p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href={checkoutHref} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-[#e47750] px-7 font-black text-white shadow-2xl transition hover:-translate-y-0.5 hover:bg-[#ee835c]">
+              <Link href={`/tours?lang=${lang}`} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-md bg-[#e96551] px-7 font-black text-white shadow-2xl transition hover:-translate-y-0.5 hover:bg-[#f17460]">
                 {t.start} <ArrowRight className="h-5 w-5" />
               </Link>
-              <a href="#preview" className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-7 font-black text-white backdrop-blur transition hover:bg-white/20">
+              <a href="#preview" className="inline-flex min-h-14 items-center justify-center gap-2 rounded-md border border-white/30 bg-white/10 px-7 font-black text-white backdrop-blur transition hover:bg-white/20">
                 <Headphones className="h-5 w-5" /> {t.preview}
               </a>
             </div>
@@ -194,11 +194,11 @@ export default async function PremiumHomePage() {
       </section>
 
       <div className="mx-auto max-w-6xl space-y-8 px-4 py-10 sm:px-8 sm:py-16">
-        <section id="preview" className="overflow-hidden rounded-[2.2rem] border border-[#ddd2c2] bg-[#fffdf8] shadow-[0_24px_70px_rgba(38,48,40,.10)]">
+        <section id="preview" className="overflow-hidden rounded-xl border border-[#dce2e1] bg-white shadow-[0_24px_70px_rgba(4,48,62,.12)]">
           <div className="grid lg:grid-cols-[1.05fr_.95fr]">
             <div className="p-6 sm:p-9">
               <p className="text-xs font-black uppercase tracking-[.22em] text-[#7a8875]">{t.available}</p>
-              <h2 className="mt-3 text-4xl font-black tracking-[-.04em] sm:text-5xl">{title}</h2>
+              <h2 className="mt-3 font-serif text-4xl font-medium tracking-[-.02em] text-[#082f3e] sm:text-5xl">{title}</h2>
               {description ? <p className="mt-5 max-w-2xl text-base leading-7 text-[#5e685f]">{description}</p> : null}
 
               <p className="mt-7 text-xs font-black uppercase tracking-[.18em] text-[#7a8875]">{t.included}</p>
@@ -231,9 +231,9 @@ export default async function PremiumHomePage() {
           </div>
         </section>
 
-        <section className="rounded-[2.2rem] bg-[#153f45] p-6 text-white sm:p-9">
+        <section className="rounded-xl bg-[#003b4d] p-6 text-white sm:p-9">
           <p className="text-xs font-black uppercase tracking-[.22em] text-emerald-200">{t.howLabel}</p>
-          <h2 className="mt-3 max-w-3xl text-3xl font-black tracking-[-.035em] sm:text-5xl">{t.howTitle}</h2>
+          <h2 className="mt-3 max-w-3xl font-serif text-3xl font-medium tracking-[-.02em] sm:text-5xl">{t.howTitle}</h2>
           <div className="mt-8 grid gap-3 md:grid-cols-3">
             {t.steps.map(([label, text], index) => {
               const Icon = [ShieldCheck, Smartphone, Navigation][index]
@@ -254,7 +254,7 @@ export default async function PremiumHomePage() {
         </section>
 
         <section className="px-2 py-8 text-center sm:py-12">
-          <h2 className="text-4xl font-black tracking-[-.045em] sm:text-6xl">{t.finalTitle}</h2>
+          <h2 className="font-serif text-4xl font-medium tracking-[-.025em] sm:text-6xl">{t.finalTitle}</h2>
           <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-[#667067]">{t.finalText}</p>
           <Link href={checkoutHref} className="mt-7 inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-[#e47750] px-7 font-black text-white shadow-xl transition hover:-translate-y-0.5 hover:bg-[#ee835c]">
             {t.finalCta} <ArrowRight className="h-5 w-5" />
