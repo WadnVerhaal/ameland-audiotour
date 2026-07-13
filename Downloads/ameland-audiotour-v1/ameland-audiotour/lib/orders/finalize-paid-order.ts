@@ -4,7 +4,14 @@ import { sendAccessEmail } from '@/lib/mail/send-access-email'
 type FinalizePaidOrderInput = {
   orderId: string
   paymentReference?: string
+  language?: string | null
   source?: 'webhook' | 'success-page' | 'manual'
+}
+
+type AppLanguage = 'nl' | 'en' | 'de'
+
+function normalizeLanguage(value?: string | null): AppLanguage {
+  return value === 'en' || value === 'de' ? value : 'nl'
 }
 
 type FinalizePaidOrderResult = {
@@ -18,6 +25,7 @@ type FinalizePaidOrderResult = {
 export async function finalizePaidOrder({
   orderId,
   paymentReference,
+  language: requestedLanguage,
   source = 'manual',
 }: FinalizePaidOrderInput): Promise<FinalizePaidOrderResult> {
   const cleanOrderId = String(orderId || '').trim()
@@ -107,7 +115,8 @@ export async function finalizePaidOrder({
     process.env.NEXT_PUBLIC_APP_URL || 'https://app.amelandaudiotours.nl'
   ).replace(/\/$/, '')
 
-  const accessUrl = `${appUrl}/player/${token}`
+  const language = normalizeLanguage(requestedLanguage)
+  const accessUrl = `${appUrl}/player/${token}?lang=${language}`
 
   // The token insert is the idempotency boundary for the booking email. Both
   // Mollie's webhook and the success page can finalize the same paid order.
@@ -148,6 +157,8 @@ export async function finalizePaidOrder({
       to: order.email,
       tourTitle: tour?.title ?? 'Ameland Audiotour',
       accessUrl,
+      language,
+      orderId: cleanOrderId,
     })
 
     console.log(`[${source}] Access email sent`, {
