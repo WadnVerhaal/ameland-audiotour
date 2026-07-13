@@ -12,15 +12,10 @@ export default function AppChrome() {
     pathname.startsWith('/bedankt') ||
     pathname.startsWith('/admin')
 
-  const focusedFlow =
-    pathname.startsWith('/tours') ||
-    pathname.startsWith('/checkout/') ||
-    pathname.startsWith('/betaling')
-
   return (
     <>
       {!immersive ? <AppLanguageBar /> : null}
-      {!immersive && !focusedFlow ? <SkipperHiddeChat /> : null}
+      {!immersive ? <SkipperHiddeChat /> : null}
     </>
   )
 }
