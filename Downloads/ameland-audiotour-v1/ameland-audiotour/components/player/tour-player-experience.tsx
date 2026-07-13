@@ -147,6 +147,11 @@ const COPY = {
     play: 'Afspelen',
     pause: 'Pauzeren',
     noAudio: 'Voor deze stop is nog geen audio in deze taal beschikbaar.',
+    completeStop: 'Stop afronden',
+    stopDone: 'Stop afgerond',
+    nextStop: 'Verder naar volgende stop',
+    nextStopHint: 'De route wordt automatisch ingesteld op',
+    finishTour: 'Tour afronden',
     audioBlocked: 'Tik nogmaals op afspelen. Je telefoon blokkeerde de eerste poging.',
     gpsActive: 'GPS actief',
     gpsWaiting: 'GPS zoeken…',
@@ -187,6 +192,11 @@ const COPY = {
     play: 'Play',
     pause: 'Pause',
     noAudio: 'No audio is available for this stop in the selected language yet.',
+    completeStop: 'Complete this stop',
+    stopDone: 'Stop completed',
+    nextStop: 'Continue to next stop',
+    nextStopHint: 'The route will automatically switch to',
+    finishTour: 'Finish tour',
     audioBlocked: 'Tap play again. Your phone blocked the first attempt.',
     gpsActive: 'GPS active',
     gpsWaiting: 'Finding GPS…',
@@ -227,6 +237,11 @@ const COPY = {
     play: 'Abspielen',
     pause: 'Pausieren',
     noAudio: 'Für diesen Stopp ist in der gewählten Sprache noch kein Audio verfügbar.',
+    completeStop: 'Stopp abschließen',
+    stopDone: 'Stopp abgeschlossen',
+    nextStop: 'Weiter zum nächsten Stopp',
+    nextStopHint: 'Die Route wechselt automatisch zu',
+    finishTour: 'Tour abschließen',
     audioBlocked: 'Tippe erneut auf Abspielen. Dein Telefon hat den ersten Versuch blockiert.',
     gpsActive: 'GPS aktiv',
     gpsWaiting: 'GPS wird gesucht…',
@@ -529,6 +544,12 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
     setArrivedIndex(selectedIndex)
   }
 
+  function markSelectedComplete() {
+    audioRef.current?.pause()
+    setCompletedKeys((current) => current.includes(selectedKey) ? current : [...current, selectedKey])
+    setPlaying(false)
+  }
+
   function seekAudio(seconds: number) {
     const audio = audioRef.current
     if (!audio) return
@@ -604,18 +625,16 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
       ? completedKeys
       : [...completedKeys, selectedKey]
     setCompletedKeys(nextCompletedKeys)
+  }
 
+  async function advanceFromCurrent() {
+    if (!selectedIsCompleted) return
     if (isLastStop) {
-      await completeTour(nextCompletedKeys)
+      await completeTour(completedKeys)
       return
     }
-
-    const nextIndex = findNextIncomplete(nextCompletedKeys)
-    window.setTimeout(() => {
-      setSelectedIndex(nextIndex)
-      setArrivedIndex(null)
-      setAudioBlocked(false)
-    }, 500)
+    goToStop(findNextIncomplete(completedKeys))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   useEffect(() => {
@@ -704,6 +723,11 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
     audio.currentTime = 0
     audio.load()
   }, [language, selectedAudioUrl, selectedIndex])
+
+  const nextStopIndex = isLastStop ? null : findNextIncomplete(completedKeys)
+  const nextStopTitle = nextStopIndex === null
+    ? ''
+    : titleFor(cleanStops[nextStopIndex], language) || `${copy.stopOf} ${nextStopIndex + 1}`
 
   if (!cleanStops.length) {
     return (
@@ -931,10 +955,37 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
                       <span>{formatAudioTime(audioDuration)}</span>
                     </div>
                     {audioBlocked ? <p className="mt-3 rounded-2xl bg-amber-300/10 p-3 text-sm leading-6 text-amber-100">{copy.audioBlocked}</p> : null}
+                    {!selectedIsCompleted ? (
+                      <button
+                        type="button"
+                        onClick={markSelectedComplete}
+                        className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-black text-white transition active:scale-[.99]"
+                      >
+                        <CheckCircle2 className="h-5 w-5" /> {copy.completeStop}
+                      </button>
+                    ) : null}
                   </div>
                 ) : (
-                  <div className="mt-4 rounded-2xl bg-amber-300/10 p-4 text-sm leading-6 text-amber-100">{copy.noAudio}</div>
+                  <div className="mt-4 rounded-2xl bg-amber-300/10 p-4 text-sm leading-6 text-amber-100">
+                    <p>{copy.noAudio}</p>
+                    {!selectedIsCompleted ? (
+                      <button
+                        type="button"
+                        onClick={markSelectedComplete}
+                        className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-white px-4 font-black text-slate-950"
+                      >
+                        <CheckCircle2 className="h-5 w-5" /> {copy.completeStop}
+                      </button>
+                    ) : null}
+                  </div>
                 )}
+
+                {selectedIsCompleted ? (
+                  <div aria-live="polite" className="mt-4 rounded-2xl border border-emerald-300/25 bg-emerald-300/10 p-4">
+                    <p className="flex items-center gap-2 text-sm font-black text-emerald-200"><CheckCircle2 className="h-5 w-5" /> {copy.stopDone}</p>
+                    {nextStopTitle ? <p className="mt-2 text-sm leading-6 text-slate-300">{copy.nextStopHint} <strong className="text-white">{nextStopTitle}</strong>.</p> : null}
+                  </div>
+                ) : null}
               </div>
             )}
           </div>
@@ -987,6 +1038,15 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
         <div className="mx-auto max-w-xl">
           {isCompleting ? (
             <div className="flex min-h-14 items-center justify-center rounded-2xl bg-emerald-300 px-5 text-sm font-black text-slate-950">{copy.completing}</div>
+          ) : selectedIsCompleted ? (
+            <button
+              type="button"
+              onClick={() => void advanceFromCurrent()}
+              className="inline-flex min-h-16 w-full items-center justify-center gap-3 rounded-2xl bg-[#e96551] px-5 text-base font-black text-white shadow-[0_16px_42px_rgba(233,101,81,.32)] transition active:scale-[.99]"
+            >
+              {isLastStop ? <CheckCircle2 className="h-6 w-6" /> : <Navigation className="h-6 w-6" />}
+              {isLastStop ? copy.finishTour : copy.nextStop}
+            </button>
           ) : selectedCanListen && selectedAudioUrl ? (
             <div className="grid grid-cols-[1fr_1.5fr_1fr] gap-2">
               <button type="button" onClick={() => seekAudio(-15)} className="inline-flex min-h-14 items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/10 text-sm font-black text-white"><RotateCcw className="h-5 w-5" />15</button>
