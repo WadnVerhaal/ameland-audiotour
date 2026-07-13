@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const payment = await mollie().payments.get(paymentId)
     const paymentStatus = mapPaymentStatus(payment.status)
 
-    const metadata = payment.metadata as { orderId?: string; tourId?: string } | undefined
+    const metadata = payment.metadata as { orderId?: string; tourId?: string; language?: string } | undefined
     const orderId = String(metadata?.orderId || '').trim()
 
     if (!orderId) {
@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
       const finalizeResult = await finalizePaidOrder({
         orderId,
         paymentReference: paymentId,
+        language: metadata?.language,
         source: 'webhook',
       })
 
