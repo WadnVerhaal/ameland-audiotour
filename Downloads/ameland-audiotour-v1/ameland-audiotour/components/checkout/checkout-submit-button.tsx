@@ -19,7 +19,7 @@ export function CheckoutSubmitButton({
       type="submit"
       disabled={pending}
       aria-busy={pending}
-      className="relative w-full overflow-hidden rounded-2xl bg-[#536b4d] px-5 py-4 text-base font-bold text-white shadow-lg shadow-[#536b4d]/20 transition hover:bg-[#465d41] disabled:cursor-wait disabled:opacity-90"
+      className="relative w-full overflow-hidden rounded-md bg-[#003b4d] px-5 py-4 text-base font-bold text-white shadow-lg shadow-[#003b4d]/20 transition hover:bg-[#002d3b] disabled:cursor-wait disabled:opacity-90"
     >
       <span className="flex items-center justify-center gap-2">
         {pending && <Loader2 className="h-4 w-4 animate-spin" />}
