@@ -182,7 +182,14 @@ export function SkipperHiddeChat({
   } = useChat({ transport })
   const t = copy[language]
   const busy = status === 'submitted' || status === 'streaming'
-  const requestBody = { locale: language, context: { pathname: typeof window === 'undefined' ? '/' : window.location.pathname } }
+  const requestBody = {
+    locale: language,
+    context: {
+      pathname: typeof window === 'undefined' ? '/' : window.location.pathname,
+      userAgent: typeof navigator === 'undefined' ? '' : navigator.userAgent,
+      platform: typeof navigator === 'undefined' ? '' : navigator.platform,
+    },
+  }
 
   useEffect(() => {
     if (!open) return
