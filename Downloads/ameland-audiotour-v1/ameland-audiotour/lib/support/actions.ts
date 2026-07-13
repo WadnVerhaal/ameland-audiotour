@@ -84,7 +84,7 @@ export async function resendAccessLink(input: {
   await sendAccessEmail({
     to: email,
     tourTitle,
-    accessUrl: `${appUrl}/access/${tokenRow.token}`,
+    accessUrl: `${appUrl.replace(/\/$/, '')}/access/${tokenRow.token}?lang=${input.language}`,
     language: input.language,
   })
 
