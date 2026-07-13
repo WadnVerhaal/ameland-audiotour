@@ -87,34 +87,14 @@ export async function buildFallbackSupportResponse({
   ])
 
   if (wantsAccessLink && !accessExpired) {
-    if (!email) {
-      return answer(language, {
-        nl: 'Dat zoek ik voor je uit. Welk e-mailadres heb je bij de bestelling gebruikt? Je bestelnummer mag je er ook bij zetten; dat werkt het snelst.',
-        en: 'I’ll sort that out. Which email address did you use for the order? You can also add the order number; that is the quickest route.',
-        de: 'Das kläre ich für dich. Welche E-Mail-Adresse hast du bei der Bestellung verwendet? Mit der Bestellnummer geht es am schnellsten.',
-      })
-    }
+    if (!email || !orderId) return orderDetailsPrompt(language, !email, !orderId)
 
     const result = await resendAccessLink({ email, orderId, language })
     if (result.status === 'sent') {
       return answer(language, {
-        nl: 'Gevonden. Ik heb je nog geldige persoonlijke startlink opnieuw verstuurd. Kijk ook even in je spamfolder; daar spoelt hij soms aan.',
-        en: 'Found it. I have resent your still-valid personal start link. Please check your spam folder too; it occasionally washes up there.',
-        de: 'Gefunden. Ich habe deinen noch gültigen persönlichen Startlink erneut gesendet. Schau bitte auch im Spam-Ordner nach.',
-      })
-    }
-    if (result.status === 'expired') {
-      return answer(language, {
-        nl: 'Je startlink is verlopen. Ik kan die niet zelf verlengen, maar ik kan wel direct een supportverzoek voor je aanmaken. Zeg maar kort wat er is gebeurd.',
-        en: 'Your start link has expired. I cannot extend it myself, but I can create a support request right away. Tell me briefly what happened.',
-        de: 'Dein Startlink ist abgelaufen. Ich kann ihn nicht selbst verlängern, aber sofort eine Supportanfrage anlegen. Sag mir kurz, was passiert ist.',
-      })
-    }
-    if (result.status === 'not_ready') {
-      return answer(language, {
-        nl: 'Je bestelling is gevonden, maar de startlink staat nog niet klaar. Ik raad aan de betaalpagina één keer te verversen. Blijft dit zo, dan maak ik een supportverzoek voor je aan.',
-        en: 'Your order was found, but the start link is not ready yet. Refresh the payment result page once. If it stays this way, I can create a support request.',
-        de: 'Deine Bestellung wurde gefunden, aber der Startlink ist noch nicht bereit. Aktualisiere die Zahlungsseite einmal. Bleibt es so, kann ich eine Supportanfrage anlegen.',
+        nl: 'Gevonden. Ik heb een nieuwe persoonlijke startlink aangemaakt en verstuurd. Die is 48 uur geldig; je oude link werkt niet meer. Kijk ook even in je spamfolder.',
+        en: 'Found it. I created and emailed a new personal start link. It is valid for 48 hours; your old link no longer works. Please check your spam folder too.',
+        de: 'Gefunden. Ich habe einen neuen persönlichen Startlink erstellt und gesendet. Er ist 48 Stunden gültig; dein alter Link funktioniert nicht mehr. Prüfe bitte auch den Spam-Ordner.',
       })
     }
     if (result.status === 'not_found') {
@@ -125,9 +105,9 @@ export async function buildFallbackSupportResponse({
       })
     }
     return answer(language, {
-      nl: 'Als er een geldige bestelling op dit e-mailadres staat, is de startlink opnieuw verstuurd. Zo houden we je gegevens netjes privé. Kijk ook even in je spamfolder.',
-      en: 'If there is a valid order for this email address, the start link has been resent. This keeps your details private. Please also check spam.',
-      de: 'Wenn zu dieser E-Mail-Adresse eine gültige Bestellung gehört, wurde der Startlink erneut gesendet. So bleiben deine Daten geschützt. Prüfe auch den Spam-Ordner.',
+      nl: 'Ik kon de link nog niet vernieuwen. Controleer het e-mailadres en bestelnummer en probeer het nog één keer.',
+      en: 'I could not renew the link yet. Check the email address and order number and try once more.',
+      de: 'Ich konnte den Link noch nicht erneuern. Prüfe E-Mail-Adresse und Bestellnummer und versuche es noch einmal.',
     })
   }
 
