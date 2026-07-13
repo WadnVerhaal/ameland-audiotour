@@ -112,14 +112,14 @@ export default async function ToursPage({
     <main className="min-h-[100svh] bg-[#f1eadf] pb-16 text-[#20372f]">
       <section className="px-4 pb-8 pt-10 sm:px-8 sm:pb-12 sm:pt-14">
         <div className="mx-auto max-w-6xl">
-          <p className="text-xs font-black uppercase tracking-[.22em] text-[#0f5d67]">{t.eyebrow}</p>
-          <h1 className="mt-3 max-w-4xl text-[clamp(3rem,8vw,5.7rem)] font-black leading-[.92] tracking-[-.06em]">{t.title}</h1>
+          <p className="text-xs font-black uppercase tracking-[.22em] text-[#d85c49]">{t.eyebrow}</p>
+          <h1 className="mt-3 max-w-4xl font-serif text-[clamp(3rem,8vw,5.7rem)] font-medium leading-[.92] tracking-[-.035em] text-[#082f3e]">{t.title}</h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-[#667067] sm:text-lg sm:leading-8">{t.intro}</p>
 
           <div className="mt-7 grid grid-cols-3 gap-2 sm:max-w-2xl sm:gap-3">
             {t.journey.map(([number, label]) => (
               <div key={number} className="rounded-2xl border border-[#d8cfc1] bg-[#fffdf8] p-3 sm:p-4">
-                <span className="grid h-7 w-7 place-items-center rounded-full bg-[#153f45] text-xs font-black text-white">{number}</span>
+                <span className="grid h-7 w-7 place-items-center rounded-full bg-[#003b4d] text-xs font-black text-white">{number}</span>
                 <p className="mt-3 text-xs font-black leading-4 text-[#31473d] sm:text-sm">{label}</p>
               </div>
             ))}
@@ -146,7 +146,7 @@ export default async function ToursPage({
                     {image ? <img src={image} alt={title} className="absolute inset-0 h-full w-full object-cover" /> : null}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/25 to-transparent" />
                     <div className="absolute inset-x-0 bottom-0 p-5 text-white sm:p-8">
-                      <h2 className="max-w-2xl text-4xl font-black leading-[.95] tracking-[-.045em] sm:text-5xl">{title}</h2>
+                      <h2 className="max-w-2xl font-serif text-4xl font-medium leading-[.95] tracking-[-.025em] text-[#082f3e] sm:text-5xl">{title}</h2>
                       {description ? <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-200 sm:text-base sm:leading-7">{description}</p> : null}
                     </div>
                   </div>
@@ -188,7 +188,7 @@ export default async function ToursPage({
                         </div>
                         <ShieldCheck className="h-8 w-8 text-[#0f5d67]" />
                       </div>
-                      <Link href={`/checkout/${slug}?lang=${lang}`} className="mt-5 inline-flex min-h-16 w-full items-center justify-center gap-3 rounded-2xl bg-[#e47750] px-6 text-base font-black text-white shadow-[0_16px_38px_rgba(228,119,80,.24)] transition hover:-translate-y-0.5 hover:bg-[#ee835c]">
+                      <Link href={`/checkout/${slug}?lang=${lang}`} className="mt-5 inline-flex min-h-16 w-full items-center justify-center gap-3 rounded-md bg-[#e96551] px-6 text-base font-black text-white shadow-[0_16px_38px_rgba(233,101,81,.24)] transition hover:-translate-y-0.5 hover:bg-[#f17460]">
                         {t.order} <ArrowRight className="h-5 w-5" />
                       </Link>
                       <p className="mt-3 text-center text-xs font-bold leading-5 text-[#738078]">{t.secure}</p>
@@ -200,9 +200,9 @@ export default async function ToursPage({
           })}
         </section>
 
-        <section className="rounded-[2rem] bg-[#153f45] p-6 text-white sm:p-9">
+        <section className="rounded-xl bg-[#003b4d] p-6 text-white sm:p-9">
           <p className="text-xs font-black uppercase tracking-[.2em] text-emerald-200">{t.upcoming}</p>
-          <h2 className="mt-3 max-w-3xl text-3xl font-black tracking-[-.035em] sm:text-4xl">{t.upcomingText}</h2>
+          <h2 className="mt-3 max-w-3xl font-serif text-3xl font-medium tracking-[-.02em] sm:text-4xl">{t.upcomingText}</h2>
           <div className="mt-6 grid gap-2 sm:grid-cols-3">
             {t.future.map(([place, description]) => (
               <article key={place} className="rounded-[1.3rem] border border-white/10 bg-white/[0.07] p-4">
