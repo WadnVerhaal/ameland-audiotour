@@ -104,20 +104,59 @@ function normalizeResult(result: unknown) {
 }
 
 function emailShell(preview: string, title: string, body: string) {
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHtml(
-    title
-  )}</title></head><body style="margin:0;background:#f5efe3;color:#123c2f;font-family:Arial,sans-serif"><div style="display:none;max-height:0;overflow:hidden">${escapeHtml(
-    preview
-  )}</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5efe3"><tr><td align="center" style="padding:28px 14px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 18px 50px rgba(18,60,47,.12)"><tr><td style="background:#123c2f;padding:26px 28px;color:#ffffff"><div style="font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#a7f3d0">Ameland Audiotours</div><h1 style="margin:12px 0 0;font-size:30px;line-height:1.15">${escapeHtml(
-    title
-  )}</h1></td></tr><tr><td style="padding:28px">${body}</td></tr><tr><td style="padding:20px 28px;background:#eef6f1;color:#4b635b;font-size:13px;line-height:1.6">Bjorn &amp; Sander · Ameland Audiotours<br><a href="mailto:info@amelandaudiotours.nl" style="color:#123c2f">info@amelandaudiotours.nl</a></td></tr></table></td></tr></table></body></html>`
+  const c = amelandBrand.colors
+  return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>${escapeHtml(title)}</title>
+</head>
+<body style="margin:0;padding:0;background:${c.softGreen};color:${c.ink};font-family:Arial,Helvetica,sans-serif;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${escapeHtml(preview)}</div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${c.softGreen};padding:28px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:${c.white};border-radius:18px;overflow:hidden;box-shadow:0 18px 50px rgba(0,59,77,.14);">
+          <tr>
+            <td style="background:${c.white};padding:22px 28px;border-bottom:1px solid #e8e2d9;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="width:70px;vertical-align:middle;"><img src="${escapeHtml(amelandBrand.logoUrl)}" width="60" height="60" alt="Ameland Audiotours" style="display:block;width:60px;height:60px;border-radius:999px;border:1px solid #d9e0df;"></td>
+                  <td style="vertical-align:middle;padding-left:14px;color:${c.deepGreen};"><div style="font-family:Georgia,Times New Roman,serif;font-size:24px;line-height:1;letter-spacing:.08em;">AMELAND</div><div style="margin-top:7px;font-size:11px;line-height:1;letter-spacing:.24em;">AUDIOTOURS</div></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr><td style="padding:0;background:${c.deepGreen};"><img src="${escapeHtml(amelandBrand.heroImageUrl)}" width="640" alt="Vuurtoren en duinen op Ameland" style="display:block;width:100%;max-width:640px;height:auto;border:0;"></td></tr>
+          <tr>
+            <td style="background:${c.deepGreen};padding:25px 28px 29px;color:${c.white};">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#f58a78;">Ameland Audiotours</div>
+              <h1 style="margin:10px 0 0;font-family:Georgia,Times New Roman,serif;font-size:31px;line-height:1.16;font-weight:400;color:${c.white};">${escapeHtml(title)}</h1>
+              <div style="width:46px;height:3px;margin-top:15px;background:${c.warmSand};"></div>
+            </td>
+          </tr>
+          <tr><td style="padding:30px 28px;background:${c.white};">${body}</td></tr>
+          <tr>
+            <td style="padding:22px 28px;background:${c.sand};color:${c.muted};font-size:13px;line-height:1.7;">
+              <div style="font-family:Georgia,Times New Roman,serif;font-size:18px;color:${c.deepGreen};margin-bottom:7px;">Ameland Audiotours</div>
+              Bjorn &amp; Sander · Verhalen die blijven hangen.<br>
+              <a href="mailto:${escapeHtml(amelandBrand.fromEmail)}" style="color:${c.deepGreen};">${escapeHtml(amelandBrand.fromEmail)}</a>
+            </td>
+          </tr>
+          <tr><td style="height:12px;background:${c.deepGreen};font-size:0;line-height:0;">&nbsp;</td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
 }
-
 function button(label: string, href: string, primary = true) {
   const colors = primary
-    ? 'background:#123c2f;color:#ffffff'
-    : 'background:#eef6f1;color:#123c2f'
-  return `<a href="${escapeHtml(href)}" style="display:inline-block;margin-top:14px;padding:13px 20px;border-radius:999px;text-decoration:none;font-weight:700;${colors}">${escapeHtml(
+    ? 'background:#e96551;color:#ffffff'
+    : 'background:#003b4d;color:#ffffff'
+  return `<a href="${escapeHtml(href)}" style="display:inline-block;margin-top:14px;padding:14px 22px;border-radius:6px;text-decoration:none;font-weight:700;${colors}">${escapeHtml(
     label
   )}</a>`
 }
@@ -134,18 +173,18 @@ async function sendCustomerEmail(
   const preview = isReminder ? t.reminderPreview : t.completedPreview
   const title = isReminder ? t.reminderTitle : t.completedTitle
   const body = isReminder
-    ? `<p style="margin:0;font-size:17px;line-height:1.7;color:#31473d">${escapeHtml(
+    ? `<p style="margin:0;font-size:17px;line-height:1.7;color:#40534a">${escapeHtml(
         t.reminderText
       )}</p>${button(t.reviewButton, input.reviewUrl)}`
     : `<p style="margin:0;font-size:17px;line-height:1.7;color:#31473d">${escapeHtml(
         t.completedText
-      )}</p><div style="margin-top:22px;padding:20px;border-radius:18px;background:#f5efe3"><h2 style="margin:0;font-size:20px">${escapeHtml(
+      )}</p><div style="margin-top:22px;padding:20px;border-radius:18px;background:#f1eadf"><h2 style="margin:0;font-family:Georgia,Times New Roman,serif;font-size:22px;font-weight:400;color:#003b4d">${escapeHtml(
         t.reviewTitle
-      )}</h2><p style="margin:8px 0 0;line-height:1.6;color:#4b635b">${escapeHtml(
+      )}</h2><p style="margin:8px 0 0;line-height:1.6;color:#667067">${escapeHtml(
         t.reviewText
-      )}</p>${button(t.reviewButton, input.reviewUrl)}</div><div style="margin-top:18px;padding:20px;border-radius:18px;background:#eef6f1"><p style="margin:0;line-height:1.6;color:#4b635b">${escapeHtml(
+      )}</p>${button(t.reviewButton, input.reviewUrl)}</div><div style="margin-top:18px;padding:20px;border-radius:18px;background:#f7f5f1"><p style="margin:0;line-height:1.6;color:#667067">${escapeHtml(
         t.accessText
-      )}</p>${button(t.accessButton, input.accessUrl, false)}</div><p style="margin:22px 0 0;font-size:14px;line-height:1.6;color:#64746e">${escapeHtml(
+      )}</p>${button(t.accessButton, input.accessUrl, false)}</div><p style="margin:22px 0 0;font-size:14px;line-height:1.6;color:#667067">${escapeHtml(
         t.support
       )}</p>`
 
@@ -186,9 +225,9 @@ export async function sendLowRatingAlertEmail(input: LowRatingAlertInput) {
       'Een gast had een minder goede ervaring',
       `<p style="margin:0;line-height:1.7">Tour: <strong>${escapeHtml(
         input.tourTitle
-      )}</strong><br>Score: <strong>${input.rating}/5</strong></p><div style="margin-top:18px;padding:18px;border-radius:16px;background:#f5efe3;line-height:1.7">${escapeHtml(
+      )}</strong><br>Score: <strong>${input.rating}/5</strong></p><div style="margin-top:18px;padding:18px;border-radius:16px;background:#f1eadf;line-height:1.7">${escapeHtml(
         feedback
-      )}</div><p style="margin:18px 0 0;color:#64746e">Bestelling: ${escapeHtml(
+      )}</div><p style="margin:18px 0 0;color:#667067">Bestelling: ${escapeHtml(
         input.orderId
       )}</p>`
     ),
