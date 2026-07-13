@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   ArrowLeft,
   Check,
@@ -131,7 +132,10 @@ export default async function Page({ params, searchParams }: PageProps) {
   const record = tour as unknown as Record<string, unknown>
   const title = getLocalizedValue(record, 'title', lang) || t.fallbackTitle
   const description = getLocalizedValue(record, 'description', lang)
-  const image = typeof record.hero_image_url === 'string' ? record.hero_image_url : ''
+  const storedImage = typeof record.hero_image_url === 'string' ? record.hero_image_url.trim() : ''
+  const image = storedImage.startsWith('https://www.amelandaudiotours.nl/images/')
+    ? storedImage.replace('https://www.amelandaudiotours.nl', '')
+    : storedImage || '/images/tour-dorp.jpg'
   const priceCents = typeof record.price_cents === 'number' ? record.price_cents : 0
   const price = formatPrice(priceCents, lang)
   const duration = typeof record.duration_minutes === 'number' ? `${record.duration_minutes} min` : '90 min'
@@ -151,13 +155,22 @@ export default async function Page({ params, searchParams }: PageProps) {
 
         <div className="mt-7 grid gap-6 lg:grid-cols-[1.08fr_.92fr] lg:items-start">
           <section className="overflow-hidden rounded-[2.2rem] border border-[#ddd2c2] bg-[#fffdf8] shadow-[0_22px_60px_rgba(38,48,40,.08)]">
-            {image ? (
-              <div className="relative h-56 overflow-hidden sm:h-72">
+            <div className="grid h-64 grid-cols-[1.55fr_.8fr] gap-1 overflow-hidden bg-[#003b4d] sm:h-80">
+              <div className="relative overflow-hidden">
+                {/* Een gewone img ondersteunt ook extern beheerde tourbeelden zonder checkoutblokkade. */}
                 <img src={image} alt={title} className="h-full w-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
-                <p className="absolute bottom-5 left-5 text-xs font-black uppercase tracking-[.2em] text-emerald-200 sm:bottom-7 sm:left-7">{t.summary}</p>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#002f3e]/85 via-transparent to-transparent" />
+                <p className="absolute bottom-5 left-5 text-xs font-black uppercase tracking-[.2em] text-white sm:bottom-7 sm:left-7">{t.summary}</p>
               </div>
-            ) : null}
+              <div className="grid grid-rows-2 gap-1">
+                <div className="relative overflow-hidden">
+                  <Image src="/images/tour-duinen.jpg" alt="Vuurtoren en duinen op Ameland" fill sizes="(max-width: 640px) 32vw, 240px" className="object-cover" />
+                </div>
+                <div className="relative overflow-hidden">
+                  <Image src="/images/hero-ameland.jpg" alt="Ameland beleven onderweg" fill sizes="(max-width: 640px) 32vw, 240px" className="object-cover" />
+                </div>
+              </div>
+            </div>
 
             <div className="p-6 sm:p-8">
               <h1 className="font-serif text-4xl font-medium leading-[.95] tracking-[-.025em] sm:text-5xl">{title}</h1>
