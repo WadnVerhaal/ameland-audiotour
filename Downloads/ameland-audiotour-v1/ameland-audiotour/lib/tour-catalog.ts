@@ -24,7 +24,7 @@ const fallbackTour = {
   description: 'Een ontspannen audiotour langs de mooiste verhalen van Hollum, van het oude dorp tot de vuurtoren.',
   description_en: 'A relaxed audio tour through the stories of Hollum, from the old village to the lighthouse.',
   description_de: 'Eine entspannte Audiotour durch die Geschichten von Hollum, vom alten Dorf bis zum Leuchtturm.',
-  hero_image_url: 'https://www.amelandaudiotours.nl/images/tour-dorp.jpg',
+  hero_image_url: '/images/tour-dorp.jpg',
   duration_minutes: 90,
   distance_km: 6.5,
   price_cents: 999,
