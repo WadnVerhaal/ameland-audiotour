@@ -118,10 +118,10 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   if (!tour || !tour.is_active) {
     return (
-      <main className="min-h-screen bg-[#f1eadf] px-4 py-12 text-[#20372f]">
+      <main className="min-h-screen bg-[#f7f5f1] px-4 py-12 text-[#082f3e]">
         <div className="mx-auto max-w-2xl rounded-[2rem] border border-[#ddd2c2] bg-[#fffdf8] p-8">
           <Link href={`/tours?lang=${lang}`} className="inline-flex items-center gap-2 text-sm font-black text-[#0f5d67]"><ArrowLeft className="h-4 w-4" /> {t.back}</Link>
-          <h1 className="mt-8 text-3xl font-black">{t.notFoundTitle}</h1>
+          <h1 className="mt-8 font-serif text-3xl font-medium">{t.notFoundTitle}</h1>
           <p className="mt-3 text-[#667067]">{t.notFoundText}</p>
         </div>
       </main>
@@ -143,7 +143,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-[#f1eadf] px-4 pb-16 pt-8 text-[#20372f] sm:px-8 sm:pt-12">
+    <main className="min-h-screen bg-[#f7f5f1] px-4 pb-16 pt-8 text-[#082f3e] sm:px-8 sm:pt-12">
       <div className="mx-auto max-w-6xl">
         <Link href={`/tours?lang=${lang}`} className="inline-flex items-center gap-2 text-sm font-black text-[#0f5d67] transition hover:gap-3">
           <ArrowLeft className="h-4 w-4" /> {t.back}
@@ -160,7 +160,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             ) : null}
 
             <div className="p-6 sm:p-8">
-              <h1 className="text-4xl font-black leading-[.95] tracking-[-.045em] sm:text-5xl">{title}</h1>
+              <h1 className="font-serif text-4xl font-medium leading-[.95] tracking-[-.025em] sm:text-5xl">{title}</h1>
               {description ? <p className="mt-4 max-w-2xl text-sm leading-7 text-[#667067] sm:text-base">{description}</p> : null}
 
               <div className="mt-6 flex flex-wrap gap-2">
@@ -184,7 +184,7 @@ export default async function Page({ params, searchParams }: PageProps) {
           </section>
 
           <aside className="rounded-[2.2rem] border border-[#d6e2dc] bg-white p-6 shadow-[0_24px_70px_rgba(38,48,40,.12)] sm:p-8 lg:sticky lg:top-6">
-            <h2 className="text-3xl font-black tracking-[-.035em]">{t.checkout}</h2>
+            <h2 className="font-serif text-3xl font-medium tracking-[-.02em]">{t.checkout}</h2>
             <p className="mt-2 text-sm leading-6 text-[#667067]">{t.intro}</p>
 
             <div className="mt-7 flex items-end justify-between border-b border-[#e7ece9] pb-5">
