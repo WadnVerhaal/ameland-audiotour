@@ -51,7 +51,7 @@ export default function AppLanguageBar() {
       className={home ? 'absolute inset-x-0 top-0 z-50 text-white' : 'relative z-50 text-[#20372f]'}
     >
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 pb-3 pt-[max(1.1rem,env(safe-area-inset-top))] sm:px-8 sm:pt-6">
-        <a href="/" aria-label="Ameland Audiotours home" className="inline-flex min-w-0 items-center gap-3 no-underline">
+        <a href={`/?lang=${current}`} aria-label="Ameland Audiotours home" className="inline-flex min-w-0 items-center gap-3 no-underline">
           <Image
             src="/images/ameland-audiotours-logo.webp"
             alt="Ameland Audiotours"
