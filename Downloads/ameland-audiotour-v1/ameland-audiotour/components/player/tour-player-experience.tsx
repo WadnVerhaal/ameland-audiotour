@@ -16,7 +16,6 @@ import {
   Play,
   RotateCcw,
   RotateCw,
-  Route,
   ShieldCheck,
   Smartphone,
 } from 'lucide-react'
@@ -124,8 +123,8 @@ const COPY = {
     brand: 'Ameland Audiotours',
     beforeStart: 'Voor vertrek',
     startTitle: 'Klaar om te beginnen?',
-    startText: 'Na het starten maakt de app een wandelroute naar de eerste stop. Het verhaal wordt beschikbaar zodra je aankomt.',
-    startButton: 'Start de wandeling',
+    startText: 'Druk op start wanneer je klaarstaat. Vanaf dat moment volg je de route en je locatie volledig in deze app.',
+    startButton: 'Start tour en navigatie',
     startPrivacy: 'Je locatie wordt pas gevraagd nadat je op Start de wandeling drukt.',
     firstStop: 'Eerste stop',
     startCheckLocation: 'GPS begeleidt je naar de volgende stop',
@@ -140,7 +139,7 @@ const COPY = {
     arrivedInstruction: 'Je bent op de juiste plek. Neem rustig de tijd en start het verhaal.',
     distance: 'Nog te lopen',
     progress: 'Voortgang',
-    openRoute: 'Open looproute',
+    openRoute: 'Volg mij in de app',
     confirmArrival: 'Ik ben bij de stop',
     confirmArrivalHelp: 'Gebruik dit alleen wanneer GPS je niet automatisch herkent.',
     listen: 'Luister naar het verhaal',
@@ -169,8 +168,8 @@ const COPY = {
     brand: 'Ameland Audiotours',
     beforeStart: 'Before you leave',
     startTitle: 'Ready to begin?',
-    startText: 'After you start, the app creates a walking route to the first stop. The story becomes available when you arrive.',
-    startButton: 'Start the walk',
+    startText: 'Press start when you are ready. From that moment, follow the route and your location entirely in this app.',
+    startButton: 'Start tour and navigation',
     startPrivacy: 'Your location is only requested after you press Start the walk.',
     firstStop: 'First stop',
     startCheckLocation: 'GPS guides you to the next stop',
@@ -185,7 +184,7 @@ const COPY = {
     arrivedInstruction: 'You are in the right place. Take your time and start the story.',
     distance: 'Distance to go',
     progress: 'Progress',
-    openRoute: 'Open walking route',
+    openRoute: 'Follow me in the app',
     confirmArrival: 'I am at the stop',
     confirmArrivalHelp: 'Use this only when GPS does not recognise your location.',
     listen: 'Listen to the story',
@@ -214,8 +213,8 @@ const COPY = {
     brand: 'Ameland Audiotours',
     beforeStart: 'Vor dem Start',
     startTitle: 'Bereit loszugehen?',
-    startText: 'Nach dem Start erstellt die App einen Fußweg zum ersten Stopp. Die Geschichte wird verfügbar, sobald du ankommst.',
-    startButton: 'Wanderung starten',
+    startText: 'Drücke auf Start, wenn du bereit bist. Ab dann folgst du Route und Standort vollständig in dieser App.',
+    startButton: 'Tour und Navigation starten',
     startPrivacy: 'Dein Standort wird erst abgefragt, nachdem du auf Wanderung starten gedrückt hast.',
     firstStop: 'Erster Stopp',
     startCheckLocation: 'GPS führt dich zum nächsten Stopp',
@@ -230,7 +229,7 @@ const COPY = {
     arrivedInstruction: 'Du bist am richtigen Ort. Nimm dir Zeit und starte die Geschichte.',
     distance: 'Noch zu gehen',
     progress: 'Fortschritt',
-    openRoute: 'Fußweg öffnen',
+    openRoute: 'Mir in der App folgen',
     confirmArrival: 'Ich bin am Stopp',
     confirmArrivalHelp: 'Nutze dies nur, wenn GPS deinen Standort nicht automatisch erkennt.',
     listen: 'Geschichte anhören',
@@ -439,6 +438,7 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
   const [restored, setRestored] = useState(false)
   const [overviewOpen, setOverviewOpen] = useState(false)
   const [isCompleting, setIsCompleting] = useState(false)
+  const [navigationFocusRequest, setNavigationFocusRequest] = useState(0)
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const watchIdRef = useRef<number | null>(null)
@@ -529,14 +529,10 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
     setOverviewOpen(false)
   }
 
-  function openWalkingRoute() {
+  function focusAppNavigation() {
     if (!selectedCoordinates) return
-    const url = new URL('https://www.google.com/maps/dir/')
-    url.searchParams.set('api', '1')
-    if (location) url.searchParams.set('origin', `${location.lat},${location.lng}`)
-    url.searchParams.set('destination', `${selectedCoordinates.lat},${selectedCoordinates.lng}`)
-    url.searchParams.set('travelmode', 'walking')
-    window.open(url.toString(), '_blank', 'noopener,noreferrer')
+    if (locationState !== 'active') requestLocation()
+    setNavigationFocusRequest((current) => current + 1)
   }
 
   function confirmArrival() {
@@ -890,6 +886,7 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
               selectedIndex={selectedIndex}
               arrivedIndex={mapArrivedIndex}
               reachedKeys={completedKeys}
+              focusRequest={navigationFocusRequest}
             />
           </div>
 
@@ -898,11 +895,11 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
               <div className="grid gap-2 sm:grid-cols-2">
                 <button
                   type="button"
-                  onClick={openWalkingRoute}
+                  onClick={focusAppNavigation}
                   disabled={!selectedCoordinates}
                   className="inline-flex min-h-13 items-center justify-center gap-2 rounded-2xl bg-blue-500 px-5 text-sm font-black text-white shadow-lg disabled:opacity-40"
                 >
-                  <Route className="h-5 w-5" /> {copy.openRoute}
+                  <Navigation className="h-5 w-5" /> {copy.openRoute}
                 </button>
                 <button
                   type="button"
@@ -1055,7 +1052,7 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
             </div>
           ) : (
             <div className="grid grid-cols-[1.35fr_1fr] gap-2">
-              <button type="button" onClick={openWalkingRoute} disabled={!selectedCoordinates} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-blue-500 px-4 text-sm font-black text-white shadow-xl disabled:opacity-40"><Footprints className="h-5 w-5" />{copy.openRoute}</button>
+              <button type="button" onClick={focusAppNavigation} disabled={!selectedCoordinates} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-[#e96551] px-4 text-sm font-black text-white shadow-xl disabled:opacity-40"><Navigation className="h-5 w-5" />{copy.openRoute}</button>
               <button type="button" onClick={confirmArrival} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-3 text-sm font-black text-white"><MapPin className="h-5 w-5" />{copy.confirmArrival}</button>
             </div>
           )}
