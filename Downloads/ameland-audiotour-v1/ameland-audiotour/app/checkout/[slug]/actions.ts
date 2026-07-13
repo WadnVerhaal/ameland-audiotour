@@ -7,9 +7,16 @@ import { createPayment } from '@/lib/mollie/create-payment';
 import { getTourBySlug } from '@/lib/data/tours';
 import { validateEmail } from '@/lib/utils/text';
 
+type AppLanguage = 'nl' | 'en' | 'de';
+
+function normalizeLanguage(value: FormDataEntryValue | null): AppLanguage {
+  return value === 'en' || value === 'de' ? value : 'nl';
+}
+
 export async function startCheckout(slug: string, formData: FormData) {
   const rawEmail = String(formData.get('email') || '');
   const email = validateEmail(rawEmail);
+  const language = normalizeLanguage(formData.get('lang'));
 
   const tour = await getTourBySlug(slug);
   if (!tour || !tour.is_active) throw new Error('Tour niet gevonden');
@@ -54,7 +61,7 @@ export async function startCheckout(slug: string, formData: FormData) {
     'https://app.amelandaudiotours.nl'
   ).replace(/\/$/, '');
 
-  const redirectUrl = `${appUrl}/success/${order.id}`;
+  const redirectUrl = `${appUrl}/success/${order.id}?lang=${language}`;
   const webhookUrl = `${webhookBaseUrl}/api/mollie/webhook`;
 
   console.log('CHECKOUT redirectUrl:', redirectUrl);
@@ -65,7 +72,7 @@ export async function startCheckout(slug: string, formData: FormData) {
     description: tour.title,
     redirectUrl,
     webhookUrl,
-    metadata: { orderId: order.id, tourId: tour.id },
+    metadata: { orderId: order.id, tourId: tour.id, language },
   });
 
   await supabase
