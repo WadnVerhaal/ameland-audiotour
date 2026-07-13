@@ -201,46 +201,45 @@ export function buildBookingConfirmationEmail(input: BookingConfirmationInput) {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${c.softGreen};padding:28px 12px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:680px;background:${c.cream};border-radius:${brand.radius.large};overflow:hidden;box-shadow:0 18px 50px rgba(36,68,57,.16);">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:680px;background:${c.white};border-radius:${brand.radius.medium};overflow:hidden;box-shadow:0 18px 50px rgba(0,59,77,.14);">
           <tr>
-            <td style="background:${c.deepGreen};padding:34px 30px 26px 30px;color:${c.white};">
+            <td style="background:${c.white};padding:22px 30px;border-bottom:1px solid #e8e2d9;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td>
-                    <div style="font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:${c.warmSand};font-weight:700;">
-                      ${escapeHtml(t.eyebrow)}
-                    </div>
-                    <h1 style="margin:14px 0 10px 0;font-size:34px;line-height:1.08;color:${c.white};font-weight:800;">
-                      ${escapeHtml(t.title)}
-                    </h1>
-                    <p style="margin:0;color:#e8f0e9;font-size:16px;line-height:1.6;max-width:520px;">
-                      ${escapeHtml(tourTitle)}
-                    </p>
+                  <td style="width:74px;vertical-align:middle;">
+                    <img src="${escapeHtml(brand.logoUrl)}" width="62" height="62" alt="Ameland Audiotours" style="display:block;width:62px;height:62px;border:1px solid #d9e0df;border-radius:999px;object-fit:cover;">
                   </td>
-                  <td align="right" style="width:108px;">
-                    <div style="width:86px;height:86px;border-radius:999px;background:${c.sand};color:${c.deepGreen};text-align:center;line-height:86px;font-size:27px;font-weight:900;border:4px solid rgba(255,255,255,.35);">
-                      AA
-                    </div>
+                  <td style="vertical-align:middle;padding-left:14px;color:${c.deepGreen};">
+                    <div style="font-family:Georgia,Times New Roman,serif;font-size:25px;line-height:1;letter-spacing:.08em;">AMELAND</div>
+                    <div style="margin-top:7px;font-size:11px;line-height:1;letter-spacing:.24em;">AUDIOTOURS</div>
                   </td>
                 </tr>
               </table>
-
-              <div style="margin-top:24px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:14px 16px;color:#f7f0df;font-size:14px;line-height:1.5;">
-                Wad → Dorp → Duin → Verhaal
-              </div>
             </td>
           </tr>
-
           <tr>
-            <td style="padding:30px;">
+            <td style="padding:0;background:${c.deepGreen};">
+              <img src="${escapeHtml(brand.heroImageUrl)}" width="680" alt="Vuurtoren en duinen op Ameland" style="display:block;width:100%;max-width:680px;height:auto;border:0;">
+            </td>
+          </tr>
+          <tr>
+            <td style="background:${c.deepGreen};padding:26px 30px 30px;color:${c.white};">
+              <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#f58a78;font-weight:700;">${escapeHtml(t.eyebrow)}</div>
+              <h1 style="margin:10px 0 8px;font-family:Georgia,Times New Roman,serif;font-size:34px;line-height:1.12;color:${c.white};font-weight:400;">${escapeHtml(t.title)}</h1>
+              <div style="width:48px;height:3px;background:${c.warmSand};margin:14px 0;"></div>
+              <p style="margin:0;color:#e6eef0;font-size:16px;line-height:1.6;">${escapeHtml(tourTitle)}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 30px;background:${c.white};">
               <p style="margin:0 0 22px 0;font-size:17px;line-height:1.7;color:${c.ink};">
                 ${escapeHtml(t.intro)}
               </p>
 
               <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 28px 0;">
                 <tr>
-                  <td style="background:${c.green};border-radius:999px;">
-                    <a href="${escapeHtml(accessUrl)}" style="display:inline-block;padding:16px 26px;color:${c.white};text-decoration:none;font-weight:800;font-size:16px;border-radius:999px;">
+                  <td style="background:${c.deepGreen};border-radius:6px;">
+                    <a href="${escapeHtml(accessUrl)}" style="display:inline-block;padding:16px 26px;color:${c.white};text-decoration:none;font-weight:800;font-size:16px;border-radius:6px;">
                       ${escapeHtml(t.cta)}
                     </a>
                   </td>
@@ -251,7 +250,7 @@ export function buildBookingConfirmationEmail(input: BookingConfirmationInput) {
                 <div style="font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:${c.green};font-weight:800;margin-bottom:10px;">
                   ${escapeHtml(t.detailsTitle)}
                 </div>
-                <h2 style="margin:0 0 8px 0;font-size:24px;line-height:1.25;color:${c.deepGreen};">
+                <h2 style="margin:0 0 8px 0;font-family:Georgia,Times New Roman,serif;font-size:26px;font-weight:400;line-height:1.25;color:${c.deepGreen};">
                   ${escapeHtml(tourTitle)}
                 </h2>
                 <p style="margin:0 0 18px 0;color:${c.muted};font-size:15px;line-height:1.6;">
@@ -264,12 +263,12 @@ export function buildBookingConfirmationEmail(input: BookingConfirmationInput) {
               </div>
 
               <div style="background:${c.sand};border-radius:${brand.radius.medium};padding:22px;margin-bottom:22px;">
-                <h3 style="margin:0 0 14px 0;color:${c.deepGreen};font-size:20px;">${escapeHtml(t.howTitle)}</h3>
+                <h3 style="margin:0 0 14px 0;font-family:Georgia,Times New Roman,serif;font-weight:400;color:${c.deepGreen};font-size:22px;">${escapeHtml(t.howTitle)}</h3>
                 ${stepsHtml}
               </div>
 
-              <div style="background:#fff7df;border-left:5px solid ${c.warmSand};border-radius:${brand.radius.small};padding:18px 18px;margin-bottom:24px;">
-                <h3 style="margin:0 0 8px 0;color:${c.deepGreen};font-size:18px;">${escapeHtml(t.safetyTitle)}</h3>
+              <div style="background:${c.cream};border-left:5px solid ${c.warmSand};border-radius:${brand.radius.small};padding:18px 18px;margin-bottom:24px;">
+                <h3 style="margin:0 0 8px 0;font-family:Georgia,Times New Roman,serif;font-weight:400;color:${c.deepGreen};font-size:20px;">${escapeHtml(t.safetyTitle)}</h3>
                 <p style="margin:0;color:${c.ink};font-size:14px;line-height:1.65;">
                   ${escapeHtml(t.safety)}
                 </p>
