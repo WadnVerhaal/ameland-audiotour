@@ -13,7 +13,6 @@ import {
   useMap,
 } from 'react-leaflet'
 import {
-  ExternalLink,
   Layers3,
   LocateFixed,
   Route as RouteIcon,
@@ -34,6 +33,7 @@ type Props = {
   selectedIndex: number
   arrivedIndex: number | null
   reachedKeys: string[]
+  focusRequest: number
 }
 
 type CameraMode = 'route' | 'follow'
@@ -62,7 +62,6 @@ const COPY = {
     myLocation: 'Mijn locatie',
     followMe: 'Volg mij',
     routeOverview: 'Route in beeld',
-    maps: 'Open in Maps',
     gps: 'GPS zoeken',
     selected: 'Gekozen stop',
     completed: 'Beluisterd',
@@ -80,7 +79,6 @@ const COPY = {
     myLocation: 'My location',
     followMe: 'Follow me',
     routeOverview: 'Show route',
-    maps: 'Open in Maps',
     gps: 'Finding GPS',
     selected: 'Selected stop',
     completed: 'Played',
@@ -98,7 +96,6 @@ const COPY = {
     myLocation: 'Mein Standort',
     followMe: 'Mir folgen',
     routeOverview: 'Route anzeigen',
-    maps: 'In Maps öffnen',
     gps: 'GPS wird gesucht',
     selected: 'Ausgewählter Stopp',
     completed: 'Gehört',
@@ -272,16 +269,6 @@ function userIcon() {
   })
 }
 
-function googleMapsUrl(destination: [number, number], location: GeoPoint | null) {
-  const params = new URLSearchParams({
-    api: '1',
-    destination: `${destination[0]},${destination[1]}`,
-    travelmode: 'walking',
-  })
-  if (location) params.set('origin', `${location.lat},${location.lng}`)
-  return `https://www.google.com/maps/dir/?${params.toString()}`
-}
-
 function runProgrammaticMove(
   map: L.Map,
   programmaticMoveRef: ProgrammaticMoveRef,
@@ -326,12 +313,14 @@ function NavigationCamera({
   selectedIndex,
   cameraMode,
   programmaticMoveRef,
+  focusRequest,
 }: {
   location: GeoPoint | null
   route: [number, number][]
   selectedIndex: number
   cameraMode: CameraMode
   programmaticMoveRef: ProgrammaticMoveRef
+  focusRequest: number
 }) {
   const map = useMap()
   const lastRouteFit = useRef('')
@@ -341,24 +330,24 @@ function NavigationCamera({
     if (cameraMode !== 'route' || !route.length) return
     const first = route[0]
     const last = route[route.length - 1]
-    const key = `${selectedIndex}-${first[0].toFixed(5)}-${first[1].toFixed(5)}-${last[0].toFixed(5)}-${last[1].toFixed(5)}`
+    const key = `${selectedIndex}-${first[0].toFixed(5)}-${first[1].toFixed(5)}-${last[0].toFixed(5)}-${last[1].toFixed(5)}-${focusRequest}`
     if (lastRouteFit.current === key) return
     lastRouteFit.current = key
     const timer = window.setTimeout(() => fitRoute(map, route, programmaticMoveRef), 120)
     return () => window.clearTimeout(timer)
-  }, [cameraMode, map, programmaticMoveRef, route, selectedIndex])
+  }, [cameraMode, focusRequest, map, programmaticMoveRef, route, selectedIndex])
 
   useEffect(() => {
     if (cameraMode !== 'follow' || !location) return
     const next: [number, number] = [location.lat, location.lng]
     const previous = lastFollowPoint.current
-    if (previous && distanceMeters(previous, next) < 7) return
+    if (previous && distanceMeters(previous, next) < 7 && focusRequest === 0) return
     lastFollowPoint.current = next
     runProgrammaticMove(map, programmaticMoveRef, () => {
       map.panTo(next, { animate: true, duration: 0.25 })
       if (map.getZoom() < FOLLOW_ZOOM) map.setZoom(FOLLOW_ZOOM, { animate: true })
     })
-  }, [cameraMode, location, map, programmaticMoveRef])
+  }, [cameraMode, focusRequest, location, map, programmaticMoveRef])
 
   return null
 }
@@ -457,18 +446,6 @@ function NavigationControls({
         >
           <LocateFixed className="h-5 w-5" />
         </button>
-        {target ? (
-          <a
-            href={googleMapsUrl(target, location)}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={t.maps}
-            title={t.maps}
-            className="grid h-11 w-11 place-items-center rounded-full border border-white/15 bg-slate-950/90 text-white shadow-2xl backdrop-blur transition active:scale-95"
-          >
-            <ExternalLink className="h-5 w-5" />
-          </a>
-        ) : null}
       </div>
 
     </>
@@ -482,6 +459,7 @@ export function PlayerMap({
   selectedIndex,
   arrivedIndex,
   reachedKeys,
+  focusRequest,
 }: Props) {
   const t = COPY[language]
   const selectedStop = stops[selectedIndex] || stops[0] || null
@@ -549,6 +527,10 @@ export function PlayerMap({
 
     return () => controller.abort()
   }, [location, plannedOrigin, selectedIndex, target])
+
+  useEffect(() => {
+    if (focusRequest > 0) setCameraMode(location ? 'follow' : 'route')
+  }, [focusRequest, location])
 
   useEffect(() => {
     if (!target || !location) return
@@ -694,6 +676,7 @@ export function PlayerMap({
           selectedIndex={selectedIndex}
           cameraMode={cameraMode}
           programmaticMoveRef={programmaticMoveRef}
+          focusRequest={focusRequest}
         />
 
         {routeLine.length > 1 ? (
