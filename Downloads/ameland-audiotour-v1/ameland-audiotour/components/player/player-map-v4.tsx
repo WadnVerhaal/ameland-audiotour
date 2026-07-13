@@ -51,7 +51,7 @@ const DEFAULT_CENTER: [number, number] = [53.4394, 5.6399]
 const MAX_ZOOM = 19
 const MIN_ZOOM = 14
 const ROUTE_REFRESH_DISTANCE_M = 40
-const FOLLOW_ZOOM = 18
+const FOLLOW_ZOOM = 18.5
 
 const COPY = {
   nl: {
@@ -470,6 +470,7 @@ export function PlayerMap({
   const nextTarget = useMemo(() => coordinatesFor(nextStop), [nextStop])
   const initialCenter = useRef<[number, number]>(target ?? DEFAULT_CENTER)
   const programmaticMoveRef = useRef(false)
+  const navigationStartRef = useRef<{ index: number; point: [number, number] } | null>(null)
   const routeCache = useRef(new Map<string, RouteResult>())
   const plannedController = useRef<AbortController | null>(null)
   const liveController = useRef<AbortController | null>(null)
@@ -529,8 +530,33 @@ export function PlayerMap({
   }, [location, plannedOrigin, selectedIndex, target])
 
   useEffect(() => {
-    if (focusRequest > 0) setCameraMode(location ? 'follow' : 'route')
-  }, [focusRequest, location])
+    if (focusRequest <= 0) return
+    if (!location) {
+      setCameraMode('route')
+      return
+    }
+
+    const point: [number, number] = [location.lat, location.lng]
+    const start = navigationStartRef.current
+
+    // De eerste start toont bewust de hele route. Een latere tik op 'Volg mij'
+    // centreert direct; tijdens de eerste start gebeurt dat pas als iemand loopt.
+    if (focusRequest > 1) {
+      setCameraMode('follow')
+      return
+    }
+
+    if (!start || start.index !== selectedIndex) {
+      navigationStartRef.current = { index: selectedIndex, point }
+      setCameraMode('route')
+      return
+    }
+
+    const movementThreshold = Math.max(8, Math.min(15, location.accuracy * 0.35))
+    if (distanceMeters(start.point, point) >= movementThreshold) {
+      setCameraMode('follow')
+    }
+  }, [focusRequest, location, selectedIndex])
 
   useEffect(() => {
     if (!target || !location) return
@@ -627,6 +653,8 @@ export function PlayerMap({
       <MapContainer
         center={initialCenter.current}
         zoom={17.5}
+        zoomSnap={0.25}
+        zoomDelta={0.25}
         minZoom={MIN_ZOOM}
         maxZoom={MAX_ZOOM}
         zoomControl={false}
