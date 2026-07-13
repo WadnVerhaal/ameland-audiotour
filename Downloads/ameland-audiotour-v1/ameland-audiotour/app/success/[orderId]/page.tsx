@@ -147,6 +147,7 @@ export default async function SuccessPage({ params, searchParams }: PageProps) {
             const finalizeResult = await finalizePaidOrder({
               orderId: cleanOrderId,
               paymentReference,
+              language: lang,
               source: 'success-page',
             })
 
@@ -169,6 +170,7 @@ export default async function SuccessPage({ params, searchParams }: PageProps) {
         const finalizeResult = await finalizePaidOrder({
           orderId: cleanOrderId,
           paymentReference,
+          language: lang,
           source: 'success-page',
         })
 
