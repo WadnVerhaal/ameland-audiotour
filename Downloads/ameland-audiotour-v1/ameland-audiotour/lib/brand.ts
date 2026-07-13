@@ -5,7 +5,7 @@ export const amelandBrand = {
   websiteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.amelandaudiotours.nl',
   appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://app.amelandaudiotours.nl',
   logoUrl: process.env.NEXT_PUBLIC_EMAIL_LOGO_URL || 'https://app.amelandaudiotours.nl/icon.png',
-  heroImageUrl: process.env.NEXT_PUBLIC_EMAIL_HERO_URL || 'https://app.amelandaudiotours.nl/images/tour-duinen.jpg',
+  heroImageUrl: process.env.NEXT_PUBLIC_EMAIL_HERO_URL || 'https://app.amelandaudiotours.nl/images/tour-duinen-v2.webp',
 
   colors: {
     deepGreen: '#003b4d',
