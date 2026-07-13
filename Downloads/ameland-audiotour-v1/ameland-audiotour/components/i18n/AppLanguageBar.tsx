@@ -27,7 +27,6 @@ function getCurrentLang(): Lang {
 export default function AppLanguageBar() {
   const pathname = usePathname() || '/'
   const [current, setCurrent] = useState<Lang>('nl')
-  const home = pathname === '/'
 
   useEffect(() => {
     setCurrent(getCurrentLang())
@@ -47,31 +46,26 @@ export default function AppLanguageBar() {
   }
 
   return (
-    <header
-      className={home ? 'absolute inset-x-0 top-0 z-50 text-white' : 'relative z-50 text-[#20372f]'}
-    >
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 pb-3 pt-[max(1.1rem,env(safe-area-inset-top))] sm:px-8 sm:pt-6">
+    <header className="relative z-50 border-b border-[#dfe3e2] bg-white text-[#082f3e]">
+      <div className="mx-auto flex min-h-[82px] w-full max-w-7xl items-center justify-between gap-4 px-5 py-3 sm:px-8">
         <a href={`/?lang=${current}`} aria-label="Ameland Audiotours home" className="inline-flex min-w-0 items-center gap-3 no-underline">
           <Image
             src="/images/ameland-audiotours-logo.webp"
             alt="Ameland Audiotours"
             width={48}
             height={48}
-            className="h-11 w-11 shrink-0 rounded-full border border-white/30 object-cover shadow-xl"
+            className="h-12 w-12 shrink-0 rounded-full border border-[#0b3443]/20 object-cover"
             priority
           />
-          <span className={`min-w-0 text-sm font-black tracking-tight sm:text-base ${home ? 'text-white' : 'text-[#20372f]'}`}>
-            Ameland Audiotours
+          <span className="min-w-0 leading-none text-[#082f3e]">
+            <span className="block font-serif text-lg font-medium tracking-[.08em] sm:text-2xl">AMELAND</span>
+            <span className="mt-1 block text-[9px] tracking-[.22em] sm:text-xs">AUDIOTOURS</span>
           </span>
         </a>
 
         <nav
           aria-label="Taal kiezen"
-          className={`flex items-center rounded-full border p-1 shadow-lg backdrop-blur-xl ${
-            home
-              ? 'border-white/20 bg-slate-950/30'
-              : 'border-[#ddd4c4] bg-[#fffdf8]/95'
-          }`}
+          className="flex items-center rounded-full border border-[#d8d0c2] bg-[#f8f4eb] p-1"
         >
           {languages.map((lang) => {
             const active = lang.code === current
@@ -83,12 +77,8 @@ export default function AppLanguageBar() {
                 aria-pressed={active}
                 className={`grid h-9 min-w-10 place-items-center rounded-full px-3 text-xs font-black transition ${
                   active
-                    ? home
-                      ? 'bg-white text-slate-950'
-                      : 'bg-[#153f45] text-white'
-                    : home
-                    ? 'text-white/75 hover:bg-white/10 hover:text-white'
-                    : 'text-[#53635a] hover:bg-[#efe8dc] hover:text-[#20372f]'
+                    ? 'bg-[#003b4d] text-white'
+                    : 'text-[#53635a] hover:bg-white hover:text-[#082f3e]'
                 }`}
               >
                 {lang.label}
