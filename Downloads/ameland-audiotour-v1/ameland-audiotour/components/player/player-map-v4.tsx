@@ -11,11 +11,8 @@ import {
   TileLayer,
   Tooltip,
   useMap,
-  useMapEvents,
-  ZoomControl,
 } from 'react-leaflet'
 import {
-  Crosshair,
   ExternalLink,
   Layers3,
   LocateFixed,
@@ -39,7 +36,7 @@ type Props = {
   reachedKeys: string[]
 }
 
-type CameraMode = 'route' | 'follow' | 'free'
+type CameraMode = 'route' | 'follow'
 type MapStyle = 'street' | 'satellite'
 type RouteStatus = 'idle' | 'loading' | 'live' | 'planned' | 'unavailable'
 type RouteResult = {
@@ -65,7 +62,6 @@ const COPY = {
     myLocation: 'Mijn locatie',
     followMe: 'Volg mij',
     routeOverview: 'Route in beeld',
-    resumeNavigation: 'Hervat navigatie',
     maps: 'Open in Maps',
     gps: 'GPS zoeken',
     selected: 'Gekozen stop',
@@ -73,7 +69,7 @@ const COPY = {
     arrived: 'Je bent hier',
     street: 'Kaart',
     satellite: 'Satelliet',
-    freeMode: 'Kaart vrij verkennen',
+    fixedMap: 'Kaart volgt automatisch de actieve stop',
     minutes: 'min',
   },
   en: {
@@ -84,7 +80,6 @@ const COPY = {
     myLocation: 'My location',
     followMe: 'Follow me',
     routeOverview: 'Show route',
-    resumeNavigation: 'Resume navigation',
     maps: 'Open in Maps',
     gps: 'Finding GPS',
     selected: 'Selected stop',
@@ -92,7 +87,7 @@ const COPY = {
     arrived: 'You are here',
     street: 'Map',
     satellite: 'Satellite',
-    freeMode: 'Explore map freely',
+    fixedMap: 'Map automatically follows the active stop',
     minutes: 'min',
   },
   de: {
@@ -103,7 +98,6 @@ const COPY = {
     myLocation: 'Mein Standort',
     followMe: 'Mir folgen',
     routeOverview: 'Route anzeigen',
-    resumeNavigation: 'Navigation fortsetzen',
     maps: 'In Maps öffnen',
     gps: 'GPS wird gesucht',
     selected: 'Ausgewählter Stopp',
@@ -111,7 +105,7 @@ const COPY = {
     arrived: 'Du bist hier',
     street: 'Karte',
     satellite: 'Satellit',
-    freeMode: 'Karte frei erkunden',
+    fixedMap: 'Karte folgt automatisch dem aktiven Stopp',
     minutes: 'Min.',
   },
 } as const
@@ -326,26 +320,6 @@ function fitRoute(
   })
 }
 
-function MapInteractionController({
-  cameraMode,
-  setCameraMode,
-  programmaticMoveRef,
-}: {
-  cameraMode: CameraMode
-  setCameraMode: (mode: CameraMode) => void
-  programmaticMoveRef: ProgrammaticMoveRef
-}) {
-  useMapEvents({
-    dragstart: () => {
-      if (!programmaticMoveRef.current && cameraMode !== 'free') setCameraMode('free')
-    },
-    zoomstart: () => {
-      if (!programmaticMoveRef.current && cameraMode !== 'free') setCameraMode('free')
-    },
-  })
-  return null
-}
-
 function NavigationCamera({
   location,
   route,
@@ -497,16 +471,6 @@ function NavigationControls({
         ) : null}
       </div>
 
-      {cameraMode === 'free' ? (
-        <button
-          type="button"
-          onClick={showRoute}
-          className="absolute bottom-4 left-1/2 z-[850] inline-flex min-h-12 -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-emerald-300 px-5 py-3 text-sm font-black text-slate-950 shadow-[0_18px_45px_rgba(2,6,23,.45)] transition active:scale-[.98]"
-        >
-          <Crosshair className="h-5 w-5" />
-          {t.resumeNavigation}
-        </button>
-      ) : null}
     </>
   )
 }
@@ -686,18 +650,13 @@ export function PlayerMap({
         zoomControl={false}
         className="h-full w-full"
         preferCanvas
-        dragging
-        touchZoom
-        scrollWheelZoom
-        doubleClickZoom
-        keyboard
+        dragging={false}
+        touchZoom={false}
+        scrollWheelZoom={false}
+        doubleClickZoom={false}
+        boxZoom={false}
+        keyboard={false}
       >
-        <ZoomControl position="bottomleft" />
-        <MapInteractionController
-          cameraMode={cameraMode}
-          setCameraMode={setCameraMode}
-          programmaticMoveRef={programmaticMoveRef}
-        />
 
         {mapStyle === 'street' ? (
           <TileLayer
@@ -811,9 +770,8 @@ export function PlayerMap({
 
       <div className="pointer-events-none absolute left-3 top-3 z-[750] max-w-[68%] rounded-2xl border border-white/15 bg-slate-950/88 px-3 py-2 text-white shadow-2xl backdrop-blur">
         <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-300">{routeLabel}</p>
-        <p className="mt-1 truncate text-sm font-black">{selectedIndex + 1}. {selectedTitle}</p>
         {routeSummary ? <p className="mt-0.5 text-xs font-bold text-slate-300">{routeSummary}</p> : null}
-        {cameraMode === 'free' ? <p className="mt-1 text-[11px] font-semibold text-amber-200">{t.freeMode}</p> : null}
+        <p className="mt-1 text-[11px] font-semibold text-slate-300">{t.fixedMap}</p>
       </div>
 
       {routeStatus === 'unavailable' ? (
