@@ -11,8 +11,8 @@
   --aat-card-soft: #f7f2e8;
   --aat-green: #20372f;
   --aat-green-2: #31473d;
-  --aat-teal: #0f5d67;
-  --aat-clay: #c96643;
+  --aat-teal: #003b4d;
+  --aat-clay: #e96551;
   --aat-muted: #626b61;
   --aat-muted-2: #7a8875;
   --aat-border: #ddd4c4;
@@ -40,6 +40,13 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
+}
+
+h1,
+h2,
+h3,
+.font-serif {
+  font-family: Georgia, 'Times New Roman', ui-serif, serif;
 }
 
 body {
