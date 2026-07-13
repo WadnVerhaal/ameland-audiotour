@@ -51,7 +51,9 @@ export async function resendAccessLink(input: {
 
   if (input.orderId) query = query.eq('id', input.orderId)
 
-  const { data: orders } = await query
+  const { data: orders, error: orderError } = await query
+  if (orderError) throw new Error('Order lookup failed')
+
   const order = orders?.[0]
   if (!order) {
     return input.orderId
@@ -59,22 +61,43 @@ export async function resendAccessLink(input: {
       : { status: 'processed_privately' as const }
   }
 
-  const { data: tokenRow } = await supabase
+  const { data: tokenRow, error: tokenError } = await supabase
     .from('access_tokens')
     .select('token, expires_at')
     .eq('order_id', order.id)
     .maybeSingle()
 
-  if (!tokenRow?.token) {
-    return input.orderId
-      ? { status: 'not_ready' as const }
-      : { status: 'processed_privately' as const }
-  }
+  if (tokenError) throw new Error('Access link lookup failed')
 
-  if (tokenRow.expires_at && new Date(tokenRow.expires_at) < new Date()) {
-    return input.orderId
-      ? { status: 'expired' as const }
-      : { status: 'processed_privately' as const }
+  let token = tokenRow?.token ? String(tokenRow.token) : ''
+  let expiresAt = tokenRow?.expires_at ? String(tokenRow.expires_at) : null
+  let rotated = false
+
+  // A verified order number plus purchasing email authorizes a fresh link.
+  // Upserting on the unique order_id also invalidates the previous token.
+  if (input.orderId) {
+    token = crypto.randomUUID()
+    expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
+
+    const { error: upsertError } = await supabase
+      .from('access_tokens')
+      .upsert(
+        {
+          order_id: order.id,
+          token,
+          expires_at: expiresAt,
+          last_opened_at: null,
+        },
+        { onConflict: 'order_id' },
+      )
+
+    if (upsertError) throw new Error('Access link could not be renewed')
+    rotated = true
+  } else {
+    if (!token) return { status: 'processed_privately' as const }
+    if (expiresAt && new Date(expiresAt) < new Date()) {
+      return { status: 'processed_privately' as const }
+    }
   }
 
   const tour = Array.isArray(order.tours) ? order.tours[0] : order.tours
@@ -84,12 +107,12 @@ export async function resendAccessLink(input: {
   await sendAccessEmail({
     to: email,
     tourTitle,
-    accessUrl: `${appUrl.replace(/\/$/, '')}/access/${tokenRow.token}?lang=${input.language}`,
+    accessUrl: `${appUrl.replace(/\/$/, '')}/player/${token}?lang=${input.language}`,
     language: input.language,
   })
 
   return input.orderId
-    ? { status: 'sent' as const }
+    ? { status: 'sent' as const, rotated, expiresAt }
     : { status: 'processed_privately' as const }
 }
 
