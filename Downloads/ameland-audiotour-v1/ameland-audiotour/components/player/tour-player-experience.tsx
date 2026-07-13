@@ -123,8 +123,8 @@ const COPY = {
     brand: 'Ameland Audiotours',
     beforeStart: 'Voor vertrek',
     startTitle: 'Klaar om te beginnen?',
-    startText: 'Druk op start wanneer je klaarstaat. Vanaf dat moment volg je de route en je locatie volledig in deze app.',
-    startButton: 'Start tour en navigatie',
+    startText: 'Druk op begin wanneer je klaarstaat. De app toont eerst de route naar de volgende stop en volgt je daarna automatisch tijdens het lopen.',
+    startButton: 'Begin de tour',
     startPrivacy: 'Je locatie wordt pas gevraagd nadat je op Start de wandeling drukt.',
     firstStop: 'Eerste stop',
     startCheckLocation: 'GPS begeleidt je naar de volgende stop',
@@ -136,7 +136,7 @@ const COPY = {
     arrived: 'Aangekomen bij stop',
     listened: 'Beluisterd',
     walkInstruction: 'Volg de wandelroute. Het verhaal komt vrij wanneer je bij de stop bent.',
-    arrivedInstruction: 'Je bent op de juiste plek. Neem rustig de tijd en start het verhaal.',
+    arrivedInstruction: 'Je bent op de juiste plek. Zoek een veilige plek, start het verhaal en pauzeer gerust wanneer dat nodig is.',
     distance: 'Nog te lopen',
     progress: 'Voortgang',
     openRoute: 'Volg mij in de app',
@@ -152,6 +152,7 @@ const COPY = {
     nextStopHint: 'De route wordt automatisch ingesteld op',
     finishTour: 'Tour afronden',
     audioBlocked: 'Tik nogmaals op afspelen. Je telefoon blokkeerde de eerste poging.',
+    pauseSafety: 'Je kunt de audio altijd pauzeren om eerst een veilige plek te zoeken.',
     gpsActive: 'GPS actief',
     gpsWaiting: 'GPS zoeken…',
     gpsDenied: 'Locatie staat uit',
@@ -168,8 +169,8 @@ const COPY = {
     brand: 'Ameland Audiotours',
     beforeStart: 'Before you leave',
     startTitle: 'Ready to begin?',
-    startText: 'Press start when you are ready. From that moment, follow the route and your location entirely in this app.',
-    startButton: 'Start tour and navigation',
+    startText: 'Press begin when you are ready. The app first shows the route to the next stop and then follows you automatically as you walk.',
+    startButton: 'Begin the tour',
     startPrivacy: 'Your location is only requested after you press Start the walk.',
     firstStop: 'First stop',
     startCheckLocation: 'GPS guides you to the next stop',
@@ -181,7 +182,7 @@ const COPY = {
     arrived: 'Arrived at stop',
     listened: 'Played',
     walkInstruction: 'Follow the walking route. The story unlocks when you reach the stop.',
-    arrivedInstruction: 'You are in the right place. Take your time and start the story.',
+    arrivedInstruction: 'You are in the right place. Find a safe place, start the story and pause whenever needed.',
     distance: 'Distance to go',
     progress: 'Progress',
     openRoute: 'Follow me in the app',
@@ -197,6 +198,7 @@ const COPY = {
     nextStopHint: 'The route will automatically switch to',
     finishTour: 'Finish tour',
     audioBlocked: 'Tap play again. Your phone blocked the first attempt.',
+    pauseSafety: 'You can always pause the audio while you find a safe place to listen.',
     gpsActive: 'GPS active',
     gpsWaiting: 'Finding GPS…',
     gpsDenied: 'Location is off',
@@ -213,8 +215,8 @@ const COPY = {
     brand: 'Ameland Audiotours',
     beforeStart: 'Vor dem Start',
     startTitle: 'Bereit loszugehen?',
-    startText: 'Drücke auf Start, wenn du bereit bist. Ab dann folgst du Route und Standort vollständig in dieser App.',
-    startButton: 'Tour und Navigation starten',
+    startText: 'Drücke auf Beginnen, wenn du bereit bist. Die App zeigt zuerst den Weg zum nächsten Stopp und folgt dir dann automatisch beim Gehen.',
+    startButton: 'Tour beginnen',
     startPrivacy: 'Dein Standort wird erst abgefragt, nachdem du auf Wanderung starten gedrückt hast.',
     firstStop: 'Erster Stopp',
     startCheckLocation: 'GPS führt dich zum nächsten Stopp',
@@ -226,7 +228,7 @@ const COPY = {
     arrived: 'Angekommen bei Stopp',
     listened: 'Gehört',
     walkInstruction: 'Folge dem Fußweg. Die Geschichte wird freigeschaltet, sobald du den Stopp erreichst.',
-    arrivedInstruction: 'Du bist am richtigen Ort. Nimm dir Zeit und starte die Geschichte.',
+    arrivedInstruction: 'Du bist am richtigen Ort. Suche einen sicheren Platz, starte die Geschichte und pausiere bei Bedarf.',
     distance: 'Noch zu gehen',
     progress: 'Fortschritt',
     openRoute: 'Mir in der App folgen',
@@ -242,6 +244,7 @@ const COPY = {
     nextStopHint: 'Die Route wechselt automatisch zu',
     finishTour: 'Tour abschließen',
     audioBlocked: 'Tippe erneut auf Abspielen. Dein Telefon hat den ersten Versuch blockiert.',
+    pauseSafety: 'Du kannst die Audioführung jederzeit pausieren, um zuerst einen sicheren Platz zu suchen.',
     gpsActive: 'GPS aktiv',
     gpsWaiting: 'GPS wird gesucht…',
     gpsDenied: 'Standort ist aus',
@@ -518,6 +521,7 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
     setSelectedIndex(nextIncomplete >= 0 ? nextIncomplete : 0)
     startedAtRef.current = Date.now()
     setStarted(true)
+    setNavigationFocusRequest((current) => Math.max(1, current + 1))
     requestLocation()
   }
 
@@ -886,7 +890,7 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
               selectedIndex={selectedIndex}
               arrivedIndex={mapArrivedIndex}
               reachedKeys={completedKeys}
-              focusRequest={navigationFocusRequest}
+              focusRequest={Math.max(1, navigationFocusRequest)}
             />
           </div>
 
@@ -952,6 +956,7 @@ export function TourPlayer({ token, tour, stops, initialLanguage, expiresAt }: P
                       <span>{formatAudioTime(audioDuration)}</span>
                     </div>
                     {audioBlocked ? <p className="mt-3 rounded-2xl bg-amber-300/10 p-3 text-sm leading-6 text-amber-100">{copy.audioBlocked}</p> : null}
+                    <p className="mt-3 flex items-start gap-2 text-xs font-semibold leading-5 text-slate-300"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />{copy.pauseSafety}</p>
                     {!selectedIsCompleted ? (
                       <button
                         type="button"
